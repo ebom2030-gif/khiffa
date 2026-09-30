@@ -99,6 +99,15 @@ window.KHIFFA_DATA = (function () {
     ['spinach','V','سبانخ مطبوخة',100,'نص كوب',23,3,3.8,0.3,'leafy_green',''],
     ['greenbeans','V','فاصوليا خضراء مطبوخة',100,'نص كوب',35,1.9,7.9,0.3,'pea_pod',''],
     ['onion','V','بصل',70,'نص حبة',28,0.8,6.5,0.1,'onion',''],
+    ['lettuce','V','خس',100,'كوبين',15,1.4,2.9,0.2,'leafy_green',''],
+    ['arugula','V','جرجير',100,'كوبين',25,2.6,3.7,0.7,'leafy_green',''],
+    ['parsley','V','بقدونس وكزبرة',60,'كوب مفروم',22,1.8,3.8,0.5,'leafy_green',''],
+    ['cabbage','V','ملفوف (كرنب)',100,'كوب',25,1.3,5.8,0.1,'leafy_green',''],
+    ['cauliflower','V','قرنبيط مطبوخ',100,'نص كوب',23,1.8,4.1,0.5,'broccoli',''],
+    ['radish','V','فجل',100,'٨ حبات',16,0.7,3.4,0.1,'onion',''],
+    ['beet','V','شمندر (بنجر) مسلوق',80,'نص كوب',35,1.3,8,0.1,'onion',''],
+    ['celery','V','كرفس',100,'عودين',14,0.7,3,0.2,'leafy_green',''],
+    ['hotpepper','V','فلفل حار',30,'حبتين',12,0.6,2.6,0.1,'hot_pepper',''],
 
     // ---------- الدهون ----------
     ['oliveoil','Fa','زيت زيتون',5,'ملعقة صغيرة',40,0,0,4.5,'pouring_liquid',''],
@@ -173,6 +182,7 @@ window.KHIFFA_DATA = (function () {
     { id: 'l-shrimp', m: 'l', name: 'روبيان مشوي مع أرز', how: 'روبيان بالثوم والليمون على الشواية، مع أرز وسلطة.', parts: { S: ['rice'], P: ['shrimp'], Fa: ['oliveoil'], V: ['salad', 'tomato'] } },
     { id: 'l-tray', m: 'l', name: 'صينية دجاج وخضار بالفرن', how: 'دجاج وبطاطس وجزر وكوسة وفلفل بالفرن بملعقة زيت وبهارات.', parts: { S: ['potato'], P: ['chicken'], Fa: ['oliveoil'], V: ['carrot', 'zucchini'] } },
     { id: 'l-gfpasta', m: 'l', name: 'مكرونة أرز بالتونة والطماطم', how: 'مكرونة خالية الجلوتين بصلصة طماطم وفلفل وتونة مصفّاة.', parts: { S: ['gfpasta'], P: ['tuna'], Fa: ['oliveoil'], V: ['tomato', 'pepper'] } },
+    { id: 'l-bigsalad', m: 'l', name: 'سلطة دجاج مشوي كبيرة', how: 'خس وجرجير وطماطم وخيار وفلفل، فوقهم دجاج مشوي وخبز محمص وتتبيلة زيت زيتون وليمون.', parts: { S: ['khubz'], P: ['chicken'], Fa: ['oliveoil'], V: ['lettuce', 'arugula', 'tomato', 'cucumber', 'pepper'] } },
     { id: 'l-okra', m: 'l', name: 'بامية باللحمة مع أرز', how: 'بامية بصلصة الطماطم مع لحم قليل الدهن، وأرز.', parts: { S: ['rice'], P: ['lamb'], Fa: ['oliveoil'], V: ['okra', 'tomato'] } },
 
     // سناك العصر
@@ -195,6 +205,7 @@ window.KHIFFA_DATA = (function () {
     { id: 'd-shawarma', m: 'd', name: 'شاورما دجاج صحية', how: 'دجاج متبل بالفرن في خبز بر مع خس وطماطم وبصل وطحينة خفيفة، وكوب لبن.', parts: { S: ['khubz'], P: ['chicken'], M: ['laban'], Fa: ['tahini'], V: ['salad', 'tomato'] } },
     { id: 'd-quinoa', m: 'd', name: 'بول كينوا بالدجاج', how: 'كينوا مع دجاج وفلفل وخيار وأفوكادو، وزبادي خالي اللاكتوز.', parts: { S: ['quinoa'], P: ['chicken'], M: ['lfyogurt'], Fa: ['avocado'], V: ['pepper', 'cucumber'] } },
     { id: 'd-shrimpsalad', m: 'd', name: 'سلطة روبيان بالأفوكادو', how: 'روبيان مشوي مع خس وخيار وأفوكادو، وكعك الأرز، وكوب حليب صويا.', parts: { S: ['ricecake'], P: ['shrimp'], M: ['soy'], Fa: ['avocado'], V: ['salad', 'cucumber'] } },
+    { id: 'd-fattoush', m: 'd', name: 'فتوش بالتونة', how: 'خس وطماطم وخيار وفجل وبقدونس ونعناع وسماق، مع تونة وخبز محمص، وكوب لبن.', parts: { S: ['khubz'], P: ['tuna'], M: ['laban'], Fa: ['oliveoil'], V: ['lettuce', 'tomato', 'cucumber', 'radish', 'parsley'] } },
     { id: 'd-turkeywrap', m: 'd', name: 'راب ديك رومي', how: 'خبز عربي أسمر بديك رومي وخضار ولبنة، مع كوب لبن.', parts: { S: ['khubz'], P: ['turkey', ['labneh', 1]], M: ['laban'], V: ['salad', 'cucumber'] } }
   ];
 
