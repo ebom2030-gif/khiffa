@@ -95,6 +95,7 @@ function resolve(parts, target) {
   order.forEach(g => {
     let n = target[g] || 0; if (g === 'S') n = Math.max(0, n - legS);
     const list = (parts[g] || []).map(x => Array.isArray(x) ? { id: x[0], fixed: x[1] } : { id: x });
+    if (g === 'V' && n && list.length > n) n = list.length; // vegetables: every picked type gets its own portion
     if (!n || !list.length) return;
     const counts = list.map(() => 0); let left = n;
     list.forEach((it, i) => { if (it.fixed) { const k = Math.min(it.fixed, left); counts[i] = k; left -= k; } });
@@ -122,7 +123,7 @@ function amountText(food, n) {
 function mealState(day, k) { return (day.meals || {})[k] || {}; }
 function mealComps(k, st) {
   const tgt = level()[k] || {};
-  if (st.mode === 'custom' && st.picks) return resolve(Object.fromEntries(Object.entries(st.picks).filter(([, v]) => v).map(([g, id]) => [g, [id]])), tgt);
+  if (st.mode === 'custom' && st.picks) return resolve(Object.fromEntries(Object.entries(st.picks).filter(([, v]) => Array.isArray(v) ? v.length : v).map(([g, id]) => [g, Array.isArray(id) ? id : [id]])), tgt);
   if (st.idea) { const idea = D.IDEAS.find(i => i.id === st.idea); if (idea) return resolve(idea.parts, tgt); }
   return [];
 }
@@ -140,7 +141,7 @@ function setMeal(k, patch, dateKey = S.cur) {
 function weekKeys(k) { const d = parseKey(k); const back = (d.getDay() + 1) % 7; const out = []; for (let i = 0; i <= back; i++) out.push(addDays(k, -i)); return out; }
 function weekCounts(k, planned) {
   const c = {}; D.LIMITS.forEach(l => c[l[0]] = 0);
-  weekKeys(k).forEach(key => { const day = dayOf(key); Object.keys(day.meals || {}).forEach(m => { const st = day.meals[m]; if (!st || !(st.done || planned)) return; (st.tags || []).forEach(t => c[t] = (c[t] || 0) + 1); }); });
+  weekKeys(k).forEach(key => { const day = dayOf(key); (day.extras || []).forEach(x => { if (x.tag) c[x.tag] = (c[x.tag] || 0) + 1; }); Object.keys(day.meals || {}).forEach(m => { const st = day.meals[m]; if (!st || !(st.done || planned)) return; (st.tags || []).forEach(t => c[t] = (c[t] || 0) + 1); }); });
   return c;
 }
 
@@ -152,6 +153,7 @@ function renderToday() {
   $('#dNext').disabled = S.cur >= addDays(TODAY, 6);
   const eaten = { n: 0, p: 0, c: 0, f: 0 };
   D.MEALS.forEach(m => { const st = mealState(day, m.k); if (st.done) { const t = totals(mealComps(m.k, st)); ['n', 'p', 'c', 'f'].forEach(x => eaten[x] += t[x]); } });
+  (day.extras || []).forEach(x => ['n', 'p', 'c', 'f'].forEach(k => eaten[k] += (x[k] || 0) * (x.q || 1)));
   $('#kcalLeft').textContent = ar(Math.max(0, Math.round(st0.level - eaten.n)), 0); $('#kcalTarget').textContent = ar(st0.level, 0);
   $('#ringFg').setAttribute('stroke-dashoffset', 326.7 * (1 - Math.min(1, eaten.n / st0.level)));
   [['P', 'p'], ['C', 'c'], ['F', 'f']].forEach(([id, k]) => { $('#b' + id).style.width = Math.min(1, eaten[k] / LT[k]) * 100 + '%'; $('#t' + id).textContent = ar(Math.round(eaten[k]), 0) + ' / ' + ar(Math.round(LT[k]), 0) + ' ج'; });
@@ -186,6 +188,7 @@ function renderToday() {
   $('#wLast').textContent = ws ? 'آخر وزن مسجل: ' + ar(dayOf(ws).weight) + ' كجم (' + fmt(ws, { day: 'numeric', month: 'short' }) + ')' : 'سجلي وزنك الصبح على الريق بعد الحمام.';
   if (document.activeElement !== $('#wIn')) $('#wIn').value = day.weight || '';
   if (document.activeElement !== $('#noteIn')) $('#noteIn').value = day.note || '';
+  (window.KHIFFA_HOOKS || []).forEach(f => { try { f(day); } catch (e) { console.error(e); } });
 }
 function renderLimits() {
   const c = weekCounts(S.cur, false);
@@ -226,15 +229,18 @@ function openMealSheet(m, mode) {
         list.forEach(i => { const c = ideaCard(i, st.mode !== 'custom' && st.idea === i.id); c.onclick = () => { setMeal(m.k, { mode: 'idea', idea: i.id, planned: false }); closeSheet(); renderToday(); toast('اتحطت في ' + m.t); }; body.append(c); });
       } else {
         const tgt = level()[m.k] || {}; const picks = { ...(st.mode === 'custom' ? st.picks : {}) };
-        if (st.mode !== 'custom' && st.idea) { mealComps(m.k, st).forEach(x => { if (!picks[x.food.g]) picks[x.food.g] = x.food.id; }); }
+        if (st.mode !== 'custom' && st.idea) { mealComps(m.k, st).forEach(x => { if (x.food.g === 'V') picks.V = (picks.V || []).concat(x.food.id); else if (!picks[x.food.g]) picks[x.food.g] = x.food.id; }); }
+        if (picks.V && !Array.isArray(picks.V)) picks.V = [picks.V];
         GORDER.filter(g => tgt[g]).forEach(g => {
           const G = D.GROUPS[g];
-          body.insertAdjacentHTML('beforeend', '<div class="grp-h"><i style="background:' + G.color + '"></i>' + G.name + ': ' + (tgt[g] === 1 ? 'حصة' : tgt[g] === 2 ? 'حصتين' : ar(tgt[g]) + ' حصص') + '</div>');
+          body.insertAdjacentHTML('beforeend', '<div class="grp-h"><i style="background:' + G.color + '"></i>' + G.name + ': ' + (tgt[g] === 1 ? 'حصة' : tgt[g] === 2 ? 'حصتين' : ar(tgt[g]) + ' حصص') + (g === 'V' ? ' <span class="note" style="font-weight:400">– اختاري أكتر من نوع براحتك</span>' : '') + '</div>');
           const grid = document.createElement('div'); grid.className = 'fgrid';
           Object.values(D.FOODS).filter(f => f.g === g && allowed(f)).forEach(f => {
-            const b = document.createElement('button'); b.className = 'fbtn'; b.setAttribute('aria-pressed', picks[g] === f.id);
+            const b = document.createElement('button'); b.className = 'fbtn'; b.setAttribute('aria-pressed', g === 'V' ? (picks.V || []).includes(f.id) : picks[g] === f.id);
             b.innerHTML = img(f.img) + '<span>' + esc(f.name) + '</span><span class="q num">' + amountText(f, tgt[g]) + '</span>';
-            b.onclick = () => { picks[g] = picks[g] === f.id ? null : f.id; grid.querySelectorAll('.fbtn').forEach(x => x.setAttribute('aria-pressed', 'false')); if (picks[g]) b.setAttribute('aria-pressed', 'true'); updateSum(); };
+            b.onclick = () => {
+              if (g === 'V') { const v = picks.V || []; picks.V = v.includes(f.id) ? v.filter(x => x !== f.id) : v.concat(f.id); b.setAttribute('aria-pressed', picks.V.includes(f.id)); updateSum(); return; }
+              picks[g] = picks[g] === f.id ? null : f.id; grid.querySelectorAll('.fbtn').forEach(x => x.setAttribute('aria-pressed', 'false')); if (picks[g]) b.setAttribute('aria-pressed', 'true'); updateSum(); };
             grid.append(b);
           });
           body.append(grid);
@@ -244,7 +250,7 @@ function openMealSheet(m, mode) {
         body.append(foot);
         const updateSum = () => { const comps = mealComps(m.k, { mode: 'custom', picks }); const t = totals(comps); $('#shSum').textContent = comps.length ? ar(Math.round(t.n), 0) + ' سعرة – ' + ar(Math.round(t.p), 0) + ' ج بروتين' + (picks.P && D.FOODS[picks.P].leg ? ' – البقوليات بتقلل النشويات' : '') : 'اختاري صنف من كل مجموعة'; };
         updateSum();
-        $('#shSave').onclick = () => { if (!Object.values(picks).some(Boolean)) { toast('اختاري صنف واحد على الأقل'); return; } setMeal(m.k, { mode: 'custom', picks, planned: false }); closeSheet(); renderToday(); toast('اتحفظت الوجبة'); };
+        $('#shSave').onclick = () => { if (!Object.values(picks).some(v => Array.isArray(v) ? v.length : v)) { toast('اختاري صنف واحد على الأقل'); return; } setMeal(m.k, { mode: 'custom', picks, planned: false }); closeSheet(); renderToday(); toast('اتحفظت الوجبة'); };
       }
     };
     draw(mode);
@@ -409,5 +415,6 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet()
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.pin) { if (dkey(new Date()) !== TODAY) location.reload(); else flush(); } });
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 
+window.KHIFFA_APP = { D, dayOf, saveDay, toast, settings, level, mealComps, mealState, totals, levelTotals, weekKeys, weekCounts, fmt, ar, esc, img, addDays, TODAY, get cur() { return S.cur; }, get data() { return S.data; }, refresh: () => { if (S.data) renderToday(); } };
 if (S.pin) boot(); else showLogin();
 })();
