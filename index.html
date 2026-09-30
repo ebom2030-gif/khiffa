@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>خفّة – Khiffa</title>
+<meta name="description" content="متابعة يومية لنظامك الغذائي: البدائل، الماية، الوزن، وقياسات InBody.">
+<meta name="theme-color" content="#2f9e7a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="خفّة">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Reem+Kufi:wght@500;700&display=swap">
+<style>
+/* Layout: phone-first single column, sticky header + bottom tab bar; summary ring on top, detail cards below */
+:root{
+  --bg:#f6f8f5; --surface:#ffffff; --ink:#1d2b26; --muted:#66776f; --line:#dfe7e2;
+  --mint:#2f9e7a; --mint-soft:#e1f3ec; --peach:#f08a5d; --peach-soft:#fdeee6;
+  --warn:#c9822b; --bad:#c2453b; --good:#2f9e7a;
+  --f-display:"Reem Kufi","IBM Plex Sans Arabic",Tahoma,sans-serif;
+  --f-body:"IBM Plex Sans Arabic",Tahoma,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111916; --surface:#18231f; --ink:#e6efe9; --muted:#93a59c; --line:#2a3833;
+  --mint:#5cc9a3; --mint-soft:#1d3a30; --peach:#f5a07a; --peach-soft:#3a2720;
+  --warn:#e0a458; --bad:#e57368; --good:#5cc9a3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111916; --surface:#18231f; --ink:#e6efe9; --muted:#93a59c; --line:#2a3833;
+  --mint:#5cc9a3; --mint-soft:#1d3a30; --peach:#f5a07a; --peach-soft:#3a2720;
+  --warn:#e0a458; --bad:#e57368; --good:#5cc9a3; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;direction:rtl}
+.wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:0 96px}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:14px 10px;display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.logo{font-family:var(--f-display);font-size:30px;font-weight:700;color:var(--mint);letter-spacing:0}
+.logo small{display:block;font-family:var(--f-body);font-size:12px;font-weight:500;color:var(--muted);margin-top:-4px}
+.date{font-size:13px;color:var(--muted);text-align:left}
+section.view{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+h2{font-family:var(--f-display);font-size:19px;font-weight:500;margin:0 0 10px;text-wrap:balance}
+.eyebrow{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.num{font-variant-numeric:tabular-nums}
+/* Hero ring */
+.hero{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.ring{width:132px;height:132px;position:relative}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .big{font-size:28px;font-weight:700;line-height:1}
+.ring .sm{font-size:12px;color:var(--muted)}
+.macros{display:flex;flex-direction:column;gap:8px;min-width:0}
+.macro{display:grid;grid-template-columns:52px 1fr auto;gap:8px;align-items:center;font-size:13px}
+.bar{height:8px;background:var(--mint-soft);border-radius:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--mint);border-radius:8px}
+.bar.p i{background:var(--peach)}
+.bar.f i{background:var(--warn)}
+/* meals */
+.meal{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding-block:10px;border-top:1px solid var(--line)}
+.meal:first-of-type{border-top:0}
+.meal .t{font-weight:600}
+.meal .d{font-size:13px;color:var(--muted)}
+.chk{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);background:transparent;cursor:pointer;display:grid;place-items:center;color:transparent;font-size:16px;padding:0}
+.chk.on{background:var(--mint);border-color:var(--mint);color:#fff}
+.chk:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--peach);outline-offset:2px}
+/* water */
+.cups{display:flex;flex-wrap:wrap;gap:8px}
+.cup{width:34px;height:42px;border:2px solid var(--line);border-radius:4px 4px 10px 10px;background:transparent;cursor:pointer;position:relative;overflow:hidden;padding:0}
+.cup.on{border-color:var(--mint)}
+.cup.on::after{content:"";position:absolute;inset:auto 0 0 0;height:70%;background:var(--mint-soft)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
+button.btn{font:inherit;font-weight:600;border:0;border-radius:10px;padding:9px 16px;background:var(--mint);color:#fff;cursor:pointer}
+button.ghost{background:transparent;color:var(--mint);border:1px solid var(--line)}
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.stat{padding:12px;border-radius:12px;background:var(--bg);border:1px solid var(--line)}
+.stat .v{font-size:22px;font-weight:700}
+.stat .u{font-size:12px;color:var(--muted)}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:20px;margin-inline-start:6px;vertical-align:middle}
+.pill.good{background:var(--mint-soft);color:var(--good)}
+.pill.warn{background:var(--peach-soft);color:var(--warn)}
+.pill.bad{background:var(--peach-soft);color:var(--bad)}
+.delta{font-size:12px;font-weight:600}
+.delta.good{color:var(--good)} .delta.bad{color:var(--bad)}
+/* charts */
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-family:var(--f-body);font-size:11px}
+.legend{font-size:12px;color:var(--muted)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{color:var(--muted);font-weight:500}
+.note{font-size:13px;color:var(--muted)}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.empty{border:1.5px dashed var(--line);border-radius:14px;padding:18px;text-align:center;color:var(--muted)}
+/* tabs */
+nav.tabs{position:fixed;inset:auto 0 0 0;z-index:6;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs button{flex:1;max-width:140px;background:none;border:0;font:inherit;font-size:13px;color:var(--muted);padding:12px 4px;cursor:pointer}
+nav.tabs button[aria-selected="true"]{color:var(--mint);font-weight:700}
+.pick{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.pick select{font-size:13px;padding:6px 8px;flex:1 1 140px}
+.meal .tag{font-size:11px;color:var(--muted)}
+.limits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.lim{padding:10px;border-radius:12px;background:var(--bg);border:1px solid var(--line);text-align:center}
+.lim .v{font-size:20px;font-weight:700}
+.lim.over{border-color:var(--bad)} .lim.over .v{color:var(--bad)}
+.lim.full .v{color:var(--warn)}
+.pm{border-top:1px solid var(--line);padding-block:12px}
+.pm:first-child{border-top:0}
+.pm h3{font-size:15px;margin:0 0 2px}
+.grp{font-size:13px;margin:6px 0 0}
+.grp b{color:var(--mint);font-weight:600}
+.pm .note{margin:6px 0 0}
+.tips{margin:0;padding-inline-start:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:20px;font-size:13px;z-index:9}
+@media (prefers-reduced-motion:no-preference){.ring circle.fg{transition:stroke-dashoffset .6s ease}}
+
+html,body{margin:0}
+[hidden]{display:none!important}
+img{max-width:100%}
+:root{padding-top:env(safe-area-inset-top,0px)}
+.logo.big{font-size:56px;line-height:1.1}
+.login{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding-inline:16px;text-align:center}
+.err{color:var(--bad)}
+.hdr-side{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.hdr-side select{font-size:13px;padding:4px 8px}
+.sync{width:9px;height:9px;border-radius:50%;background:var(--line);flex:none}
+.sync.ok{background:var(--good)} .sync.wait{background:var(--warn)} .sync.off{background:var(--bad)}
+.daynav{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.daynav strong{font-size:14px;font-weight:600}
+button.btn.sm{padding:6px 12px;font-size:13px}
+button.btn:disabled{opacity:.35;cursor:default}
+.pick select.set{border-color:var(--mint);background:var(--mint-soft)}
+textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;resize:vertical}
+.tag{font-size:12px;color:var(--muted)}
+tr.hl td{font-weight:700;color:var(--mint)}
+
+/* ---- v2 additions ---- */
+.fimg{width:36px;height:36px;object-fit:contain;flex:none}
+.fimg.sm{width:26px;height:26px}
+.fimg.lg{width:52px;height:52px}
+.mhead{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
+.mhead .t{font-weight:700;font-size:16px}
+.slots{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.slot{font-size:11px;padding:1px 8px;border-radius:20px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.slot i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-inline-end:4px;vertical-align:middle}
+.mcard{display:flex;flex-direction:column;gap:10px}
+.mcard.done{border-color:var(--mint)}
+.chosen{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.chosen .nm{font-weight:600;margin-bottom:6px;display:flex;justify-content:space-between;gap:8px}
+.comp{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;font-size:13.5px;padding-block:3px}
+.comp .amt{color:var(--muted);font-size:12.5px;text-align:left;white-space:nowrap}
+.mact{display:flex;gap:8px;flex-wrap:wrap}
+.mact .btn{flex:1 1 auto}
+.kc{font-size:12px;color:var(--muted);white-space:nowrap}
+.tagchip{display:inline-block;font-size:10.5px;padding:0 7px;border-radius:10px;background:var(--mint-soft);color:var(--mint);margin-inline-start:4px;font-weight:600}
+/* sheet */
+.sheet-bg{position:fixed;inset:0;background:rgba(10,20,16,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:600px;max-height:88vh;border-radius:20px 20px 0 0;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet-h{padding:14px 16px 8px;display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid var(--line)}
+.sheet-h h3{margin:0;font-size:17px}
+.sheet-b{overflow:auto;padding:12px 16px 20px;display:flex;flex-direction:column;gap:12px}
+.seg{display:flex;background:var(--bg);border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;font:inherit;font-size:13.5px;padding:7px;border-radius:9px;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.icard{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;text-align:right;width:100%;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:10px;font:inherit;color:inherit;cursor:pointer}
+.icard:hover{border-color:var(--mint)}
+.icard.sel{border-color:var(--mint);background:var(--mint-soft)}
+.collage{display:grid;grid-template-columns:repeat(2,26px);grid-auto-rows:26px;gap:2px;width:56px;justify-content:center;align-content:center}
+.collage img{width:26px;height:26px;object-fit:contain}
+.icard .nm{font-weight:600}
+.icard .sub{font-size:12px;color:var(--muted)}
+.grp-h{font-weight:700;font-size:14px;display:flex;align-items:center;gap:6px;margin-top:4px}
+.grp-h i{width:9px;height:9px;border-radius:50%}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.fbtn{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:8px 4px;font:inherit;font-size:12px;color:inherit;cursor:pointer;text-align:center;line-height:1.35}
+.fbtn .q{color:var(--muted);font-size:11px}
+.fbtn[aria-pressed="true"]{border-color:var(--mint);background:var(--mint-soft)}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.fchip{font:inherit;font-size:12.5px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:20px;padding:4px 12px;cursor:pointer}
+.fchip[aria-pressed="true"]{background:var(--mint);border-color:var(--mint);color:#fff}
+.levels{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.levels button{font:inherit;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:8px 2px;cursor:pointer;font-weight:700;font-variant-numeric:tabular-nums}
+.levels button[aria-pressed="true"]{border-color:var(--mint);background:var(--mint-soft);color:var(--mint)}
+.xtbl td,.xtbl th{text-align:center}
+.xtbl td:first-child,.xtbl th:first-child{text-align:right}
+.week{display:flex;flex-direction:column;gap:8px}
+.wday{border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.wday .dn{font-weight:700;font-size:13px;margin-bottom:4px}
+.wday .row2{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px;color:var(--muted)}
+.wday .row2 b{color:var(--ink);font-weight:600}
+.shop{columns:2;column-gap:18px;font-size:13.5px}
+@media (max-width:420px){.shop{columns:1}}
+.shop div{break-inside:avoid;display:flex;align-items:center;gap:6px;padding-block:2px}
+.shop label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.shop .amt{color:var(--muted);font-size:12px;margin-inline-start:auto}
+.flist{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 12px}
+.fl{display:flex;align-items:center;gap:6px;font-size:13px}
+.fl span{color:var(--muted);font-size:11.5px;display:block}
+.disclaim{font-size:12.5px;color:var(--muted);border-inline-start:3px solid var(--peach);padding-inline-start:10px}
+</style>
+</head>
+<body>
+<!-- LOGIN -->
+<div class="login" id="login" hidden>
+  <img src="icon.svg" alt="" width="72" height="72" style="border-radius:18px">
+  <div class="logo big">خفّة</div>
+  <p class="note">أخفّ كل أسبوع</p>
+  <form id="loginForm" class="card" style="width:100%;max-width:320px">
+    <label for="pin" class="eyebrow">رمز الدخول</label>
+    <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="8" placeholder="••••" style="width:100%;font-size:22px;text-align:center;letter-spacing:.3em;margin-block:8px 12px">
+    <button class="btn" style="width:100%" type="submit">دخول</button>
+    <p class="note err" id="loginErr" hidden></p>
+  </form>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <header>
+    <div class="logo">خفّة<small id="who">أخفّ كل أسبوع</small></div>
+    <div class="hdr-side">
+      <select id="person" aria-label="عرض بيانات" hidden></select>
+      <div class="date" id="today"></div>
+      <span class="sync" id="sync" title="حالة المزامنة"></span>
+    </div>
+  </header>
+
+  <!-- TODAY -->
+  <section class="view" id="v-today">
+    <div class="card hero">
+      <div class="ring" aria-label="السعرات">
+        <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="var(--mint-soft)" stroke-width="12"/><circle class="fg" id="ringFg" cx="60" cy="60" r="52" fill="none" stroke="var(--mint)" stroke-width="12" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7"/></svg>
+        <div class="c"><span class="big num" id="kcalLeft">—</span><span class="sm">متبقي من <span class="num" id="kcalTarget">—</span></span></div>
+      </div>
+      <div class="macros">
+        <div class="eyebrow" id="planName">النظام</div>
+        <div class="macro"><span>بروتين</span><div class="bar p"><i id="bP"></i></div><span class="num" id="tP">—</span></div>
+        <div class="macro"><span>كارب</span><div class="bar"><i id="bC"></i></div><span class="num" id="tC">—</span></div>
+        <div class="macro"><span>دهون</span><div class="bar f"><i id="bF"></i></div><span class="num" id="tF">—</span></div>
+      </div>
+    </div>
+
+    <div class="daynav">
+      <button class="ghost btn sm" id="dPrev">‹ أمس</button>
+      <strong id="dLabel">اليوم</strong>
+      <button class="ghost btn sm" id="dNext">بكرة ›</button>
+    </div>
+
+    <div id="meals" style="display:flex;flex-direction:column;gap:14px"></div>
+
+    <div class="card">
+      <h2>حدود الأسبوع</h2>
+      <div id="limits" class="limits"></div>
+      <p class="note" style="margin:8px 0 0">بتتحسب من الوجبات اللي علّمتي عليها، من السبت للجمعة.</p>
+    </div>
+
+    <div class="card">
+      <h2>الماية <span class="num note" id="waterTxt"></span></h2>
+      <div class="cups" id="cups"></div>
+    </div>
+
+    <div class="card">
+      <h2>وزن الصبح</h2>
+      <div class="row">
+        <input id="wIn" type="number" step="0.1" inputmode="decimal" placeholder="مثلاً 88.4" style="width:130px">
+        <span class="note">كجم</span>
+        <button class="btn" id="wSave">حفظ</button>
+      </div>
+      <p class="note" id="wLast"></p>
+    </div>
+
+    <div class="card">
+      <h2>ملاحظة اليوم</h2>
+      <textarea id="noteIn" rows="2" placeholder="جوع، مناسبة، تمرين، أي حاجة حصلت النهارده" style="width:100%"></textarea>
+    </div>
+  </section>
+
+  <!-- IDEAS -->
+  <section class="view" id="v-ideas" hidden>
+    <div class="card">
+      <h2>خطة الأسبوع</h2>
+      <p class="note" style="margin-top:0">خفّة يقترح وجبات ٧ أيام متنوعة حسب نظامك وحدود الأسبوع، ويطلعلك قائمة التسوق. الوجبات اللي اخترتيها بنفسك ما بتتغيرش.</p>
+      <div class="mact">
+        <button class="btn" id="genWeek">اقترحي أسبوع</button>
+        <button class="btn ghost" id="clearWeek">امسحي الاقتراحات</button>
+      </div>
+      <div class="week" id="week" style="margin-top:12px"></div>
+    </div>
+    <div class="card" id="shopCard" hidden>
+      <h2>قائمة التسوق</h2>
+      <p class="note" style="margin-top:0">مجموع الكميات بعد الطبخ لخطة الأيام الجاية. علّمي على اللي اشتريتيه.</p>
+      <div class="shop" id="shop"></div>
+    </div>
+    <div class="card">
+      <h2>كل الوجبات الجاهزة</h2>
+      <div class="filters" id="ideaFilter" style="margin-bottom:10px"></div>
+      <div id="ideaList" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </section>
+
+  <!-- BODY -->
+  <section class="view" id="v-body" hidden>
+    <div class="card">
+      <div class="eyebrow">آخر قياس InBody: <span id="ibDate" class="num"></span></div>
+      <h2 style="margin-top:4px">تركيب الجسم</h2>
+      <div class="stats" id="ibStats"></div>
+    </div>
+    <div class="card"><h2>التطور بين القياسات</h2><div id="charts"></div></div>
+    <div class="card">
+      <h2>مقاس الوسط والورك</h2>
+      <p class="note" style="margin-top:0">مرة في الأسبوع، الصبح، بالشريط على مستوى السُّرة وأعرض نقطة في الورك.</p>
+      <form class="form" id="mForm">
+        <label>التاريخ<input id="m-date" type="date" required></label><span></span>
+        <label>الوسط (سم)<input id="m-waist" type="number" step="0.5" required></label>
+        <label>الورك (سم)<input id="m-hip" type="number" step="0.5" required></label>
+        <div style="grid-column:1/-1"><button class="btn" type="submit">حفظ المقاس</button></div>
+      </form>
+      <div id="mChart" style="margin-top:12px"></div>
+    </div>
+    <div class="card"><h2>كل قياسات InBody</h2><div class="tbl"><table id="ibTable"></table></div></div>
+    <div class="card">
+      <h2>إضافة قياس InBody</h2>
+      <form class="form" id="ibForm">
+        <label>التاريخ<input id="f-date" type="date" required></label>
+        <label>الوزن (كجم)<input id="f-weight" type="number" step="0.1" required></label>
+        <label>الكتلة العضلية SMM<input id="f-smm" type="number" step="0.1" required></label>
+        <label>كتلة الدهون BFM<input id="f-bfm" type="number" step="0.1"></label>
+        <label>نسبة الدهون PBF %<input id="f-pbf" type="number" step="0.1" required></label>
+        <label>معدل الحرق BMR<input id="f-bmr" type="number" step="1"></label>
+        <label>الدهون الحشوية<input id="f-vfl" type="number" step="1"></label>
+        <label>نسبة الخصر للورك<input id="f-whr" type="number" step="0.01"></label>
+        <div style="grid-column:1/-1"><button class="btn" type="submit">حفظ القياس</button></div>
+      </form>
+    </div>
+  </section>
+
+  <!-- PLAN -->
+  <section class="view" id="v-plan" hidden>
+    <div class="card">
+      <h2>مستوى السعرات</h2>
+      <div class="levels" id="levels"></div>
+      <p class="note" id="levelNote" style="margin-bottom:0"></p>
+    </div>
+    <div class="card">
+      <h2>توزيع الحصص على الوجبات</h2>
+      <div class="tbl"><table class="xtbl" id="xtbl"></table></div>
+      <p class="note" style="margin-bottom:0">الأرقام عدد الحصص. أي حصة تتبدل بأي صنف من نفس المجموعة، والكمية بتتحسب لوحدها.</p>
+    </div>
+    <div class="card">
+      <h2>تفضيلات الأكل</h2>
+      <div class="filters">
+        <button class="fchip" id="fGluten" aria-pressed="false">بدون جلوتين</button>
+        <button class="fchip" id="fLactose" aria-pressed="false">بدون لاكتوز</button>
+      </div>
+      <p class="note" style="margin-bottom:0">بتخفي الأصناف والوجبات اللي فيها جلوتين أو لاكتوز من كل الاختيارات.</p>
+    </div>
+    <div class="card">
+      <h2>مقارنة مع InBody</h2>
+      <div class="form">
+        <label>مستوى النشاط
+          <select id="s-act">
+            <option value="1.2">قليل جداً (مكتب بدون رياضة)</option>
+            <option value="1.375">خفيف (رياضة ١–٣ أيام)</option>
+            <option value="1.55">متوسط (رياضة ٣–٥ أيام)</option>
+            <option value="1.725">عالي (رياضة يومية)</option>
+          </select></label>
+        <label>هدف الماية (أكواب ٢٥٠ مل)<input id="s-water" type="number" min="4" max="16"></label>
+      </div>
+      <table style="margin-top:14px" id="calcTbl"></table>
+    </div>
+    <div class="card"><h2>دليل البدائل</h2><div id="guide" style="display:flex;flex-direction:column;gap:14px"></div></div>
+    <div class="card"><h2>مسموح براحتك</h2><ul class="tips" id="free"></ul></div>
+    <div class="card"><h2>إرشادات</h2><ul class="tips" id="tips"></ul>
+      <p class="disclaim" style="margin-top:14px">النظام مبني على قوائم البدائل الغذائية القياسية، وقيم السعرات تقريبية. أي تغيير في مستوى السعرات راجعيه مع أخصائية التغذية.</p>
+    </div>
+    <div class="card"><h2>الحساب</h2><p class="note" id="acct"></p><button class="btn ghost" id="logout">تسجيل الخروج</button></div>
+  </section>
+</div>
+
+<nav class="tabs" role="tablist" id="tabs" hidden>
+  <button role="tab" data-v="today" aria-selected="true">اليوم</button>
+  <button role="tab" data-v="ideas" aria-selected="false">الوجبات</button>
+  <button role="tab" data-v="body" aria-selected="false">الجسم</button>
+  <button role="tab" data-v="plan" aria-selected="false">النظام</button>
+</nav>
+<div id="sheetRoot"></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
