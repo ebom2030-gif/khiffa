@@ -1,6 +1,6 @@
 // خفّة — offline shell. Bump VERSION on every release so phones pick up the new files.
-const VERSION = 'khiffa-v2';
-const SHELL = ['./', 'index.html', 'config.js', 'data.js', 'app.js', 'manifest.webmanifest', 'icon.svg'];
+const VERSION = 'khiffa-v5';
+const SHELL = ['./', 'index.html', 'config.js', 'data.js', 'app.js', 'search.js', 'dashboard.js', 'install.js', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k)))));
