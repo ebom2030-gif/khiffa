@@ -144,7 +144,7 @@
     if (wkChange != null && wkChange < 0) ins.push(['', 'نزلتي ' + ar(-wkChange) + ' كجم في آخر أسبوع.']);
 
     sec.innerHTML =
-      '<div class="hm-hello"><div><div class="eyebrow">' + new Date().toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' }) + '</div><h2>' + hello + '، ' + esc(data.user.name) + '</h2></div>' +
+      '<div class="hm-hello"><div><div class="eyebrow">' + new Date().toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' }) + '</div><h2>' + hello + '، ' + esc((data.me || data.user).name) + '</h2>' + (data.me && data.me.id !== data.user.id ? '<div class="eyebrow">بتتابع بيانات: ' + esc(data.user.name) + '</div>' : '') + '</div>' +
       '<span class="note num">نظام ' + ar(target, 0) + '</span></div>' +
 
       '<div class="card"><div class="hm-sec"><h2>النهارده</h2><button class="btn ghost sm" id="hmGoToday">سجّلي</button></div><div class="hm-grid">' +
