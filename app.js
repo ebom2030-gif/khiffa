@@ -13,7 +13,7 @@ const fmt = (k, o) => parseKey(k).toLocaleDateString('ar-EG', o);
 const TODAY = dkey(new Date());
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const imgURL = n => 'https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/' + encodeURIComponent(n.charAt(0).toUpperCase() + n.slice(1).replace(/_/g, ' ')) + '/3D/' + n + '_3d.png';
-const img = (name, cls = '') => '<img class="fimg ' + cls + '" src="' + imgURL(name) + '" alt="">';
+const img = (name, cls = '') => window.KHIFFA_ICON ? window.KHIFFA_ICON(name, cls) : '<img class="fimg ' + cls + '" src="' + imgURL(name) + '" alt="">';
 const GORDER = ['S', 'P', 'M', 'F', 'V', 'Fa'];
 
 /* ================= storage & sync ================= */
@@ -209,7 +209,7 @@ function sheet(title, bodyFn) {
 }
 function ideaCard(idea, selected) {
   const comps = resolve(idea.parts, level()[idea.m] || {}); const t = totals(comps);
-  const imgs = comps.slice(0, 4).map(x => '<img src="' + imgURL(x.food.img) + '" alt="">').join('');
+  const imgs = comps.slice(0, 4).map(x => window.KHIFFA_ICON ? window.KHIFFA_ICON(x.food.img, 'sm') : '<img src="' + imgURL(x.food.img) + '" alt="">').join('');
   const gf = comps.every(x => !x.food.gluten), lf = comps.every(x => !x.food.lactose);
   const b = document.createElement('button'); b.className = 'icard' + (selected ? ' sel' : '');
   b.innerHTML = '<div class="collage">' + imgs + '</div><div style="min-width:0"><div class="nm">' + esc(ideaName(idea)) + '</div><div class="sub">' +
@@ -415,6 +415,6 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet()
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.pin) { if (dkey(new Date()) !== TODAY) location.reload(); else flush(); } });
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 
-window.KHIFFA_APP = { D, dayOf, saveDay, toast, settings, level, mealComps, mealState, totals, levelTotals, weekKeys, weekCounts, fmt, ar, esc, img, addDays, TODAY, get cur() { return S.cur; }, get data() { return S.data; }, refresh: () => { if (S.data) renderToday(); } };
+window.KHIFFA_APP = { D, dayOf, saveDay, toast, settings, level, mealComps, mealState, totals, levelTotals, weekKeys, weekCounts, fmt, ar, esc, img, addDays, TODAY, get cur() { return S.cur; }, get data() { return S.data; }, refresh: () => { if (S.data) renderToday(); }, refreshAll: () => renderAll() };
 if (S.pin) boot(); else showLogin();
 })();
