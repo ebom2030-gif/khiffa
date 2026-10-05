@@ -115,6 +115,11 @@ window.KHIFFA_DATA = (function () {
     ['almonds','Fa','لوز نيء',8,'٦ حبات',46,1.7,1.7,4,'chestnut',''],
     ['walnuts','Fa','عين جمل',7,'نصفين كبار',46,1.1,1,4.6,'chestnut',''],
     ['pistachio','Fa','فستق نيء',8,'١٠ حبات',45,1.6,2.2,3.6,'peanuts',''],
+    ['cashew','Fa','كاجو نيء',8,'٦ حبات',44,1.5,2.4,3.5,'chestnut',''],
+    ['peanuts','Fa','فول سوداني بدون ملح',8,'١٠ حبات',46,2.1,1.3,3.9,'peanuts',''],
+    ['hazelnut','Fa','بندق',7,'٥ حبات',44,1,1.2,4.3,'chestnut',''],
+    ['pumpkinseed','Fa','لب أبيض مقشر (بذور قرع)',8,'ملعقة كبيرة',45,2.4,1.1,3.9,'seedling',''],
+    ['sunflower','Fa','لب سوري مقشر (عباد الشمس)',8,'ملعقة كبيرة',47,1.7,1.6,4.1,'seedling',''],
     ['pb','Fa','زبدة فول سوداني',8,'ملعقة صغيرة ونص',47,2,1.6,4,'peanuts',''],
     ['tahini','Fa','طحينة',7,'ملعقة صغيرة',42,1.2,1.5,3.8,'jar',''],
     ['olives','Fa','زيتون',40,'٨ حبات كبيرة',46,0.3,2.5,4.3,'olive',''],
@@ -227,5 +232,14 @@ window.KHIFFA_DATA = (function () {
     'كلي ببطء: الوجبة الرئيسية ٢٠–٣٠ دقيقة، والسناك ١٠–١٥ دقيقة.'
   ];
 
-  return { GROUPS, FOODS, LEVELS, MEALS, IDEAS, LIMITS, FREE, TIPS };
+  /* countable foods: pieces in ONE exchange + [one, two, 3–10] words, so amounts can be shown and edited by the piece or by weight */
+  const PIECES = {
+    almonds: [6, 'حبة', 'حبتين', 'حبات'], cashew: [6, 'حبة', 'حبتين', 'حبات'], peanuts: [10, 'حبة', 'حبتين', 'حبات'], hazelnut: [5, 'حبة', 'حبتين', 'حبات'],
+    pistachio: [10, 'حبة', 'حبتين', 'حبات'], walnuts: [2, 'نص', 'نصين', 'أنصاف'], olives: [8, 'حبة', 'حبتين', 'حبات'],
+    dates: [2, 'حبة', 'حبتين', 'حبات'], strawberry: [12, 'حبة', 'حبتين', 'حبات'], grapes: [15, 'حبة', 'حبتين', 'حبات'], mandarin: [2, 'حبة', 'حبتين', 'حبات'],
+    radish: [8, 'حبة', 'حبتين', 'حبات'], hotpepper: [2, 'حبة', 'حبتين', 'حبات'], ricecake: [2, 'قطعة', 'قطعتين', 'قطع'],
+    egg: [1, 'بيضة', 'بيضتين', 'بيضات'], toast: [1, 'شريحة', 'شريحتين', 'شرائح']
+  };
+
+  return { GROUPS, FOODS, LEVELS, MEALS, IDEAS, LIMITS, FREE, TIPS, PIECES };
 })();
