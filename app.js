@@ -54,7 +54,7 @@ async function boot() {
   try {
     const j = await api('bootstrap', {});
     S.data = j.data; S.uid = j.data.user.id; store.set('uid', S.uid);
-    mergeQueue(); persist(); showApp(); flush();
+    mergeQueue(); store.set('queue', S.queue); persist(); showApp(); flush();
   } catch (e) {
     if (/رمز/.test(e.message)) { logout(e.message); return; }
     if (!cached) { $('#loginErr').textContent = e.message; $('#loginErr').hidden = false; showLogin(); } else setSync('off');
@@ -62,7 +62,7 @@ async function boot() {
 }
 function mergeQueue() {
   S.queue.filter(q => q.uid === S.uid).forEach(q => {
-    if (q.action === 'saveDay') upsertLocal('days', q.payload.day);
+    if (q.action === 'saveDay') { const m = mergeDay(rawDay(q.payload.day.date), q.payload.day); q.payload.day = m; upsertLocal('days', m); }
     if (q.action === 'saveInbody') upsertLocal('inbody', q.payload.reading);
     if (q.action === 'saveMeasure') upsertLocal('measures', q.payload.measure);
     if (q.action === 'saveSettings') S.data.settings = q.payload.settings;
@@ -109,20 +109,32 @@ function resolve(parts, target) {
 function totals(comps) { const t = { n: 0, p: 0, c: 0, f: 0 }; comps.forEach(x => { t.n += x.food.n * x.n; t.p += x.food.p * x.n; t.c += x.food.c * x.n; t.f += x.food.f * x.n; }); return t; }
 function levelTotals(L) {
   const avg = {}; GORDER.forEach(g => { const fs = Object.values(D.FOODS).filter(f => f.g === g && !f.leg); avg[g] = ['n', 'p', 'c', 'f'].reduce((o, k) => (o[k] = fs.reduce((s, f) => s + f[k], 0) / fs.length, o), {}); });
-  const t = { n: 0, p: 0, c: 0, f: 0 }; Object.values(D.LEVELS[L]).forEach(m => Object.keys(m).forEach(g => ['n', 'p', 'c', 'f'].forEach(k => t[k] += avg[g][k] * m[g])));
+  const t = { n: 0, p: 0, c: 0, f: 0 }; Object.values(D.LEVELS[L] || D.LEVELS[1600]).forEach(m => Object.keys(m).forEach(g => ['n', 'p', 'c', 'f'].forEach(k => t[k] += avg[g][k] * m[g])));
   return t;
 }
+let GAVG = null;
+function groupAvg() { if (GAVG) return GAVG; GAVG = {}; GORDER.forEach(g => { const fs = Object.values(D.FOODS).filter(f => f.g === g && !f.leg); GAVG[g] = fs.reduce((s, f) => s + f.n, 0) / fs.length; }); return GAVG; }
+function mealTargetKcal(k) { const t = level()[k] || {}, a = groupAvg(); return Object.keys(t).reduce((s, g) => s + (a[g] || 0) * t[g], 0); }
+// count words: 1 حبة، 2 حبتين، 3–10 حبات، 11+ حبة
+function countText(c, P) {
+  const r = Math.round(c * 2) / 2, approx = Math.abs(r - c) > 0.05 ? '≈ ' : '';
+  if (r === 0.5) return approx + 'نص ' + P[1];
+  if (r === 1) return approx + P[1]; if (r === 2) return approx + P[2];
+  return approx + ar(r) + ' ' + (r > 2 && r <= 10 ? P[3] : P[1]);
+}
+const piecesOf = food => (D.PIECES || {})[food.id];
 function amountText(food, n) {
   const g = Math.round(food.grams * n);
   const unit = ar(g, 0) + (food.g === 'M' ? ' مل' : ' ج');
-  if (food.id === 'egg') return ar(n) + (n === 1 ? ' بيضة' : n === 2 ? ' بيضتين' : ' بيضات');
   if (food.id === 'eggwhite') return 'بياض ' + ar(n * 2) + ' بيضات';
-  if (food.id === 'toast') return (n === 1 ? 'شريحة' : n === 2 ? 'شريحتين' : ar(n) + ' شرائح') + ' (' + unit + ')';
+  const P = piecesOf(food);
+  if (P) return countText(n * P[0], P) + ' (' + unit + ')';
   return unit;
 }
 function mealState(day, k) { return (day.meals || {})[k] || {}; }
 function mealComps(k, st) {
   const tgt = level()[k] || {};
+  if (st.items && st.items.length) return st.items.filter(it => D.FOODS[it.id] && it.n > 0).map(it => ({ food: D.FOODS[it.id], n: it.n }));
   if (st.mode === 'custom' && st.picks) return resolve(Object.fromEntries(Object.entries(st.picks).filter(([, v]) => Array.isArray(v) ? v.length : v).map(([g, id]) => [g, Array.isArray(id) ? id : [id]])), tgt);
   if (st.idea) { const idea = D.IDEAS.find(i => i.id === st.idea); if (idea) return resolve(idea.parts, tgt); }
   return [];
@@ -131,8 +143,43 @@ function ideaName(idea) { return idea.name || D.FOODS[idea.parts.F[0]].name; }
 function mealSummary(comps) { const tags = [...new Set(comps.map(x => x.food.limit).filter(Boolean))]; return { kcal: Math.round(totals(comps).n), tags }; }
 
 /* ================= day data ================= */
-const dayOf = k => (S.data.days || []).find(d => d.date === k) || { date: k, meals: {}, water: 0 };
-function saveDay(day) { day.updated = new Date().toISOString(); upsertLocal('days', day); persist(); enqueue('saveDay', { day }, 'day:' + S.uid + ':' + day.date); }
+const rawDay = k => (S.data.days || []).find(d => d.date === k);
+// a private copy, so edits never touch the stored day until saveDay() compares and stamps them
+const dayOf = k => { const d = rawDay(k); return d ? JSON.parse(JSON.stringify(d)) : { date: k, meals: {}, water: 0 }; };
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const exKey = x => x.k || (x.id + '|' + (x.t || '') + '|' + (x.q || 1) + '|' + (x.name || ''));
+// stamp every field / meal that changed, so two devices never wipe each other's work
+function stampDay(day, prev) {
+  const now = Date.now(); prev = prev || {};
+  day.ts = { ...(prev.ts || {}), ...(day.ts || {}) };
+  ['water', 'weight', 'note'].forEach(f => { if (!same(prev[f], day[f])) day.ts[f] = now; });
+  const pm = prev.meals || {}, dm = day.meals || {};
+  Object.keys(dm).forEach(k => { const a = pm[k], b = dm[k]; if (b && (!a || !same({ ...a, u: 0 }, { ...b, u: 0 }))) b.u = now; });
+  Object.keys(pm).forEach(k => { if (!dm[k]) day.mdel = { ...(day.mdel || {}), [k]: now }; });
+  (day.extras || []).forEach(x => { if (!x.k) x.k = exKey(x); });
+  const nids = (day.extras || []).map(exKey);
+  const gone = (prev.extras || []).map(exKey).filter(i => !nids.includes(i));
+  if (gone.length) day.xdel = [...new Set([...(day.xdel || []), ...gone])];
+}
+// merge two copies of the same day: newest change per meal / field wins, extras are combined
+function mergeDay(a, b) {
+  if (!a) return b; if (!b) return a;
+  const out = { ...a, ...b }, ta = a.ts || {}, tb = b.ts || {}; out.ts = {};
+  ['water', 'weight', 'note'].forEach(f => { const src = (tb[f] || 0) > (ta[f] || 0) ? b : a; if (src[f] === undefined) delete out[f]; else out[f] = src[f]; out.ts[f] = Math.max(ta[f] || 0, tb[f] || 0); });
+  const mdel = { ...(a.mdel || {}) }; Object.entries(b.mdel || {}).forEach(([k, v]) => { if (!(mdel[k] > v)) mdel[k] = v; });
+  const meals = {}, am = a.meals || {}, bm = b.meals || {};
+  new Set([...Object.keys(am), ...Object.keys(bm)]).forEach(k => {
+    const ua = am[k] ? (am[k].u || 0) : -1, ub = bm[k] ? (bm[k].u || 0) : -1, m = ub > ua ? bm[k] : am[k];
+    if (m && !(mdel[k] > Math.max(ua, ub))) meals[k] = m;
+  });
+  out.meals = meals; out.mdel = mdel;
+  const xdel = [...new Set([...(a.xdel || []), ...(b.xdel || [])])], ex = {};
+  (a.extras || []).concat(b.extras || []).forEach(x => { const k = x && exKey(x); if (k && !xdel.includes(k)) ex[k] = x; });
+  out.extras = Object.values(ex); out.xdel = xdel;
+  out.updated = (a.updated || '') > (b.updated || '') ? a.updated : b.updated;
+  return out;
+}
+function saveDay(day) { stampDay(day, rawDay(day.date)); day.updated = new Date().toISOString(); upsertLocal('days', day); persist(); enqueue('saveDay', { day }, 'day:' + S.uid + ':' + day.date); }
 function setMeal(k, patch, dateKey = S.cur) {
   const d = dayOf(dateKey); const cur = mealState(d, k); const next = { ...cur, ...patch };
   const comps = mealComps(k, next); Object.assign(next, mealSummary(comps));
@@ -167,17 +214,18 @@ function renderToday() {
       '<button class="chk' + (st.done ? ' on' : '') + '" aria-pressed="' + !!st.done + '" aria-label="خلّصت ' + m.t + '"' + (comps.length ? '' : ' disabled title="اختاري الوجبة الأول"') + '>✓</button></div>';
     if (comps.length) {
       const t = totals(comps); const idea = st.mode !== 'custom' && st.idea ? D.IDEAS.find(i => i.id === st.idea) : null;
-      const title = idea ? ideaName(idea) : 'وجبة من اختيارك';
+      const title = st.title || (idea ? ideaName(idea) : 'وجبة من اختيارك');
       card.insertAdjacentHTML('beforeend', '<div class="chosen"><div class="nm"><span>' + esc(title) + (st.planned && !st.done ? ' <span class="tagchip">مقترحة</span>' : '') + '</span><span class="kc num">' + ar(Math.round(t.n), 0) + ' سعرة</span></div>' +
         comps.map(x => '<div class="comp">' + img(x.food.img, 'sm') + '<span>' + esc(x.food.name) + '</span><span class="amt num">' + amountText(x.food, x.n) + '</span></div>').join('') +
         (idea && idea.how ? '<p class="note" style="margin:6px 0 0">' + esc(idea.how) + '</p>' : '') + '</div>');
     }
     const act = document.createElement('div'); act.className = 'mact';
-    act.innerHTML = '<button class="btn ghost sm" data-a="idea">' + (comps.length ? 'غيّري الوجبة' : 'اختاري وجبة جاهزة') + '</button><button class="btn ghost sm" data-a="custom">ركّبي بنفسك</button>';
+    act.innerHTML = '<button class="btn ghost sm" data-a="idea">' + (comps.length ? 'غيّري الوجبة' : 'اختاري وجبة جاهزة') + '</button><button class="btn ghost sm" data-a="custom">ركّبي بنفسك</button>' + (comps.length ? '<button class="btn ghost sm" data-a="tune">عدّلي الكميات</button>' : '');
     card.append(act);
     card.querySelector('.chk').onclick = () => { if (!comps.length) return; setMeal(m.k, { done: !st.done, planned: false }); renderToday(); };
     act.querySelector('[data-a="idea"]').onclick = () => openMealSheet(m, 'idea');
     act.querySelector('[data-a="custom"]').onclick = () => openMealSheet(m, 'custom');
+    const tb = act.querySelector('[data-a="tune"]'); if (tb) tb.onclick = () => openMealSheet(m, 'tune');
     box.append(card);
   });
   renderLimits();
@@ -221,12 +269,13 @@ function openMealSheet(m, mode) {
   sheet(m.t, body => {
     const st = mealState(dayOf(S.cur), m.k);
     const draw = md => {
-      body.innerHTML = '<div class="seg"><button data-md="idea" aria-pressed="' + (md === 'idea') + '">وجبات جاهزة</button><button data-md="custom" aria-pressed="' + (md === 'custom') + '">ركّبي بنفسك</button></div>';
+      body.innerHTML = '<div class="seg"><button data-md="idea" aria-pressed="' + (md === 'idea') + '">وجبات جاهزة</button><button data-md="custom" aria-pressed="' + (md === 'custom') + '">ركّبي بنفسك</button><button data-md="tune" aria-pressed="' + (md === 'tune') + '">عدّلي الكميات</button></div>';
       body.querySelectorAll('.seg button').forEach(b => b.onclick = () => draw(b.dataset.md));
+      if (md === 'tune') { tuneMeal(m, st, body); return; }
       if (md === 'idea') {
         const list = D.IDEAS.filter(i => i.m === m.k && ideaAllowed(i));
         if (!list.length) body.insertAdjacentHTML('beforeend', '<p class="note">مفيش وجبات جاهزة مناسبة للتفضيلات الحالية.</p>');
-        list.forEach(i => { const c = ideaCard(i, st.mode !== 'custom' && st.idea === i.id); c.onclick = () => { setMeal(m.k, { mode: 'idea', idea: i.id, planned: false }); closeSheet(); renderToday(); toast('اتحطت في ' + m.t); }; body.append(c); });
+        list.forEach(i => { const c = ideaCard(i, st.mode !== 'custom' && st.idea === i.id); c.onclick = () => { setMeal(m.k, { mode: 'idea', idea: i.id, items: null, title: null, planned: false }); closeSheet(); renderToday(); toast('اتحطت في ' + m.t); }; body.append(c); });
       } else {
         const tgt = level()[m.k] || {}; const picks = { ...(st.mode === 'custom' ? st.picks : {}) };
         if (st.mode !== 'custom' && st.idea) { mealComps(m.k, st).forEach(x => { if (x.food.g === 'V') picks.V = (picks.V || []).concat(x.food.id); else if (!picks[x.food.g]) picks[x.food.g] = x.food.id; }); }
@@ -250,11 +299,54 @@ function openMealSheet(m, mode) {
         body.append(foot);
         const updateSum = () => { const comps = mealComps(m.k, { mode: 'custom', picks }); const t = totals(comps); $('#shSum').textContent = comps.length ? ar(Math.round(t.n), 0) + ' سعرة – ' + ar(Math.round(t.p), 0) + ' ج بروتين' + (picks.P && D.FOODS[picks.P].leg ? ' – البقوليات بتقلل النشويات' : '') : 'اختاري صنف من كل مجموعة'; };
         updateSum();
-        $('#shSave').onclick = () => { if (!Object.values(picks).some(v => Array.isArray(v) ? v.length : v)) { toast('اختاري صنف واحد على الأقل'); return; } setMeal(m.k, { mode: 'custom', picks, planned: false }); closeSheet(); renderToday(); toast('اتحفظت الوجبة'); };
+        $('#shSave').onclick = () => { if (!Object.values(picks).some(v => Array.isArray(v) ? v.length : v)) { toast('اختاري صنف واحد على الأقل'); return; } setMeal(m.k, { mode: 'custom', picks, items: null, title: null, planned: false }); closeSheet(); renderToday(); toast('اتحفظت الوجبة'); };
       }
     };
     draw(mode);
   });
+}
+
+/* ================= fine-tune quantities: any item, any amount ================= */
+// quantity units for the editor: pieces (countable foods), grams / ml, or exchange portions
+const unitsOf = f => piecesOf(f) ? ['pc', 'g', 'x'] : ['g', 'x'];
+const uName = (f, u) => u === 'pc' ? piecesOf(f)[1] : u === 'g' ? (f.g === 'M' ? 'مل' : 'جرام') : 'حصة';
+function qVal(f, it) { const r = v => Math.round(v * 100) / 100; return it.u === 'pc' ? r(it.n * piecesOf(f)[0]) : it.u === 'g' ? Math.round(it.n * f.grams) : r(it.n); }
+function toN(f, u, v) { return u === 'pc' ? v / piecesOf(f)[0] : u === 'g' ? v / f.grams : v; }
+function stepQty(f, it, dir) {
+  const cur = qVal(f, it); let step;
+  if (it.u === 'pc') step = 1; else if (it.u === 'g') step = f.grams <= 10 ? 1 : f.grams <= 40 ? 5 : 10; else step = cur < 1 || (dir < 0 && cur <= 1) ? 0.25 : 0.5;
+  const next = Math.max(step, Math.round((cur + dir * step) / step) * step);
+  it.n = toN(f, it.u, next);
+}
+function tuneMeal(m, st, body) {
+  const idea = st.mode !== 'custom' && st.idea ? D.IDEAS.find(i => i.id === st.idea) : null;
+  let items = mealComps(m.k, st).map(x => ({ id: x.food.id, n: x.n, u: unitsOf(x.food)[0] }));
+  const title = st.title || (idea ? ideaName(idea) : '');
+  const target = mealTargetKcal(m.k); let addG = null;
+  const wrap = document.createElement('div'); body.append(wrap);
+  const draw = () => {
+    const comps = items.filter(it => it.n > 0).map(it => ({ food: D.FOODS[it.id], n: it.n })), t = totals(comps);
+    const diff = Math.round(t.n - target), p = target ? Math.min(130, t.n / target * 100) : 0;
+    wrap.innerHTML = '<p class="note" style="margin:4px 0 10px">زوّدي أو قلّلي أي صنف بالحصة أو نص الحصة، أو ضيفي صنف جديد. السعرات بتتحسب على طول.</p>' +
+      '<div class="tune-sum"><div class="tune-k num"><b>' + ar(Math.round(t.n), 0) + '</b> سعرة <span class="note">من حوالي ' + ar(Math.round(target), 0) + ' للوجبة</span></div>' +
+      '<div class="tune-bar"><i style="width:' + Math.min(100, p) + '%;background:' + (p > 110 ? 'var(--warn)' : 'var(--mint)') + '"></i></div>' +
+      '<div class="note num">' + (Math.abs(diff) < 25 ? 'مظبوطة على الهدف' : diff > 0 ? 'أكتر من الهدف بـ ' + ar(diff, 0) + ' سعرة' : 'أقل من الهدف بـ ' + ar(-diff, 0) + ' سعرة') + ' – ' + ar(Math.round(t.p), 0) + ' ج بروتين</div></div>' +
+      '<div class="tune-list">' + items.map((it, i) => { const f = D.FOODS[it.id]; return '<div class="tune-row">' + img(f.img, 'sm') + '<div style="min-width:0"><div class="nm">' + esc(f.name) + '</div><div class="note num">' + amountText(f, it.n) + ' – ' + ar(Math.round(f.n * it.n), 0) + ' سعرة</div></div>' +
+        '<div class="tune-q"><button class="qb" data-i="' + i + '" data-d="-1" aria-label="قللي">−</button><input class="qi num" data-i="' + i + '" type="number" inputmode="decimal" min="0" step="any" value="' + qVal(f, it) + '"><button class="qb" data-i="' + i + '" data-d="1" aria-label="زوّدي">+</button></div>' +
+        '<button class="qu" data-i="' + i + '" title="غيّري الوحدة">' + uName(f, it.u) + '</button><button class="qx" data-x="' + i + '" aria-label="شيلي الصنف">×</button></div>'; }).join('') + '</div>' +
+      '<div class="grp-h" style="margin-top:14px">ضيفي صنف</div><div class="filters tune-g">' + GORDER.map(g => '<button class="fchip" data-g="' + g + '" aria-pressed="' + (addG === g) + '">' + D.GROUPS[g].name + '</button>').join('') + '</div>' +
+      (addG ? '<div class="fgrid">' + Object.values(D.FOODS).filter(f => f.g === addG && allowed(f)).map(f => '<button class="fbtn" data-add="' + f.id + '">' + img(f.img) + '<span>' + esc(f.name) + '</span><span class="q num">' + amountText(f, 1) + '</span></button>').join('') + '</div>' : '') +
+      '<div class="tune-foot"><button class="btn ghost" id="tuneReset">رجّعي زي الأول</button><button class="btn" id="tuneSave">حفظ الوجبة</button></div>';
+    wrap.querySelectorAll('.qb').forEach(b => b.onclick = () => { const it = items[+b.dataset.i], f = D.FOODS[it.id]; stepQty(f, it, +b.dataset.d); draw(); });
+    wrap.querySelectorAll('.qi').forEach(inp => inp.onchange = () => { const it = items[+inp.dataset.i], f = D.FOODS[it.id], v = parseFloat(inp.value); if (!(v > 0)) { draw(); return; } it.n = toN(f, it.u, v); draw(); });
+    wrap.querySelectorAll('.qu').forEach(b => b.onclick = () => { const it = items[+b.dataset.i], f = D.FOODS[it.id], us = unitsOf(f); it.u = us[(us.indexOf(it.u) + 1) % us.length]; draw(); });
+    wrap.querySelectorAll('.qx').forEach(b => b.onclick = () => { items.splice(+b.dataset.x, 1); draw(); });
+    wrap.querySelectorAll('.tune-g .fchip').forEach(b => b.onclick = () => { addG = addG === b.dataset.g ? null : b.dataset.g; draw(); });
+    wrap.querySelectorAll('[data-add]').forEach(b => b.onclick = () => { const ex = items.find(x => x.id === b.dataset.add); if (ex) ex.n += 1; else items.push({ id: b.dataset.add, n: 1, u: unitsOf(D.FOODS[b.dataset.add])[0] }); toast('اتضاف ' + D.FOODS[b.dataset.add].name); draw(); });
+    $('#tuneReset').onclick = () => { items = mealComps(m.k, { ...st, items: null }).map(x => ({ id: x.food.id, n: x.n, u: unitsOf(x.food)[0] })); draw(); };
+    $('#tuneSave').onclick = () => { const clean = items.filter(it => it.n > 0); if (!clean.length) { toast('ضيفي صنف واحد على الأقل'); return; } setMeal(m.k, { mode: 'custom', items: clean.map(it => ({ id: it.id, n: Math.round(it.n * 1000) / 1000 })), title: title || null, planned: false }); closeSheet(); renderToday(); toast('اتحفظت الوجبة'); };
+  };
+  draw();
 }
 
 /* ================= ideas & week planner ================= */
@@ -266,7 +358,7 @@ function renderIdeas() {
   const m = D.MEALS.find(x => x.k === S.ideaFilter);
   D.IDEAS.filter(i => i.m === S.ideaFilter && ideaAllowed(i)).forEach(i => {
     const c = ideaCard(i, false);
-    c.onclick = () => { setMeal(m.k, { mode: 'idea', idea: i.id, planned: false }, TODAY); toast('اتحطت في ' + m.t + ' النهارده'); S.cur = TODAY; renderToday(); };
+    c.onclick = () => { setMeal(m.k, { mode: 'idea', idea: i.id, items: null, title: null, planned: false }, TODAY); toast('اتحطت في ' + m.t + ' النهارده'); S.cur = TODAY; renderToday(); };
     c.title = 'اضغطي عشان تحطيها في ' + m.t + ' النهارده';
     list.append(c);
   });
@@ -389,7 +481,7 @@ function renderPlan() {
       fs.map(f => '<div class="fl">' + img(f.img, 'sm') + '<div>' + esc(f.name) + '<span class="num">' + amountText(f, 1) + (f.unit ? '، ' + esc(f.unit) : '') + '، ' + ar(f.n, 0) + ' سعرة</span></div></div>').join('') + '</div></div>'; }).join('');
   $('#free').innerHTML = D.FREE.map(x => '<li>' + esc(x) + '</li>').join('');
   $('#tips').innerHTML = D.TIPS.map(x => '<li>' + esc(x) + '</li>').join('');
-  $('#acct').textContent = 'داخل باسم: ' + S.data.me.name + (S.data.me.id !== S.data.user.id ? ' – بتعرض بيانات: ' + S.data.user.name : '');
+  $('#acct').textContent = 'داخل باسم: ' + S.data.me.name + (S.data.me.id !== S.data.user.id ? ' – بتعرض بيانات: ' + displayName() : '');
 }
 $('#fGluten').onclick = () => saveSettings({ noGluten: !settings().noGluten });
 $('#fLactose').onclick = () => saveSettings({ noLactose: !settings().noLactose });
@@ -398,11 +490,15 @@ $('#fLactose').onclick = () => saveSettings({ noLactose: !settings().noLactose }
 /* ================= header & shell ================= */
 function renderHeader() {
   $('#today').textContent = new Date().toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' });
-  $('#who').textContent = S.data.user.name;
-  const ppl = S.data.people || [], sel = $('#person'); sel.hidden = ppl.length < 2;
-  sel.innerHTML = ppl.map(p => '<option value="' + esc(p.id) + '"' + (p.id === S.data.user.id ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('');
+  $('#who').textContent = displayName();
+  const ppl = people(), sel = $('#person'); sel.hidden = ppl.length < 2;
+  sel.innerHTML = ppl.map(p => '<option value="' + esc(p.id) + '"' + (p.id === S.data.user.id ? ' selected' : '') + '>' + esc(p.id === S.data.me.id ? 'حسابي' : nickOf(p.name)) + '</option>').join('');
 }
-$('#person').onchange = e => { S.uid = e.target.value; store.set('uid', S.uid); S.cur = TODAY; boot(); };
+$('#person').onchange = e => switchUser(e.target.value);
+function people() { const me = S.data.me, ppl = (S.data.people || []).slice(); if (me && me.role === 'owner' && !ppl.some(p => p.id === me.id)) ppl.unshift({ id: me.id, name: 'حسابي' }); return ppl; }
+function nickOf(name) { return name === 'زوجتي' ? 'زوجتي وحبيبتي' : name; }
+function displayName() { const st = settings(), me = S.data.me, u = S.data.user; if (st.nick) return st.nick; if (me && me.id === u.id && me.role === 'owner') return me.name; return nickOf(u.name); }
+function switchUser(uid) { if (!uid || (S.data && uid === S.data.user.id)) return; S.uid = uid; store.set('uid', S.uid); toast('جاري فتح الحساب…'); setTimeout(() => location.reload(), 150); }
 function renderAll() { if (!S.data) return; renderHeader(); renderToday(); renderIdeas(); renderBody(); renderPlan(); }
 function toast(m) { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 2200); }
 document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
@@ -412,9 +508,17 @@ document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
 });
 const t0 = store.get('tab', null); if (t0) { const b = document.querySelector('#tabs button[data-v="' + t0 + '"]'); if (b) b.click(); }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.pin) { if (dkey(new Date()) !== TODAY) location.reload(); else flush(); } });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.pin) { if (dkey(new Date()) !== TODAY) location.reload(); else refreshData(); } });
+let refreshing = false;
+async function refreshData() {
+  if (refreshing || !S.pin || !S.data) return; refreshing = true;
+  try { const j = await api('bootstrap', {}); if (j.data.user.id === S.uid) { S.data = j.data; mergeQueue(); store.set('queue', S.queue); persist(); renderAll(); } flush(); }
+  catch (e) { setSync('off'); } finally { refreshing = false; }
+}
+setInterval(() => { if (document.visibilityState === 'visible') refreshData(); }, 5 * 60 * 1000);
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 
-window.KHIFFA_APP = { D, dayOf, saveDay, toast, settings, level, mealComps, mealState, totals, levelTotals, weekKeys, weekCounts, fmt, ar, esc, img, addDays, TODAY, get cur() { return S.cur; }, get data() { return S.data; }, refresh: () => { if (S.data) renderToday(); }, refreshAll: () => renderAll() };
+window.KHIFFA_APP = { D, dayOf, saveDay, toast, settings, saveSettings, level, mealComps, mealState, setMeal, openMealSheet, mealTargetKcal, amountText, ideaName, totals, levelTotals, weekKeys, weekCounts, fmt, ar, esc, img, imgURL, addDays, TODAY, people, displayName, switchUser,
+  get cur() { return S.cur; }, setCur: k => { S.cur = k; if (S.data) renderToday(); }, get data() { return S.data; }, refresh: () => { if (S.data) renderToday(); }, refreshAll: () => renderAll() };
 if (S.pin) boot(); else showLogin();
 })();
