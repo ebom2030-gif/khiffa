@@ -38,35 +38,35 @@
 
   function openSheet(html) {
     var root = d.getElementById('sheetRoot');
-    root.innerHTML = '<div class="sheet-bg"><div class="sheet" role="dialog" aria-modal="true" aria-label="تثبيت خفّة"><div class="sheet-h"><h3>تثبيت خفّة على الموبايل</h3><button class="btn ghost sm" id="instClose">إغلاق</button></div><div class="sheet-b">' + html + '</div></div></div>';
+    root.innerHTML = '<div class="sheet-bg"><div class="sheet" role="dialog" aria-modal="true" aria-label="تثبيت خفّة"><div class="sheet-h"><h3>تثبيت خفّة على الجوال</h3><button class="btn ghost sm" id="instClose">إغلاق</button></div><div class="sheet-b">' + html + '</div></div></div>';
     d.body.style.overflow = 'hidden';
     var close = function () { root.innerHTML = ''; d.body.style.overflow = ''; };
     d.getElementById('instClose').onclick = close;
     root.querySelector('.sheet-bg').onclick = function (e) { if (e.target.classList.contains('sheet-bg')) close(); };
     var cp = d.getElementById('instCopy');
     if (cp) cp.onclick = function () {
-      var done = function () { cp.textContent = 'اتنسخ ✓'; };
+      var done = function () { cp.textContent = 'تم النسخ ✓'; };
       if (navigator.clipboard) navigator.clipboard.writeText(URL_).then(done, function () {}); else done();
     };
     return close;
   }
 
   function guide() {
-    var after = '<p class="note" style="margin:0">بعد التثبيت افتحي خفّة من الأيقونة الخضرا على الشاشة، وادخلي برمزك مرة واحدة.</p>';
+    var after = '<p class="note" style="margin:0">بعد التثبيت افتحي خفّة من الأيقونة الخضراء على الشاشة، وسجّلي الدخول برمزك مرة واحدة.</p>';
     if (inApp) {
-      return openSheet('<p style="margin:0">الرابط مفتوح جوه تطبيق تاني (واتساب أو إنستجرام مثلاً)، والتثبيت مش بيشتغل من هنا.</p>' +
+      return openSheet('<p style="margin:0">الرابط مفتوح داخل تطبيق آخر (واتساب أو إنستجرام مثلًا)، ولا يعمل التثبيت من هنا.</p>' +
         '<ol class="inst-steps"><li>انسخي الرابط</li><li>افتحيه في ' + (isIOS ? '<b>Safari</b>' : '<b>Chrome</b>') + '</li><li>ثبّتيه من هناك</li></ol>' +
         '<div class="inst-link">' + URL_ + '</div><button class="btn" id="instCopy">انسخي الرابط</button>');
     }
     if (isIOS) {
       return openSheet('<ol class="inst-steps">' +
-        '<li><span>اضغطي زرار المشاركة ' + SHARE + ' تحت في Safari</span></li>' +
-        '<li><span>انزلي واختاري <b>إضافة إلى الشاشة الرئيسية</b> ' + PLUS + '</span></li>' +
-        '<li><span>اضغطي <b>إضافة</b> فوق على الشمال</span></li></ol>' + after +
-        '<p class="note" style="margin:0">لو مش لاقية الاختيار، اتأكدي إن الرابط مفتوح في Safari.</p>');
+        '<li><span>اضغطي زر المشاركة ' + SHARE + ' أسفل Safari</span></li>' +
+        '<li><span>مرّري للأسفل واختاري <b>إضافة إلى الشاشة الرئيسية</b> ' + PLUS + '</span></li>' +
+        '<li><span>اضغطي <b>إضافة</b> في الأعلى يسارًا</span></li></ol>' + after +
+        '<p class="note" style="margin:0">إن لم تجدي هذا الخيار، فتأكدي أن الرابط مفتوح في Safari.</p>');
     }
     return openSheet('<ol class="inst-steps">' +
-      '<li><span>اضغطي على القائمة ' + DOTS + ' فوق في Chrome</span></li>' +
+      '<li><span>اضغطي على القائمة ' + DOTS + ' أعلى Chrome</span></li>' +
       '<li><span>اختاري <b>تثبيت التطبيق</b> أو <b>إضافة إلى الشاشة الرئيسية</b></span></li>' +
       '<li><span>اضغطي <b>تثبيت</b></span></li></ol>' + after);
   }
@@ -80,8 +80,8 @@
 
   function card(where, withSnooze) {
     var el = d.createElement('div'); el.className = 'inst-card'; el.setAttribute('data-inst', '1');
-    el.innerHTML = '<img src="icon-192.png" alt=""><div style="min-width:0"><b>ثبّتي خفّة على موبايلك</b><p class="note">يفتح زي أي تطبيق، من غير متجر ومن غير مساحة تقريباً.</p>' +
-      '<div class="row"><button class="btn sm" data-a="go">تثبيت</button>' + (withSnooze ? '<button class="btn ghost sm" data-a="later">مش دلوقتي</button>' : '') + '</div></div>';
+    el.innerHTML = '<img src="icon-192.png" alt=""><div style="min-width:0"><b>ثبّتي خفّة على جوالك</b><p class="note">يعمل مثل أي تطبيق، دون متجر وبمساحة صغيرة جدًا.</p>' +
+      '<div class="row"><button class="btn sm" data-a="go">تثبيت</button>' + (withSnooze ? '<button class="btn ghost sm" data-a="later">ليس الآن</button>' : '') + '</div></div>';
     el.querySelector('[data-a="go"]').onclick = install;
     var l = el.querySelector('[data-a="later"]');
     if (l) l.onclick = function () { snooze(); el.remove(); };
@@ -103,7 +103,7 @@
   if (nav && (isIOS || isAndroid) && !snoozed()) card(function (el) { nav.parentNode.insertBefore(el, nav); }, true);
   // account card: always available
   var acct = d.getElementById('acct');
-  if (acct) { var b = d.createElement('button'); b.className = 'btn'; b.textContent = 'تثبيت التطبيق على الموبايل'; b.style.marginInlineEnd = '8px'; b.setAttribute('data-inst', '1'); b.onclick = install; acct.parentNode.insertBefore(b, acct.nextSibling); }
+  if (acct) { var b = d.createElement('button'); b.className = 'btn'; b.textContent = 'تثبيت التطبيق على الجوال'; b.style.marginInlineEnd = '8px'; b.setAttribute('data-inst', '1'); b.onclick = install; acct.parentNode.insertBefore(b, acct.nextSibling); }
 
   if (location.hash === '#install') setTimeout(install, 400);
 })();
