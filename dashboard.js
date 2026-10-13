@@ -76,6 +76,7 @@
     '.hm-spark{width:100%;height:70px;margin-top:10px}' +
     '@media (prefers-reduced-motion:reduce){.hm-ring .fg,.hm-bar i{transition:none}.hm-chart rect.v{animation:none}}' +
     /* fine-tune sheet (app.js) */
+    '.cup{width:24px;height:52px;border-radius:10px 10px 6px 6px;border-top-width:6px}.cup.on{border-color:#3f8fd6}.cup.on::after{height:85%;background:#3f8fd6;opacity:.3}' +
     '.tune-sum{background:var(--bg);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;position:sticky;top:-20px;z-index:1}' +
     '.tune-k b{font-size:22px}.tune-bar{height:8px;border-radius:8px;background:var(--line);overflow:hidden}.tune-bar i{display:block;height:100%;border-radius:8px;transition:width .3s}' +
     '.tune-list{display:flex;flex-direction:column;gap:6px;margin-top:10px}' +
@@ -190,7 +191,7 @@
     var mealsDone = pDays.reduce(function (s, x) { return s + dayTotals(x).meals; }, 0);
     var adherence = Math.round(pct(mealsDone, past.length * 5));
     var avgKcal = pLogged.length ? Math.round(pLogged.reduce(function (s, x) { return s + dayTotals(x).n; }, 0) / pLogged.length) : 0;
-    var avgWater = past.length ? pDays.reduce(function (s, x) { return s + (x.water || 0); }, 0) / past.length : 0;
+    var avgWater = past.length ? pDays.reduce(function (s, x) { return s + A.bottles(x); }, 0) / past.length : 0;
     var limits = A.weekCounts(A.TODAY, false);
 
     var streak = 0, k = A.TODAY; if (!logged(A.dayOf(k))) k = A.addDays(k, -1);
@@ -211,7 +212,7 @@
     if (tt.meals === 0 && !(today.extras || []).length) ins.push(['', 'sunrise', 'لسه ما سجلتيش أكل النهارده. دوسي على الفطور تحت وابدئي.']);
     else if (left > 0) ins.push(['', 'bullseye', 'فاضل لك ' + ar(left, 0) + ' سعرة النهارده.']);
     else if (left < -80) ins.push(['w', 'warning', 'عدّيتي هدف النهارده بـ ' + ar(-left, 0) + ' سعرة. خلّي باقي اليوم خضار وماية.']);
-    if (h >= 15 && (today.water || 0) < st.water / 2) ins.push(['w', 'droplet', 'الماية لسه ' + ar(today.water || 0) + ' من ' + ar(st.water) + ' أكواب، ولسه فاضل نص اليوم.']);
+    if (h >= 15 && A.bottles(today) < st.water / 2) ins.push(['w', 'droplet', 'الماية لسه ' + ar(A.bottles(today)) + ' من ' + ar(st.water) + ' زجاجات، ولسه فاضل نص اليوم.']);
     if (tt.meals >= 3 && tt.p < LT.p * 0.5) ins.push(['w', 'poultry_leg', 'البروتين النهارده قليل. اختاري عشا فيه دجاج أو سمك أو جبن قريش.']);
     D.LIMITS.forEach(function (l) { if ((limits[l[0]] || 0) >= l[2]) ins.push(['w', 'stop_sign', 'خلّصتي حد ' + l[1] + ' للأسبوع ده (' + ar(l[2]) + ' مرات).']); });
     if (streak >= 3) ins.push(['', 'fire', 'ملتزمة ' + ar(streak) + ' أيام ورا بعض. كمّلي!']);
@@ -226,12 +227,12 @@
           '<h2>' + (own ? hello + ' يا ' + esc(name) : 'بيانات ' + esc(name)) + '</h2>' + (own ? '' : '<div class="note">' + hello + ' يا ' + esc(me.name) + '، بتتابع حسابها دلوقتي</div>') + '</div>' +
           (ppl.length > 1 ? '<div class="hm-acc" role="group" aria-label="الحساب">' + ppl.map(function (p) { return '<button data-u="' + esc(p.id) + '" aria-pressed="' + (p.id === data.user.id) + '">' + esc(p.id === me.id ? 'حسابي' : (p.name === 'زوجتي' ? 'زوجتي وحبيبتي' : p.name)) + '</button>'; }).join('') + '</div>' : '') +
         '</div>' +
-        '<div class="hm-main"><div class="hm-ring"><svg viewBox="0 0 140 140"><circle cx="70" cy="70" r="' + R + '" fill="none" stroke="var(--surface)" stroke-width="13"/><circle class="fg" cx="70" cy="70" r="' + R + '" fill="none" stroke="' + (overT ? 'var(--warn)' : 'var(--mint)') + '" stroke-width="13" stroke-linecap="round" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + C.toFixed(1) + '" data-o="' + (C * (1 - ringP)).toFixed(1) + '"/></svg>' +
-          '<div class="c"><span class="big num">' + ar(Math.round(tt.n), 0) + '</span><span class="sm">من ' + ar(target, 0) + ' سعرة</span></div></div>' +
-          '<div><div class="hm-left">' + (left >= 0 ? 'فاضل <b class="num">' + ar(left, 0) + '</b> سعرة' : 'زيادة <b class="num" style="color:var(--warn)" dir="ltr">-' + ar(-left, 0) + '</b> سعرة') + '</div>' +
+        '<div class="hm-main"><div class="hm-ring"><svg viewBox="0 0 140 140"><circle cx="70" cy="70" r="' + R + '" fill="none" stroke="var(--surface)" stroke-width="13"/><circle class="fg" cx="70" cy="70" r="' + R + '" fill="none" stroke="' + (tt.n > target ? 'var(--bad)' : 'var(--mint)') + '" stroke-width="13" stroke-linecap="round" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + C.toFixed(1) + '" data-o="' + (C * (1 - ringP)).toFixed(1) + '"/></svg>' +
+          '<div class="c"><span class="big num"' + (tt.n > target ? ' style="color:var(--bad)"' : '') + '>' + ar(Math.round(tt.n), 0) + '</span><span class="sm">من ' + ar(target, 0) + ' سعرة</span></div></div>' +
+          '<div><div class="hm-left">' + (left >= 0 ? 'فاضل <b class="num">' + ar(left, 0) + '</b> سعرة' : 'زيادة <b class="num" style="color:var(--bad)" dir="ltr">-' + ar(-left, 0) + '</b> سعرة') + '</div>' +
             macro('بروتين', tt.p, LT.p, 'var(--peach)') + macro('نشويات', tt.c, LT.c, '#d4a13a') + macro('دهون', tt.f, LT.f, '#8a6bbf') + '</div></div>' +
-        '<div class="hm-water">' + A.img('droplet') + '<div class="t">ماية <b class="num">' + ar(today.water || 0) + '</b> من ' + ar(st.water) + ' أكواب' + bar(pct(today.water || 0, st.water)) + '</div>' +
-          '<button class="hm-rb" id="hmWm" aria-label="شيلي كوب">−</button><button class="hm-rb p" id="hmWp" aria-label="اشربي كوب">+</button></div>' +
+        '<div class="hm-water">' + A.img('droplet') + '<div class="t">ماية <b class="num">' + ar(A.bottles(today)) + '</b> من ' + ar(st.water) + ' زجاجات 330 مل' + bar(pct(A.bottles(today), st.water)) + '</div>' +
+          '<button class="hm-rb" id="hmWm" aria-label="شيلي زجاجة">−</button><button class="hm-rb p" id="hmWp" aria-label="اشربي زجاجة">+</button></div>' +
       '</div>' +
 
       '<div class="card hm-wide"><div class="hm-sec"><h2>الأسبوع</h2><span class="note">دوسي على أي يوم تفتحيه</span></div><div class="hm-week">' +
@@ -254,7 +255,7 @@
       '<div class="card"><div class="hm-sec"><h2>الأسبوع ده</h2><span class="note">من السبت</span></div><div class="hm-grid">' +
         tile('الالتزام بالوجبات', ar(adherence, 0) + '%', '', adherence, adherence < 60) +
         tile('متوسط السعرات', avgKcal ? ar(avgKcal, 0) : '—', avgKcal ? 'في اليوم' : 'لسه مفيش', avgKcal ? pct(avgKcal, target) : null, avgKcal > target * 1.05) +
-        tile('متوسط الماية', ar(Math.round(avgWater * 10) / 10), 'كوب', pct(avgWater, st.water), avgWater < st.water * 0.6) +
+        tile('متوسط الماية', ar(Math.round(avgWater * 10) / 10), 'زجاجة', pct(avgWater, st.water), avgWater < st.water * 0.6) +
         tile('أيام ورا بعض', ar(streak), streak === 1 ? 'يوم' : 'أيام', null) +
       '</div><div class="hm-lim">' +
         D.LIMITS.map(function (l) { var v = limits[l[0]] || 0, dots = ''; for (var j = 0; j < Math.max(l[2], v); j++) dots += '<i class="' + (j < v ? 'on' : '') + '"></i>'; return '<div class="' + (v > l[2] ? 'over' : v === l[2] ? 'full' : '') + '"><span>' + l[1] + '</span><span class="hm-dots" title="' + ar(v) + ' من ' + ar(l[2]) + '">' + dots + '</span></div>'; }).join('') +
@@ -281,7 +282,7 @@
 
     // interactions
     sec.querySelectorAll('.hm-acc button').forEach(function (b) { b.onclick = function () { A.switchUser(b.dataset.u); }; });
-    var water = function (dlt) { var x = A.dayOf(A.TODAY); x.water = Math.max(0, Math.min(st.water + 6, (x.water || 0) + dlt)); A.saveDay(Object.assign({}, x)); if (dlt > 0 && x.water === st.water) A.toast('برافو! خلّصتي الماية النهارده'); A.refresh(); };
+    var water = function (dlt) { var x = A.dayOf(A.TODAY); x.w3 = Math.max(0, Math.min(st.water + 6, A.bottles(x) + dlt)); A.saveDay(Object.assign({}, x)); if (dlt > 0 && x.w3 === st.water) A.toast('برافو! خلّصتي الماية النهارده'); A.refresh(); };
     d.getElementById('hmWp').onclick = function () { water(1); };
     d.getElementById('hmWm').onclick = function () { water(-1); };
     sec.querySelectorAll('.hm-day').forEach(function (b) { b.onclick = function () { openDay(b.dataset.k); }; });
