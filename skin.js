@@ -113,7 +113,7 @@
     eye.onclick = function () { var sh = pin.type === 'password'; pin.type = sh ? 'text' : 'password'; eye.textContent = sh ? 'إخفاء' : 'إظهار'; pin.focus(); };
     wrap.appendChild(eye);
     var btn = form.querySelector('button[type="submit"]'); if (btn) btn.textContent = 'دخول';
-    var link = d.createElement('button'); link.type = 'button'; link.className = 'lg-inst'; link.textContent = 'ثبّت التطبيق على الموبايل';
+    var link = d.createElement('button'); link.type = 'button'; link.className = 'lg-inst'; link.textContent = 'ثبّتي التطبيق على الجوال';
     link.onclick = function () { var b = L.querySelector('[data-inst] [data-a="go"]'); if (b) b.click(); else location.hash = 'install'; };
     form.appendChild(link);
     var k = 0, slides = ph.children, dots = inn.querySelectorAll('.lg-dots i');
