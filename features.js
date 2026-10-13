@@ -185,7 +185,6 @@
     var expect = Math.floor(st.water * Math.min(1, Math.max(0, (h - 8) / 13)));
     if (h >= 11 && A.bottles(day) < expect - 1) notify('w' + Math.floor(h / 3), 'خفّة – الماء', 'اشربي زجاجة ماء. حتى الآن ' + ar(A.bottles(day)) + ' من ' + ar(st.water) + '.');
   }
-  setInterval(checkRemind, 10 * 60 * 1000);
   function remindToggle() {
     var acct = d.getElementById('acct'); if (!acct || d.getElementById('kfRem')) return;
     var row = d.createElement('div'); row.className = 'row'; row.id = 'kfRem'; row.style.margin = '10px 0';
@@ -200,7 +199,8 @@
     paint();
   }
 
-  (window.KHIFFA_HOOKS = window.KHIFFA_HOOKS || []).push(function () { showFab(); addRepeatButtons(); levelCard(); remindToggle(); checkRemind(); });
+  // التذكير المحلي القديم اتشال: الإشعارات بقت من الخادم (reminders.js + Code.gs)
+  (window.KHIFFA_HOOKS = window.KHIFFA_HOOKS || []).push(function () { showFab(); addRepeatButtons(); levelCard(); });
   d.querySelectorAll('#tabs button').forEach(function (b) { b.addEventListener('click', function () { setTimeout(levelCard, 0); }); });
-  showFab(); addRepeatButtons(); if (A.data) { levelCard(); remindToggle(); }
+  showFab(); addRepeatButtons(); if (A.data) { levelCard(); }
 })();
