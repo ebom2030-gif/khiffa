@@ -117,7 +117,7 @@
     var seen = {}, out = [];
     for (var i = 1; i <= 45 && out.length < 12; i++) {
       var key = A.addDays(A.TODAY, -i), st = A.mealState(A.dayOf(key), k), comps = A.mealComps(k, st);
-      if (!comps.length || !st.done) continue;
+      if (!comps.length) continue; // أي وجبة اتسجلت (مش المتعلّم عليها بس)
       var sig = comps.map(function (x) { return x.food.id + ':' + Math.round(x.n * 100); }).sort().join(',');
       if (seen[sig]) continue; seen[sig] = 1;
       var idea = st.mode !== 'custom' && st.idea ? D.IDEAS.find(function (x) { return x.id === st.idea; }) : null;
