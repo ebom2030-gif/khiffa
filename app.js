@@ -23,11 +23,15 @@ const store = {
   del(k) { try { localStorage.removeItem('khiffa.' + k); } catch (e) {} }
 };
 const S = { pin: store.get('pin', null), uid: store.get('uid', null), data: null, cur: TODAY, queue: store.get('queue', []), ideaFilter: 'b' };
+// [accounts] session token from username/password login (accounts.js); the PIN stays only for legacy accounts
+S.token = store.get('token', null);
+const authed = () => !!(S.token || S.pin);
+const isAuthErr = e => !!(e && (e.auth || /رمز/.test(e.message)));
 
 async function api(action, payload) {
   if (!API || /PASTE_/.test(API)) throw new Error('يجب وضع رابط Apps Script في config.js');
-  const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, pin: S.pin, uid: S.uid, ...payload }) });
-  const j = await r.json(); if (!j.ok) throw new Error(j.error || 'خطأ'); return j;
+  const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, token: S.token || undefined, pin: S.token ? undefined : S.pin, uid: S.uid, ...payload }) });
+  const j = await r.json(); if (!j.ok) { const er = new Error(j.error || 'خطأ'); er.auth = j.code === 'auth'; throw er; } return j; // [accounts] code:'auth' → back to login
 }
 function setSync(st) { const el = $('#sync'); el.className = 'sync ' + st; el.title = { ok: 'متزامن', wait: 'جارٍ الحفظ…', off: 'لا يوجد اتصال، سيُحفظ عند عودة الإنترنت' }[st]; }
 function enqueue(action, payload, key) { S.queue = S.queue.filter(q => q.key !== key); S.queue.push({ action, payload, key, uid: S.uid }); store.set('queue', S.queue); flush(); }
@@ -43,7 +47,7 @@ async function doFlush() {
       S.queue.shift(); store.set('queue', S.queue);
     }
     setSync('ok');
-  } catch (e) { setSync('off'); if (/رمز/.test(e.message)) { logout(); return; } setTimeout(flush, 15000); }
+  } catch (e) { setSync('off'); if (isAuthErr(e)) { logout(e.message); return; } setTimeout(flush, 15000); }
   finally { flushing = false; }
 }
 window.addEventListener('online', flush);
@@ -56,7 +60,7 @@ async function boot() {
     S.data = j.data; S.uid = j.data.user.id; store.set('uid', S.uid);
     mergeQueue(); store.set('queue', S.queue); persist(); showApp(); flush();
   } catch (e) {
-    if (/رمز/.test(e.message)) { logout(e.message); return; }
+    if (isAuthErr(e)) { logout(e.message); return; }
     if (!cached) { $('#loginErr').textContent = e.message; $('#loginErr').hidden = false; showLogin(); } else setSync('off');
   }
 }
@@ -70,13 +74,15 @@ function mergeQueue() {
 }
 function upsertLocal(col, row) { const a = (S.data[col] || []).filter(r => r.date !== row.date); a.push(row); a.sort((x, y) => x.date < y.date ? -1 : 1); S.data[col] = a; }
 function persist() { store.set('data:' + S.uid, S.data); }
-function showLogin() { $('#login').hidden = false; $('#app').hidden = true; $('#tabs').hidden = true; setTimeout(() => $('#pin').focus(), 50); }
+function showLogin() { $('#login').hidden = false; $('#app').hidden = true; $('#tabs').hidden = true; setTimeout(() => { const u = $('#acUser'); (u && !u.closest('[hidden]') ? u : $('#pin')).focus(); }, 50); }
 function showApp() { $('#login').hidden = true; $('#app').hidden = false; $('#tabs').hidden = false; renderAll(); }
 function logout(msg) {
-  ['pin', 'uid', 'queue'].forEach(k => store.del(k));
+  if (S.token && !msg) api('logout', {}).catch(() => {}); // [accounts] end the server session (fire-and-forget; body is built before the token is cleared)
+  ['pin', 'token', 'uid', 'queue'].forEach(k => store.del(k));
   try { Object.keys(localStorage).filter(k => k.startsWith('khiffa.data:')).forEach(k => localStorage.removeItem(k)); } catch (e) {}
-  S.pin = null; S.uid = null; S.data = null; S.queue = [];
+  S.pin = null; S.token = null; S.uid = null; S.data = null; S.queue = [];
   if (msg) { $('#loginErr').textContent = msg; $('#loginErr').hidden = false; }
+  (window.KHIFFA_LOGOUT_HOOKS || []).forEach(f => { try { f(); } catch (e) {} }); // [accounts]
   showLogin();
 }
 $('#loginForm').onsubmit = e => { e.preventDefault(); const p = $('#pin').value.trim(); if (!p) return; S.pin = p; store.set('pin', p); $('#loginErr').hidden = true; boot(); };
@@ -429,7 +435,7 @@ function status(kind, val) {
   const m = { pbf: [[32, 'bad', 'عالٍ'], [28, 'warn', 'مرتفع'], [0, 'good', 'طبيعي']], vfl: [[15, 'bad', 'عالٍ'], [10, 'warn', 'مرتفع'], [0, 'good', 'طبيعي']], whr: [[0.95, 'bad', 'عالٍ'], [0.85, 'warn', 'مرتفع'], [0, 'good', 'طبيعي']], bmi: [[30, 'bad', 'سمنة'], [25, 'warn', 'وزن زائد'], [0, 'good', 'طبيعي']] }[kind];
   if (!m || val == null || val === '') return ''; const r = m.find(x => val >= x[0]); return '<span class="pill ' + r[1] + '">' + r[2] + '</span>';
 }
-const latest = () => (S.data.inbody || [])[S.data.inbody.length - 1];
+const latest = () => (S.data.inbody || []).slice(-1)[0];
 function renderBody() {
   const IB = S.data.inbody || [], ib = latest(), first = IB[0];
   if (!ib) { $('#ibStats').innerHTML = '<div class="empty" style="grid-column:1/-1">لا توجد قياسات بعد. أضيفي أول قياس من الأسفل.</div>'; $('#charts').innerHTML = ''; $('#ibTable').innerHTML = ''; }
@@ -459,8 +465,8 @@ function spark(rows, k, label, color) {
 $('#f-date').value = TODAY; $('#m-date').value = TODAY;
 $('#ibForm').onsubmit = e => { e.preventDefault();
   const g = id => { const v = parseFloat($('#f-' + id).value); return isNaN(v) ? null : v; };
-  const r = { date: $('#f-date').value, weight: g('weight'), smm: g('smm'), bfm: g('bfm'), pbf: g('pbf'), bmr: g('bmr'), vfl: g('vfl'), whr: g('whr') };
-  const prev = latest(); if (prev && prev.target_weight) r.target_weight = prev.target_weight;
+  const r = { date: $('#f-date').value, weight: g('weight'), smm: g('smm'), bfm: g('bfm'), pbf: g('pbf'), bmr: g('bmr'), vfl: g('vfl'), whr: g('whr'), bmi: g('bmi'), ffm: g('ffm'), tbw: g('tbw'), score: g('score'), target_weight: g('target') };
+  const prev = latest(); if (r.target_weight == null && prev && prev.target_weight) r.target_weight = prev.target_weight;
   Object.keys(r).forEach(k => r[k] == null && delete r[k]);
   upsertLocal('inbody', r); persist(); enqueue('saveInbody', { reading: r }, 'ib:' + S.uid + ':' + r.date);
   toast('تم حفظ القياس'); e.target.reset(); $('#f-date').value = TODAY; renderAll(); };
@@ -505,7 +511,7 @@ function renderHeader() {
   sel.innerHTML = ppl.map(p => '<option value="' + esc(p.id) + '"' + (p.id === S.data.user.id ? ' selected' : '') + '>' + esc(p.id === S.data.me.id ? 'حسابي' : nickOf(p.name)) + '</option>').join('');
 }
 $('#person').onchange = e => switchUser(e.target.value);
-function people() { const me = S.data.me, ppl = (S.data.people || []).slice(); if (me && me.role === 'owner' && !ppl.some(p => p.id === me.id)) ppl.unshift({ id: me.id, name: 'حسابي' }); return ppl; }
+function people() { const me = S.data.me, ppl = (S.data.people || []).slice(); if (me && (me.role === 'owner' || me.role === 'dietitian') && !ppl.some(p => p.id === me.id)) ppl.unshift({ id: me.id, name: 'حسابي' }); return ppl; }
 function nickOf(name) { return name === 'زوجتي' ? 'زوجتي وحبيبتي' : name; }
 function displayName() { const st = settings(), me = S.data.me, u = S.data.user; if (st.nick) return st.nick; if (me && me.id === u.id && me.role === 'owner') return me.name; return nickOf(u.name); }
 function switchUser(uid) { if (!uid || (S.data && uid === S.data.user.id)) return; S.uid = uid; store.set('uid', S.uid); toast('جارٍ فتح الحساب…'); setTimeout(() => location.reload(), 150); }
@@ -518,10 +524,10 @@ document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
 });
 const t0 = store.get('tab', null); if (t0) { const b = document.querySelector('#tabs button[data-v="' + t0 + '"]'); if (b) b.click(); }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.pin) { if (dkey(new Date()) !== TODAY) location.reload(); else refreshData(); } });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && authed()) { if (dkey(new Date()) !== TODAY) location.reload(); else refreshData(); } });
 let refreshing = false;
 async function refreshData() {
-  if (refreshing || !S.pin || !S.data) return; refreshing = true;
+  if (refreshing || !authed() || !S.data) return; refreshing = true;
   try { const j = await api('bootstrap', {}); if (j.data.user.id === S.uid) { S.data = j.data; mergeQueue(); store.set('queue', S.queue); persist(); renderAll(); } flush(); }
   catch (e) { setSync('off'); } finally { refreshing = false; }
 }
@@ -529,6 +535,10 @@ setInterval(() => { if (document.visibilityState === 'visible') refreshData(); }
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 
 window.KHIFFA_APP = { D, bottles, BOTTLE, dayOf, saveDay, toast, settings, saveSettings, level, mealComps, mealState, setMeal, openMealSheet, mealTargetKcal, amountText, ideaName, totals, levelTotals, weekKeys, weekCounts, fmt, ar, esc, img, imgURL, addDays, TODAY, people, displayName, switchUser,
+  // [accounts] api + session helpers for accounts.js
+  api, logout, get me() { return S.data && S.data.me; },
+  startSession(token) { S.token = token; store.set('token', token); S.pin = null; store.del('pin'); S.uid = null; store.del('uid'); $('#loginErr').hidden = true; boot(); },
+  setToken(token) { S.token = token; store.set('token', token); S.pin = null; store.del('pin'); },
   get cur() { return S.cur; }, setCur: k => { S.cur = k; if (S.data) renderToday(); }, get data() { return S.data; }, refresh: () => { if (S.data) renderToday(); }, refreshAll: () => renderAll() };
-if (S.pin) boot(); else showLogin();
+if (authed()) boot(); else showLogin();
 })();
