@@ -7,7 +7,7 @@
     // سندوتشات وفطار
     ['سندوتش فول', 'رغيف بلدي صغير', 330, 14, 52, 7, 'ساندوتش فول,فول', 'stuffed_flatbread'],
     ['سندوتش طعمية', 'رغيف بلدي صغير', 350, 11, 45, 15, 'فلافل,طعميه,ساندوتش طعمية', 'falafel'],
-    ['سندوتش جبنة بيضا', 'رغيف صغير', 280, 12, 35, 10, 'جبنه,ساندوتش جبنة', 'sandwich'],
+    ['سندوتش جبنة بيضاء', 'رغيف صغير', 280, 12, 35, 10, 'جبنه,ساندوتش جبنة', 'sandwich'],
     ['سندوتش بيض', 'رغيف صغير', 320, 15, 33, 14, 'ساندوتش بيض', 'sandwich', 'egg'],
     ['سندوتش شاورما دجاج', 'متوسط', 450, 28, 45, 17, 'شاورما فراخ,شورما', 'stuffed_flatbread'],
     ['سندوتش شاورما لحم', 'متوسط', 520, 26, 44, 26, 'شاورما لحمة', 'stuffed_flatbread', 'red'],
@@ -27,14 +27,14 @@
     ['فول مدمس بالزيت', 'طبق صغير', 200, 11, 30, 5, 'فول', 'beans'],
     ['حمص بطحينة', '٣ ملاعق', 100, 3, 9, 6, 'حمص', 'falafel'],
     ['متبل', '٣ ملاعق', 70, 1, 5, 5, 'بابا غنوج', 'eggplant'],
-    ['جبنة بيضا', '٣٠ ج', 80, 5, 1, 6, 'جبنه بيضاء,دمياطي,فيتا', 'cheese_wedge'],
+    ['جبنة بيضاء', '٣٠ ج', 80, 5, 1, 6, 'جبنه بيضاء,دمياطي,فيتا', 'cheese_wedge'],
     ['جبنة شيدر', 'شريحة', 110, 7, 0, 9, 'شيدر', 'cheese_wedge'],
     ['جبنة مثلثات', 'قطعة', 45, 2, 1, 4, 'جبنة نستو,كيري', 'cheese_wedge'],
-    ['لبنة كاملة الدسم', 'ملعقتين كبار', 100, 4, 3, 8, 'لبنه', 'jar'],
+    ['لبنة كاملة الدسم', 'ملعقتين كبيرتين', 100, 4, 3, 8, 'لبنه', 'jar'],
     ['زبادي كامل الدسم', 'علبة', 110, 6, 8, 6, 'زبادي', 'bowl_with_spoon'],
     ['عسل', 'ملعقة صغيرة', 21, 0, 6, 0, 'عسل نحل', 'jar'],
     ['مربى', 'ملعقة كبيرة', 50, 0, 13, 0, 'مربة', 'jar'],
-    ['عيش بلدي', 'رغيف', 250, 9, 50, 1.5, 'خبز بلدي,عيش', 'flatbread'],
+    ['خبز بلدي', 'رغيف', 250, 9, 50, 1.5, 'عيش بلدي,عيش', 'flatbread'],
     ['خبز عربي', 'رغيف كبير', 230, 8, 47, 1, 'خبز,تميس', 'flatbread'],
     ['صامولي', 'قطعة', 160, 5, 30, 2, 'صمولي', 'baguette_bread'],
     ['توست أبيض', 'شريحة', 75, 2.5, 14, 1, 'توست', 'bread'],
@@ -43,14 +43,14 @@
     ['بان كيك', '٢ قطعة', 350, 8, 50, 12, 'بانكيك', 'pancakes'],
     // مشروبات
     ['قهوة سادة', 'كوب بدون سكر', 5, 0.3, 0, 0, 'قهوه,امريكانو,قهوة تركي,اسبريسو,كوفي', 'hot_beverage'],
-    ['قهوة بالسكر', 'كوب بمعلقة سكر', 25, 0.3, 5, 0, 'قهوه بسكر', 'hot_beverage'],
+    ['قهوة بالسكر', 'كوب بملعقة سكر', 25, 0.3, 5, 0, 'قهوه بسكر', 'hot_beverage'],
     ['قهوة عربية', 'فنجان', 5, 0, 1, 0, 'قهوة سعودية,قهوه عربي', 'teacup_without_handle'],
-    ['نسكافيه باللبن', 'كوب بسكر', 110, 4, 16, 3, 'نسكافيه,نس كافيه', 'hot_beverage'],
+    ['نسكافيه بالحليب', 'كوب بسكر', 110, 4, 16, 3, 'نسكافيه,نس كافيه', 'hot_beverage'],
     ['لاتيه', 'كوب متوسط', 190, 10, 15, 10, 'لاتيه,قهوة بالحليب', 'hot_beverage'],
     ['كابتشينو', 'كوب متوسط', 120, 6, 10, 6, 'كابتشينو,كابوتشينو', 'hot_beverage'],
     ['آيس لاتيه', 'كوب متوسط', 180, 8, 18, 8, 'ايس كوفي,قهوة مثلجة', 'cup_with_straw'],
     ['شاي', 'كوب بدون سكر', 2, 0, 0, 0, 'شاي اخضر,شاي أحمر', 'teacup_without_handle'],
-    ['شاي بالسكر', 'كوب بمعلقتين', 35, 0, 9, 0, 'شاي بسكر', 'teacup_without_handle'],
+    ['شاي بالسكر', 'كوب بملعقتي سكر', 35, 0, 9, 0, 'شاي بسكر', 'teacup_without_handle'],
     ['شاي بالحليب', 'كوب', 70, 2, 9, 2, 'شاي بلبن', 'hot_beverage'],
     ['كرك', 'كوب', 150, 4, 22, 5, 'شاي كرك', 'hot_beverage'],
     ['عصير برتقال فريش', 'كوب', 110, 2, 26, 0.5, 'عصير برتقال', 'cup_with_straw'],
@@ -60,8 +60,8 @@
     ['مشروب طاقة', 'علبة', 110, 0, 28, 0, 'ريد بول,طاقة', 'cup_with_straw'],
     ['حليب كامل الدسم', 'كوب', 150, 8, 12, 8, 'لبن,حليب', 'glass_of_milk'],
     ['سموذي فواكه', 'كوب', 180, 3, 40, 1, 'سموذي', 'cup_with_straw'],
-    ['بروتين شيك بالماية', 'سكوب', 120, 24, 3, 1.5, 'بروتين,واي', 'cup_with_straw'],
-    ['ماية', 'كوب', 0, 0, 0, 0, 'مياه,مويه', 'droplet'],
+    ['بروتين شيك بالماء', 'سكوب', 120, 24, 3, 1.5, 'بروتين,واي', 'cup_with_straw'],
+    ['ماء', 'كوب', 0, 0, 0, 0, 'مياه,مويه,ماية', 'droplet'],
     // حلويات وسناكات
     ['شوكولاتة', 'لوح صغير ٤٠ ج', 215, 3, 24, 12, 'شيكولاتة,شوكولا,جالكسي,كيت كات', 'chestnut'],
     ['بسكويت', 'قطعتين', 100, 1, 14, 4.5, 'بسكوت', 'rice_cracker'],
@@ -74,7 +74,7 @@
     ['تمر', 'حبة', 23, 0.2, 6, 0, 'تمرة,بلح', 'palm_tree'],
     ['مكسرات مشكلة', 'حفنة ٣٠ ج', 180, 5, 6, 15, 'مكسرات,لوز,كاجو,فول سوداني', 'peanuts'],
     ['شيبس', 'كيس صغير', 150, 2, 15, 10, 'شبس,ليز,تشيبس', 'popcorn'],
-    ['فشار سينما', 'علبة وسط', 400, 5, 45, 22, 'فشار', 'popcorn'],
+    ['فشار سينما', 'علبة متوسطة', 400, 5, 45, 22, 'فشار', 'popcorn'],
     ['موزة', 'حبة متوسطة', 105, 1.3, 27, 0.4, 'موز', 'banana'],
     ['تفاحة', 'حبة متوسطة', 95, 0.5, 25, 0.3, 'تفاح', 'red_apple'],
     ['برتقالة', 'حبة', 62, 1.2, 15, 0.2, 'برتقال', 'tangerine'],
@@ -87,21 +87,21 @@
     ['مكرونة بشاميل', 'قطعة', 450, 18, 40, 24, 'بشاميل', 'spaghetti', 'red'],
     ['كشري', 'طبق متوسط', 650, 20, 110, 15, 'كشرى', 'steaming_bowl'],
     ['ملوخية', 'طبق بدون رز', 120, 5, 10, 7, 'ملوخيه', 'leafy_green'],
-    ['محشي', '٥ صوابع', 250, 5, 40, 8, 'ورق عنب,محشى', 'pot_of_food'],
-    ['فراخ مشوية', 'ربع فرخة', 300, 35, 0, 17, 'دجاج مشوي,فراخ', 'poultry_leg'],
-    ['فراخ بانيه', 'قطعة', 300, 25, 15, 15, 'بانيه,تشيكن', 'poultry_leg'],
+    ['محشي', '٥ أصابع', 250, 5, 40, 8, 'ورق عنب,محشى', 'pot_of_food'],
+    ['دجاج مشوي', 'ربع دجاجة', 300, 35, 0, 17, 'فراخ مشوية,فراخ', 'poultry_leg'],
+    ['دجاج بانيه', 'قطعة', 300, 25, 15, 15, 'بانيه,تشيكن,فراخ بانيه', 'poultry_leg'],
     ['بروستد', '٢ قطعة', 550, 35, 25, 34, 'دجاج مقلي,كنتاكي,البيك', 'poultry_leg'],
     ['سمك مقلي', 'قطعة', 300, 25, 10, 17, 'سمك', 'fish'],
     ['سمك مشوي', 'قطعة ١٥٠ ج', 190, 38, 0, 4, 'سمك', 'fish'],
     ['كفتة', '٣ أصابع', 250, 17, 4, 18, 'كباب,كفته', 'cut_of_meat', 'red'],
     ['ستيك', '١٥٠ ج', 350, 40, 0, 20, 'لحم مشوي', 'cut_of_meat', 'red'],
-    ['سلطة خضرا', 'طبق', 40, 2, 8, 0.5, 'سلطه', 'green_salad'],
+    ['سلطة خضراء', 'طبق', 40, 2, 8, 0.5, 'سلطه', 'green_salad'],
     ['سلطة سيزر', 'طبق', 350, 15, 15, 26, 'سيزر', 'green_salad'],
     ['تبولة', 'طبق صغير', 130, 2, 12, 9, 'تبوله', 'green_salad'],
     ['فتوش', 'طبق صغير', 150, 3, 15, 9, 'فتوش', 'green_salad'],
     ['شوربة عدس', 'طبق', 180, 10, 28, 3, 'شوربه عدس', 'steaming_bowl'],
     ['شوربة خضار', 'طبق', 90, 3, 15, 2, 'شوربه', 'steaming_bowl'],
-    ['بطاطس مقلية', 'وسط', 365, 4, 48, 17, 'فرايز,بطاطس', 'potato'],
+    ['بطاطس مقلية', 'متوسط', 365, 4, 48, 17, 'فرايز,بطاطس', 'potato'],
     ['مسقعة', 'طبق', 300, 6, 20, 22, 'مسقعه', 'eggplant'],
     ['فتة', 'طبق', 600, 25, 70, 25, 'فته', 'curry_rice', 'red'],
     ['جريش', 'طبق', 300, 10, 45, 9, 'هريس', 'steaming_bowl'],
@@ -157,7 +157,7 @@
   d.head.appendChild(css);
 
   var card = d.createElement('div'); card.className = 'card qa'; card.id = 'quickAdd';
-  card.innerHTML = '<h2 style="margin:0">سجّلي أي أكلة أو مشروب</h2>' +
+  card.innerHTML = '<h2 style="margin:0">سجّلي أي طعام أو مشروب</h2>' +
     '<div class="qa-in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>' +
     '<input id="qaQ" type="search" placeholder="مثلاً: سندوتش فول، قهوة، موزة" autocomplete="off" enterkeyhint="search"></div>' +
     '<div class="qa-res" id="qaRes"></div><div class="qa-log" id="qaLog" hidden></div>';
@@ -165,7 +165,7 @@
   meals.parentNode.insertBefore(card, meals);
 
   var $q = d.getElementById('qaQ'), $res = d.getElementById('qaRes'), $log = d.getElementById('qaLog');
-  var QTY = [[0.5, 'نص'], [1, 'واحد'], [1.5, 'واحد ونص'], [2, 'اتنين'], [3, '٣']];
+  var QTY = [[0.5, 'نصف'], [1, 'واحد'], [1.5, 'واحد ونصف'], [2, 'اثنان'], [3, '٣']];
 
   function row(it) {
     var b = d.createElement('button'); b.className = 'qa-item';
@@ -202,10 +202,10 @@
     act.append(add, cancel); $res.append(act);
   }
   function manual(text) {
-    $res.innerHTML = '<div class="qa-item" style="cursor:default;grid-template-columns:1fr"><div><div class="nm">أضيفي «' + A.esc(text) + '» يدوي</div><div class="sub">لو عارفة السعرات تقريباً اكتبيها</div>' +
+    $res.innerHTML = '<div class="qa-item" style="cursor:default;grid-template-columns:1fr"><div><div class="nm">أضيفي «' + A.esc(text) + '» يدويًا</div><div class="sub">إن كنت تعرفين السعرات تقريبًا فاكتبيها</div>' +
       '<div class="row" style="margin-top:8px"><input id="qaKc" type="number" inputmode="numeric" placeholder="السعرات" style="width:110px"><button class="btn sm" id="qaMan">أضيفي</button></div></div></div>';
     d.getElementById('qaMan').onclick = function () {
-      var kc = parseFloat(d.getElementById('qaKc').value); if (!kc || kc < 0 || kc > 3000) { A.toast('اكتبي السعرات رقم'); return; }
+      var kc = parseFloat(d.getElementById('qaKc').value); if (!kc || kc < 0 || kc > 3000) { A.toast('اكتبي السعرات رقمًا'); return; }
       save({ id: 'manual', name: text, portion: 'إدخال يدوي', n: kc, p: 0, c: 0, f: 0, img: 'fork_and_knife_with_plate', tag: null }, 1);
     };
   }
@@ -215,12 +215,12 @@
     ex.push({ id: it.id, name: it.name, portion: it.portion, q: q, n: it.n, p: it.p, c: it.c, f: it.f, img: it.img, tag: it.tag || null, amt: amt || null, t: String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') });
     day.extras = ex; A.saveDay(Object.assign({}, day));
     $q.value = ''; $res.innerHTML = '';
-    A.toast('اتسجلت: ' + it.name); A.refresh();
+    A.toast('تم تسجيل: ' + it.name); A.refresh();
   }
   function render(day) {
     var ex = day.extras || [];
     $log.hidden = !ex.length;
-    $log.innerHTML = ex.length ? '<div class="eyebrow">اتسجل النهارده برا الوجبات: ' + A.ar(Math.round(ex.reduce(function (s, x) { return s + x.n * (x.q || 1); }, 0)), 0) + ' سعرة</div>' +
+    $log.innerHTML = ex.length ? '<div class="eyebrow">المسجّل اليوم خارج الوجبات: ' + A.ar(Math.round(ex.reduce(function (s, x) { return s + x.n * (x.q || 1); }, 0)), 0) + ' سعرة</div>' +
       ex.map(function (x, i) { return '<div class="qa-row">' + A.img(x.img || 'fork_and_knife_with_plate', 'sm') + '<span>' + A.esc(x.name) + (x.amt ? ' – ' + A.esc(x.amt) : x.q !== 1 ? ' × ' + A.ar(x.q) : '') + ' <span class="note">' + (x.t || '') + '</span></span><span class="num note">' + A.ar(Math.round(x.n * (x.q || 1)), 0) + '</span><button class="x" data-i="' + i + '" aria-label="امسحي ' + A.esc(x.name) + '">×</button></div>'; }).join('') : '';
     $log.querySelectorAll('.x').forEach(function (b) { b.onclick = function () { var dd = A.dayOf(A.cur); var e2 = (dd.extras || []).slice(); e2.splice(+b.dataset.i, 1); dd.extras = e2; A.saveDay(Object.assign({}, dd)); A.refresh(); }; });
   }
@@ -231,7 +231,7 @@
       var v = $q.value.trim(); $res.innerHTML = ''; if (!v) return;
       var r = search(v);
       r.forEach(function (it) { var b = row(it); b.onclick = function () { pick(it); }; $res.append(b); });
-      var m = d.createElement('button'); m.className = 'btn ghost sm'; m.textContent = r.length ? 'مش لاقية اللي أكلته؟ أضيفيه يدوي' : 'مش موجود، أضيفيه يدوي';
+      var m = d.createElement('button'); m.className = 'btn ghost sm'; m.textContent = r.length ? 'لم تجدي ما تناولته؟ أضيفيه يدويًا' : 'غير موجود، أضيفيه يدويًا';
       m.onclick = function () { manual(v); }; $res.append(m);
     }, 150);
   });
