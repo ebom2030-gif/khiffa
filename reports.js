@@ -36,6 +36,16 @@
     '.rp-top{display:flex;flex-wrap:wrap;gap:6px}.rp-top span{display:inline-flex;align-items:center;gap:4px;background:var(--bg);border-radius:999px;padding:3px 10px 3px 6px;font-size:12.5px}.rp-top .fimg{width:20px;height:20px}' +
     '.rp-mbar{display:flex;height:12px;border-radius:8px;overflow:hidden;background:var(--line);margin-top:6px}.rp-mbar i{display:block;height:100%}' +
     '.rp-act{display:flex;gap:8px;flex-wrap:wrap}' +
+    /* KPI dashboard row */
+    '.rp-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}' +
+    '@media (min-width:640px){.rp-kpis{grid-template-columns:repeat(6,minmax(0,1fr))}}' +
+    '.rp-kpi{background:var(--surface);border-radius:18px;box-shadow:var(--shadow);padding:10px 12px;min-width:0;position:relative;overflow:hidden}' +
+    '.rp-kpi::before{content:"";position:absolute;inset-inline-start:0;top:12px;bottom:12px;width:3px;border-radius:3px;background:var(--kc,var(--mint))}' +
+    '.rp-kpi .l{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '.rp-kpi .v{font-size:20px;font-weight:700;line-height:1.25;color:var(--ink);white-space:nowrap}.rp-kpi .v small{font-size:11.5px;font-weight:500;color:var(--muted);margin-inline-start:2px}' +
+    '.rp-kpi .s{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '.rp-kpi .t{display:inline-flex;align-items:center;gap:2px;font-size:11px;font-weight:700;border-radius:999px;padding:0 6px;margin-top:3px;background:var(--bg);color:var(--muted)}' +
+    '.rp-kpi .t.up{color:var(--mint);background:var(--mint-soft)}.rp-kpi .t.dn{color:var(--bad);background:var(--peach-soft)}' +
     '@media print{nav.tabs,header,.rp-act,.rp-nav button{display:none!important}.card{box-shadow:none;border:1px solid #ddd}}';
   d.head.appendChild(css);
 
@@ -92,6 +102,52 @@
     W.best = best[0]; W.worst = best.length > 1 ? best[best.length - 1] : null;
     var wts = keys.map(function (x) { return A.dayOf(x).weight; }).filter(Boolean); W.w0 = wts[0]; W.w1 = wts[wts.length - 1];
     return W;
+  }
+
+  /* ---------- KPIs (shared by the on-screen dashboard row and the printed report) ---------- */
+  function lastWeight(k) {
+    var best = null;
+    (A.data.days || []).forEach(function (x) { if (x.weight && x.date <= k && (!best || x.date > best.date)) best = { date: x.date, w: +x.weight }; });
+    (A.data.inbody || []).forEach(function (x) { if (x.weight && x.date <= k && (!best || x.date > best.date)) best = { date: x.date, w: +x.weight }; });
+    return best;
+  }
+  function kpis(mode, k) {
+    var st = A.settings(), LT = A.levelTotals(st.level), K;
+    if (mode === 'day') {
+      var a = analyzeDay(k);
+      K = { mode: mode, start: k, end: k, a: a, logged: a.logged, score: a.score, kcal: a.n, kcalT: a.target, adh: Math.round(a.done / 5 * 100), prot: a.p, protT: a.LT.p, water: a.water, waterT: a.waterT, c: a.c, f: a.f };
+    } else {
+      var W = analyzeWeek(k), end = W.keys[6] > A.TODAY ? A.TODAY : W.keys[6];
+      K = { mode: mode, start: W.keys[0], end: end, W: W, logged: W.logged.length > 0, score: W.score, kcal: W.n, kcalT: st.level, adh: W.adherence, prot: W.p, protT: LT.p, water: W.water, waterT: st.water, c: W.c, f: W.f };
+    }
+    var b1 = lastWeight(K.end), b0 = lastWeight(A.addDays(K.start, -1));
+    K.w1 = b1 ? b1.w : null; K.w0 = b0 ? b0.w : null;
+    // change only when a weight was recorded inside the period and there is an earlier one to compare with
+    K.wchg = b1 && b0 && b1.date >= K.start ? Math.round((b1.w - b0.w) * 10) / 10 : null;
+    K.LT = LT;
+    return K;
+  }
+  function prevKpis(mode, k) { return mode === 'day' ? kpis('day', A.addDays(k, -1)) : kpis('week', A.addDays(weekOf(k)[0], -1)); }
+  // each: [label, value, unit, sub, delta, good(boolean|null), accent]
+  function kpiList(K, P) {
+    var has = P && P.logged && K.logged, r1 = function (v) { return Math.round(v * 10) / 10; };
+    var kd = has ? Math.abs(K.kcal - K.kcalT) - Math.abs(P.kcal - P.kcalT) : 0;
+    return [
+      ['التقييم', ar(K.score), '/100', K.mode === 'day' ? 'تقييم اليوم' : 'متوسط الأسبوع', has ? K.score - P.score : null, has ? K.score >= P.score : null, K.score >= 80 ? 'var(--mint)' : K.score >= 55 ? '#d4a13a' : 'var(--peach)'],
+      [K.mode === 'day' ? 'السعرات' : 'متوسط السعرات', K.logged ? ar(Math.round(K.kcal), 0) : '—', '', 'الهدف ' + ar(K.kcalT, 0), has ? Math.round(K.kcal - P.kcal) : null, has ? kd <= 0 : null, K.kcal > K.kcalT * 1.1 ? 'var(--bad)' : 'var(--mint)'],
+      ['الالتزام بالوجبات', ar(K.adh), '%', K.mode === 'day' ? ar(Math.round(K.adh / 20)) + ' من 5 وجبات' : 'من الوجبات المخططة', has ? K.adh - P.adh : null, has ? K.adh >= P.adh : null, 'var(--mint)'],
+      [K.mode === 'day' ? 'البروتين' : 'متوسط البروتين', ar(Math.round(K.prot), 0), 'ج', 'الهدف ' + ar(Math.round(K.protT), 0) + ' ج', has ? Math.round(K.prot - P.prot) : null, has ? K.prot >= P.prot : null, 'var(--peach)'],
+      [K.mode === 'day' ? 'الماء' : 'متوسط الماء', ar(r1(K.water)), 'زجاجة', 'الهدف ' + ar(K.waterT) + ' × 330 مل', has ? r1(K.water - P.water) : null, has ? K.water >= P.water : null, 'var(--water)'],
+      ['تغيّر الوزن', K.wchg == null ? '—' : (K.wchg > 0 ? '+' : K.wchg < 0 ? '−' : '') + ar(Math.abs(K.wchg)), K.wchg == null ? '' : 'كجم', K.w1 != null ? 'الحالي ' + ar(K.w1) + ' كجم' : 'لا يوجد وزن مسجّل', K.wchg ? K.wchg : null, K.wchg ? K.wchg < 0 : null, '#8a6bbf']
+    ];
+  }
+  function kpiRow(K, P) {
+    return '<div class="rp-kpis hm-wide">' + kpiList(K, P).map(function (x, i) {
+      var t = '';
+      if (x[4] != null && x[4] !== 0) t = '<span class="t ' + (x[5] ? 'up' : 'dn') + ' num">' + (x[4] > 0 ? '▲' : '▼') + ' ' + ar(Math.abs(x[4])) + '</span>';
+      else if (x[4] === 0) t = '<span class="t num">= ' + (i === 5 ? '' : 'كالسابق') + '</span>';
+      return '<div class="rp-kpi" style="--kc:' + x[6] + '"><div class="l">' + x[0] + '</div><div class="v num">' + x[1] + (x[2] ? '<small>' + x[2] + '</small>' : '') + '</div><div class="s num">' + x[3] + '</div>' + t + '</div>';
+    }).join('') + '</div>';
   }
 
   /* ---------- suggestions ---------- */
@@ -173,8 +229,7 @@
   function renderDay() {
     var a = analyzeDay(R.day), sugs = daySuggestions(a), lim = [];
     a.meals.forEach(function (mm) { if (mm.s.done) (mm.s.tags || []).forEach(function (t) { var l = D.LIMITS.find(function (x) { return x[0] === t; }); if (l) lim.push(l[1]); }); });
-    var html = '<div class="card hm-wide"><div class="rp-score">' + ring(a.score) + '<div><div class="rp-verdict">' + (a.k === A.TODAY && new Date().getHours() < 21 ? 'اليوم لم ينتهِ بعد' : verdict(a.score, a.logged)) + '</div><div class="note">' + A.fmt(a.k, { weekday: 'long', day: 'numeric', month: 'long' }) + '</div>' +
-      '<div class="rp-kv"><div>السعرات<b class="num">' + ar(Math.round(a.n), 0) + ' / ' + ar(a.target, 0) + '</b></div><div>الوجبات<b class="num">' + ar(a.done) + ' من 5</b></div><div>البروتين<b class="num">' + ar(Math.round(a.p), 0) + ' / ' + ar(Math.round(a.LT.p), 0) + ' ج</b></div><div>الماء<b class="num">' + ar(a.water) + ' / ' + ar(a.waterT) + '</b></div></div></div></div>' +
+    var html = kpiRow(kpis('day', R.day), prevKpis('day', R.day)) + '<div class="card hm-wide"><div class="rp-score">' + ring(a.score) + '<div><div class="rp-verdict">' + (a.k === A.TODAY && new Date().getHours() < 21 ? 'اليوم لم ينتهِ بعد' : verdict(a.score, a.logged)) + '</div><div class="note">' + A.fmt(a.k, { weekday: 'long', day: 'numeric', month: 'long' }) + ' · المقارنة مع اليوم السابق</div></div></div>' +
       (a.n ? macroBar(a.p, a.c, a.f) : '') + '</div>' +
       '<div class="card"><h2>اقتراحات</h2>' + sugList(sugs) + '</div>' +
       '<div class="card rp-clip"><h2>تفاصيل الوجبات</h2><table class="rp-tbl rp-meals"><thead><tr><th>الوجبة</th><th>ما تم تناوله</th><th>سعرات</th><th></th></tr></thead><tbody>' +
@@ -188,9 +243,8 @@
   function renderWeek() {
     var W = analyzeWeek(R.week), P = analyzeWeek(A.addDays(weekOf(R.week)[0], -1)), sugs = weekSuggestions(W, P), st = A.settings();
     var top = Object.keys(W.foods).sort(function (a, b) { return W.foods[b] - W.foods[a]; }).slice(0, 8);
-    var html = '<div class="card hm-wide"><div class="rp-score">' + ring(W.score) + '<div><div class="rp-verdict">' + verdict(W.score, W.logged.length) + '</div><div class="note">' + A.fmt(W.keys[0], { day: 'numeric', month: 'long' }) + ' – ' + A.fmt(W.keys[6], { day: 'numeric', month: 'long' }) + (P.logged.length ? ' · الأسبوع الماضي ' + ar(P.score) : '') + '</div>' +
-      '<div class="rp-kv"><div>متوسط السعرات<b class="num">' + (W.logged.length ? ar(Math.round(W.n), 0) : '—') + ' / ' + ar(st.level, 0) + '</b></div><div>الالتزام بالوجبات<b class="num">' + ar(W.adherence) + '%</b></div><div>متوسط البروتين<b class="num">' + ar(Math.round(W.p), 0) + ' ج</b></div><div>متوسط الماء<b class="num">' + ar(Math.round(W.water * 10) / 10) + ' زجاجات</b></div>' +
-      (W.w0 && W.w1 && W.w0 !== W.w1 ? '<div>الوزن<b class="num">' + ar(W.w0) + ' ← ' + ar(W.w1) + '</b></div>' : '') + '<div>أيام مسجّلة<b class="num">' + ar(W.logged.length) + ' من ' + ar(W.days.length) + '</b></div></div></div></div>' +
+    var html = kpiRow(kpis('week', R.week), prevKpis('week', R.week)) + '<div class="card hm-wide"><div class="rp-score">' + ring(W.score) + '<div><div class="rp-verdict">' + verdict(W.score, W.logged.length) + '</div><div class="note">' + A.fmt(W.keys[0], { day: 'numeric', month: 'long' }) + ' – ' + A.fmt(W.keys[6], { day: 'numeric', month: 'long' }) + (P.logged.length ? ' · الأسبوع الماضي ' + ar(P.score) : '') + '</div>' +
+      '<div class="rp-kv"><div>أيام مسجّلة<b class="num">' + ar(W.logged.length) + ' من ' + ar(W.days.length) + '</b></div>' + (W.w0 && W.w1 && W.w0 !== W.w1 ? '<div>الوزن<b class="num">' + ar(W.w0) + ' ← ' + ar(W.w1) + '</b></div>' : '') + '</div></div></div>' +
       (W.logged.length ? macroBar(W.p, W.c, W.f) : '') + '</div>' +
       '<div class="card"><h2>اقتراحات الأسبوع</h2>' + sugList(sugs) + '</div>' +
       '<div class="card rp-clip"><h2>يوم بيوم</h2><table class="rp-tbl rp-days"><thead><tr><th>اليوم</th><th>سعرات</th><th>وجبات</th><th>ماء</th><th>إضافي</th><th>تقييم</th></tr></thead><tbody>' +
@@ -230,10 +284,15 @@
     d.getElementById('rpNext').onclick = function () { if (isDay) R.day = A.addDays(R.day, 1); else R.week = A.addDays(weekOf(R.week)[6], 1); if (R.week > A.TODAY) R.week = A.TODAY; render(); };
     d.getElementById('rpCopy').onclick = function () { var done = function () { A.toast('تم نسخ التقرير'); }; if (navigator.clipboard) navigator.clipboard.writeText(body.text).then(done, function () { A.toast('تعذّر النسخ'); }); };
     var sh = d.getElementById('rpShare'); if (sh) sh.onclick = function () { navigator.share({ title: 'تقرير خفّة', text: body.text }).catch(function () {}); };
-    d.getElementById('rpPrint').onclick = function () { window.print(); };
+    d.getElementById('rpPrint').onclick = function () {
+      if (window.KHIFFA_PRINT) window.KHIFFA_PRINT.print(R.mode, isDay ? R.day : R.week); else window.print();
+    };
     sec.querySelectorAll('tr.click').forEach(function (tr) { tr.onclick = function () { R.mode = 'day'; R.day = tr.dataset.k; render(); window.scrollTo(0, 0); }; });
   }
 
+  // shared API for print.js (A4 report)
+  window.KHIFFA_REPORTS = { analyzeDay: analyzeDay, analyzeWeek: analyzeWeek, weekOf: weekOf, daySuggestions: daySuggestions, weekSuggestions: weekSuggestions,
+    verdict: verdict, kpis: kpis, prevKpis: prevKpis, kpiList: kpiList, lastWeight: lastWeight, DAYN: DAYN, dow: dow };
   (window.KHIFFA_HOOKS = window.KHIFFA_HOOKS || []).push(function () { render(); });
   render();
 })();
