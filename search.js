@@ -119,7 +119,7 @@
   var ITEMS = COMMON.map(function (r, i) { return { id: 'c' + i, name: r[0], portion: r[1], n: r[2], p: r[3], c: r[4], f: r[5], key: norm(r[0] + ' ' + (r[6] || '')), img: r[7], tag: r[8] || null }; });
   Object.keys(D.FOODS).forEach(function (k) {
     var f = D.FOODS[k];
-    ITEMS.push({ id: 'f-' + k, name: f.name, portion: 'حصة: ' + f.grams + (f.g === 'M' ? ' مل' : ' ج') + (f.unit ? ' (' + f.unit + ')' : ''), n: f.n, p: f.p, c: f.c, f: f.f, key: norm(f.name), img: f.img, tag: f.limit });
+    ITEMS.push({ id: 'f-' + k, name: f.name, portion: 'حصة: ' + f.grams + (f.g === 'M' ? ' مل' : ' ج') + (f.unit ? ' (' + f.unit + ')' : ''), n: f.n, p: f.p, c: f.c, f: f.f, key: norm(f.name), img: f.img, tag: f.limit, grams: f.grams, ml: f.g === 'M', pcs: (D.PIECES || {})[k] });
   });
 
   function search(q) {
@@ -177,12 +177,27 @@
     var sel = row(it); sel.classList.add('sel'); sel.disabled = true; $res.append(sel);
     var q = d.createElement('div'); q.className = 'qa-qty'; var chosen = 1;
     q.innerHTML = '<span class="note">الكمية:</span>' + QTY.map(function (x) { return '<button data-q="' + x[0] + '" aria-pressed="' + (x[0] === 1) + '">' + x[1] + '</button>'; }).join('');
-    q.querySelectorAll('button').forEach(function (b) { b.onclick = function () { chosen = +b.dataset.q; q.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); add.textContent = 'أضيفي (' + A.ar(Math.round(it.n * chosen), 0) + ' سعرة)'; }; });
+    var amt = '';
+    var upd = function () { add.textContent = 'أضيفي (' + A.ar(Math.round(it.n * chosen), 0) + ' سعرة)'; };
+    q.querySelectorAll('button').forEach(function (b) { b.onclick = function () { chosen = +b.dataset.q; amt = ''; q.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); q.querySelectorAll('input').forEach(function (x) { x.value = ''; }); upd(); }; });
+    // exact amount typed by hand: grams / ml, pieces, or a multiple of the portion — calories follow automatically
+    var ins = it.grams ? [['g', it.ml ? 'الكمية بالمل' : 'الوزن بالجرام']] : [['x', 'عدد الحصص (مثلاً 1.5)']];
+    if (it.pcs) ins.push(['pc', 'عدد ال' + it.pcs[3]]);
+    q.insertAdjacentHTML('beforeend', '<div style="display:flex;gap:6px;flex-wrap:wrap;width:100%">' + ins.map(function (x) { return '<input class="qa-in" data-u="' + x[0] + '" type="number" inputmode="decimal" min="0" step="any" placeholder="' + x[1] + '" style="width:150px">'; }).join('') + '</div>');
+    q.querySelectorAll('.qa-in').forEach(function (inp) { inp.oninput = function () {
+      var v = parseFloat(inp.value); if (!(v > 0)) return;
+      q.querySelectorAll('.qa-in').forEach(function (x) { if (x !== inp) x.value = ''; });
+      q.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+      var u = inp.dataset.u;
+      chosen = u === 'g' ? v / it.grams : u === 'pc' ? v / it.pcs[0] : v;
+      amt = u === 'g' ? A.ar(v) + (it.ml ? ' مل' : ' جم') : u === 'pc' ? A.ar(v) + ' ' + (v === 1 ? it.pcs[1] : v === 2 ? it.pcs[2] : it.pcs[3]) : '';
+      upd();
+    }; });
     $res.append(q);
     var act = d.createElement('div'); act.className = 'mact';
     var add = d.createElement('button'); add.className = 'btn'; add.textContent = 'أضيفي (' + A.ar(it.n, 0) + ' سعرة)';
     var cancel = d.createElement('button'); cancel.className = 'btn ghost'; cancel.textContent = 'إلغاء';
-    add.onclick = function () { save(it, chosen); };
+    add.onclick = function () { save(it, Math.round(chosen * 1000) / 1000, amt); };
     cancel.onclick = function () { $res.innerHTML = ''; $q.value = ''; };
     act.append(add, cancel); $res.append(act);
   }
@@ -194,10 +209,10 @@
       save({ id: 'manual', name: text, portion: 'إدخال يدوي', n: kc, p: 0, c: 0, f: 0, img: 'fork_and_knife_with_plate', tag: null }, 1);
     };
   }
-  function save(it, q) {
+  function save(it, q, amt) {
     var day = A.dayOf(A.cur); var now = new Date();
     var ex = (day.extras || []).slice();
-    ex.push({ id: it.id, name: it.name, portion: it.portion, q: q, n: it.n, p: it.p, c: it.c, f: it.f, img: it.img, tag: it.tag || null, t: String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') });
+    ex.push({ id: it.id, name: it.name, portion: it.portion, q: q, n: it.n, p: it.p, c: it.c, f: it.f, img: it.img, tag: it.tag || null, amt: amt || null, t: String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') });
     day.extras = ex; A.saveDay(Object.assign({}, day));
     $q.value = ''; $res.innerHTML = '';
     A.toast('اتسجلت: ' + it.name); A.refresh();
@@ -206,7 +221,7 @@
     var ex = day.extras || [];
     $log.hidden = !ex.length;
     $log.innerHTML = ex.length ? '<div class="eyebrow">اتسجل النهارده برا الوجبات: ' + A.ar(Math.round(ex.reduce(function (s, x) { return s + x.n * (x.q || 1); }, 0)), 0) + ' سعرة</div>' +
-      ex.map(function (x, i) { return '<div class="qa-row">' + A.img(x.img || 'fork_and_knife_with_plate', 'sm') + '<span>' + A.esc(x.name) + (x.q !== 1 ? ' × ' + A.ar(x.q) : '') + ' <span class="note">' + (x.t || '') + '</span></span><span class="num note">' + A.ar(Math.round(x.n * (x.q || 1)), 0) + '</span><button class="x" data-i="' + i + '" aria-label="امسحي ' + A.esc(x.name) + '">×</button></div>'; }).join('') : '';
+      ex.map(function (x, i) { return '<div class="qa-row">' + A.img(x.img || 'fork_and_knife_with_plate', 'sm') + '<span>' + A.esc(x.name) + (x.amt ? ' – ' + A.esc(x.amt) : x.q !== 1 ? ' × ' + A.ar(x.q) : '') + ' <span class="note">' + (x.t || '') + '</span></span><span class="num note">' + A.ar(Math.round(x.n * (x.q || 1)), 0) + '</span><button class="x" data-i="' + i + '" aria-label="امسحي ' + A.esc(x.name) + '">×</button></div>'; }).join('') : '';
     $log.querySelectorAll('.x').forEach(function (b) { b.onclick = function () { var dd = A.dayOf(A.cur); var e2 = (dd.extras || []).slice(); e2.splice(+b.dataset.i, 1); dd.extras = e2; A.saveDay(Object.assign({}, dd)); A.refresh(); }; });
   }
 
