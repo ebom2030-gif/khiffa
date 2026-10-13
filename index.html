@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>خفّة – Khiffa</title>
-<meta name="description" content="متابعة يومية لنظامك الغذائي: البدائل، الماية، الوزن، وقياسات InBody.">
+<meta name="description" content="متابعة يومية لنظامك الغذائي: البدائل، الماء، الوزن، وقياسات InBody.">
 <meta name="theme-color" content="#2f9e7a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="خفّة">
@@ -245,7 +245,7 @@ tr.hl td{font-weight:700;color:var(--mint)}
     <div class="daynav">
       <button class="ghost btn sm" id="dPrev">‹ أمس</button>
       <strong id="dLabel">اليوم</strong>
-      <button class="ghost btn sm" id="dNext">بكرة ›</button>
+      <button class="ghost btn sm" id="dNext">غدًا ›</button>
     </div>
 
     <div id="meals" style="display:flex;flex-direction:column;gap:14px"></div>
@@ -253,16 +253,16 @@ tr.hl td{font-weight:700;color:var(--mint)}
     <div class="card">
       <h2>حدود الأسبوع</h2>
       <div id="limits" class="limits"></div>
-      <p class="note" style="margin:8px 0 0">بتتحسب من الوجبات اللي علّمتي عليها، من السبت للجمعة.</p>
+      <p class="note" style="margin:8px 0 0">تُحتسب من الوجبات المُعلَّمة كمُنجزة، من السبت إلى الجمعة.</p>
     </div>
 
     <div class="card">
-      <h2>الماية <span class="num note" id="waterTxt"></span></h2>
+      <h2>الماء <span class="num note" id="waterTxt"></span></h2>
       <div class="cups" id="cups"></div>
     </div>
 
     <div class="card">
-      <h2>وزن الصبح</h2>
+      <h2>وزن الصباح</h2>
       <div class="row">
         <input id="wIn" type="number" step="0.1" inputmode="decimal" placeholder="مثلاً 88.4" style="width:130px">
         <span class="note">كجم</span>
@@ -273,7 +273,7 @@ tr.hl td{font-weight:700;color:var(--mint)}
 
     <div class="card">
       <h2>ملاحظة اليوم</h2>
-      <textarea id="noteIn" rows="2" placeholder="جوع، مناسبة، تمرين، أي حاجة حصلت النهارده" style="width:100%"></textarea>
+      <textarea id="noteIn" rows="2" placeholder="جوع، مناسبة، تمرين، أي شيء حدث اليوم" style="width:100%"></textarea>
     </div>
   </section>
 
@@ -281,16 +281,16 @@ tr.hl td{font-weight:700;color:var(--mint)}
   <section class="view" id="v-ideas" hidden>
     <div class="card">
       <h2>خطة الأسبوع</h2>
-      <p class="note" style="margin-top:0">خفّة يقترح وجبات ٧ أيام متنوعة حسب نظامك وحدود الأسبوع، ويطلعلك قائمة التسوق. الوجبات اللي اخترتيها بنفسك ما بتتغيرش.</p>
+      <p class="note" style="margin-top:0">تقترح خفّة وجبات متنوعة لـ٧ أيام وفق نظامك وحدود الأسبوع، وتُعدّ قائمة التسوق. الوجبات التي اخترتها بنفسك لا تتغير.</p>
       <div class="mact">
-        <button class="btn" id="genWeek">اقترحي أسبوع</button>
+        <button class="btn" id="genWeek">اقترحي أسبوعًا</button>
         <button class="btn ghost" id="clearWeek">امسحي الاقتراحات</button>
       </div>
       <div class="week" id="week" style="margin-top:12px"></div>
     </div>
     <div class="card" id="shopCard" hidden>
       <h2>قائمة التسوق</h2>
-      <p class="note" style="margin-top:0">مجموع الكميات بعد الطبخ لخطة الأيام الجاية. علّمي على اللي اشتريتيه.</p>
+      <p class="note" style="margin-top:0">مجموع الكميات بعد الطبخ لخطة الأيام القادمة. ضعي علامة على ما اشتريته.</p>
       <div class="shop" id="shop"></div>
     </div>
     <div class="card">
@@ -310,7 +310,7 @@ tr.hl td{font-weight:700;color:var(--mint)}
     <div class="card"><h2>التطور بين القياسات</h2><div id="charts"></div></div>
     <div class="card">
       <h2>مقاس الوسط والورك</h2>
-      <p class="note" style="margin-top:0">مرة في الأسبوع، الصبح، بالشريط على مستوى السُّرة وأعرض نقطة في الورك.</p>
+      <p class="note" style="margin-top:0">مرة أسبوعيًا صباحًا، بشريط القياس عند مستوى السُّرة وعند أعرض نقطة في الورك.</p>
       <form class="form" id="mForm">
         <label>التاريخ<input id="m-date" type="date" required></label><span></span>
         <label>الوسط (سم)<input id="m-waist" type="number" step="0.5" required></label>
@@ -346,7 +346,7 @@ tr.hl td{font-weight:700;color:var(--mint)}
     <div class="card">
       <h2>توزيع الحصص على الوجبات</h2>
       <div class="tbl"><table class="xtbl" id="xtbl"></table></div>
-      <p class="note" style="margin-bottom:0">الأرقام عدد الحصص. أي حصة تتبدل بأي صنف من نفس المجموعة، والكمية بتتحسب لوحدها.</p>
+      <p class="note" style="margin-bottom:0">الأرقام تمثل عدد الحصص. يمكن استبدال أي حصة بأي صنف من المجموعة نفسها، وتُحسب الكمية تلقائيًا.</p>
     </div>
     <div class="card">
       <h2>تفضيلات الأكل</h2>
@@ -354,7 +354,7 @@ tr.hl td{font-weight:700;color:var(--mint)}
         <button class="fchip" id="fGluten" aria-pressed="false">بدون جلوتين</button>
         <button class="fchip" id="fLactose" aria-pressed="false">بدون لاكتوز</button>
       </div>
-      <p class="note" style="margin-bottom:0">بتخفي الأصناف والوجبات اللي فيها جلوتين أو لاكتوز من كل الاختيارات.</p>
+      <p class="note" style="margin-bottom:0">تُخفي الأصناف والوجبات التي تحتوي على الجلوتين أو اللاكتوز من جميع الخيارات.</p>
     </div>
     <div class="card">
       <h2>مقارنة مع InBody</h2>
@@ -364,16 +364,16 @@ tr.hl td{font-weight:700;color:var(--mint)}
             <option value="1.2">قليل جداً (مكتب بدون رياضة)</option>
             <option value="1.375">خفيف (رياضة ١–٣ أيام)</option>
             <option value="1.55">متوسط (رياضة ٣–٥ أيام)</option>
-            <option value="1.725">عالي (رياضة يومية)</option>
+            <option value="1.725">عالٍ (رياضة يومية)</option>
           </select></label>
-        <label>هدف الماية (زجاجات 330 مل)<input id="s-water" type="number" min="4" max="16"></label>
+        <label>هدف الماء (زجاجات 330 مل)<input id="s-water" type="number" min="4" max="16"></label>
       </div>
       <table style="margin-top:14px" id="calcTbl"></table>
     </div>
     <div class="card"><h2>دليل البدائل</h2><div id="guide" style="display:flex;flex-direction:column;gap:14px"></div></div>
-    <div class="card"><h2>مسموح براحتك</h2><ul class="tips" id="free"></ul></div>
+    <div class="card"><h2>مسموح بلا حدود</h2><ul class="tips" id="free"></ul></div>
     <div class="card"><h2>إرشادات</h2><ul class="tips" id="tips"></ul>
-      <p class="disclaim" style="margin-top:14px">النظام مبني على قوائم البدائل الغذائية القياسية، وقيم السعرات تقريبية. أي تغيير في مستوى السعرات راجعيه مع أخصائية التغذية.</p>
+      <p class="disclaim" style="margin-top:14px">النظام مبني على قوائم البدائل الغذائية القياسية، وقيم السعرات تقريبية. وأي تغيير في مستوى السعرات يُراجَع مع أخصائية التغذية.</p>
     </div>
     <div class="card"><h2>الحساب</h2><p class="note" id="acct"></p><button class="btn ghost" id="logout">تسجيل الخروج</button></div>
   </section>
