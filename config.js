@@ -1,7 +1,7 @@
 ['https://images.unsplash.com', 'https://cdn.jsdelivr.net'].forEach(function (h) { var l = document.createElement('link'); l.rel = 'preconnect'; l.href = h; document.head.appendChild(l); });
 // رابط Apps Script (Khiffa API على حساب eb.om2030)
 window.KHIFFA_CONFIG = {
-  ONESIGNAL_APP_ID: '', // App ID من OneSignal (مش سري) — الإشعارات بتشتغل لما يتحط
+  ONESIGNAL_APP_ID: '9d88c76a-d22e-4a5d-aa49-df1fad891feb', // App ID من OneSignal (مش سري) — الإشعارات بتشتغل لما يتحط
   API_URL: 'https://script.google.com/macros/s/AKfycbwdusNK6VAk767_NkD5Bsvcqy-rYu1p-Pb_Hb6iyoAa04BlVoyC73kIyhdOCZ1kB3hGhQ/exec'
 };
 // الهوية والأيقونات + البحث عن الأكل + الصفحة الرئيسية + زرار التثبيت
