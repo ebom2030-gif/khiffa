@@ -228,7 +228,7 @@
         '</div>' +
         '<div class="hm-main"><div class="hm-ring"><svg viewBox="0 0 140 140"><circle cx="70" cy="70" r="' + R + '" fill="none" stroke="var(--surface)" stroke-width="13"/><circle class="fg" cx="70" cy="70" r="' + R + '" fill="none" stroke="' + (overT ? 'var(--warn)' : 'var(--mint)') + '" stroke-width="13" stroke-linecap="round" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + C.toFixed(1) + '" data-o="' + (C * (1 - ringP)).toFixed(1) + '"/></svg>' +
           '<div class="c"><span class="big num">' + ar(Math.round(tt.n), 0) + '</span><span class="sm">من ' + ar(target, 0) + ' سعرة</span></div></div>' +
-          '<div><div class="hm-left">' + (left >= 0 ? 'فاضل <b class="num">' + ar(left, 0) + '</b> سعرة' : 'زيادة <b class="num" style="color:var(--warn)">' + ar(-left, 0) + '</b> سعرة') + '</div>' +
+          '<div><div class="hm-left">' + (left >= 0 ? 'فاضل <b class="num">' + ar(left, 0) + '</b> سعرة' : 'زيادة <b class="num" style="color:var(--warn)" dir="ltr">-' + ar(-left, 0) + '</b> سعرة') + '</div>' +
             macro('بروتين', tt.p, LT.p, 'var(--peach)') + macro('نشويات', tt.c, LT.c, '#d4a13a') + macro('دهون', tt.f, LT.f, '#8a6bbf') + '</div></div>' +
         '<div class="hm-water">' + A.img('droplet') + '<div class="t">ماية <b class="num">' + ar(today.water || 0) + '</b> من ' + ar(st.water) + ' أكواب' + bar(pct(today.water || 0, st.water)) + '</div>' +
           '<button class="hm-rb" id="hmWm" aria-label="شيلي كوب">−</button><button class="hm-rb p" id="hmWp" aria-label="اشربي كوب">+</button></div>' +
