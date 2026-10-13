@@ -69,7 +69,7 @@
       comps.forEach(function (x) { out.foods[x.food.id] = (out.foods[x.food.id] || 0) + 1; });
     });
     (day.extras || []).forEach(function (x) { var q = x.q || 1; out.n += x.n * q; out.p += (x.p || 0) * q; out.c += (x.c || 0) * q; out.f += (x.f || 0) * q; out.extrasN += x.n * q; });
-    out.water = day.water || 0; out.target = st.level; out.LT = LT; out.waterT = st.water;
+    out.water = A.bottles(day); out.target = st.level; out.LT = LT; out.waterT = st.water;
     out.logged = out.done > 0 || (day.extras || []).length > 0;
     // score: meals 40 · calories close to target 30 · water 15 · protein 15
     var kd = Math.abs(out.n - out.target) / out.target;
@@ -114,7 +114,7 @@
       s.push(['w', 'warning', 'زيادة ' + ar(Math.round(-left), 0) + ' سعرة عن الهدف', (a.extrasN > 100 ? 'أغلبها من الأكل برا الوجبات (' + ar(Math.round(a.extrasN), 0) + ' سعرة). ' : big && big.t.n - big.tgt > 60 ? 'أكبر زيادة كانت في ' + big.m.t + ' (' + ar(Math.round(big.t.n), 0) + ' بدل حوالي ' + ar(Math.round(big.tgt), 0) + '). ' : '') + 'مش مشكلة، بكرة رجّعي للنظام ومتعوّضيش بالحرمان.']);
     }
     if (a.done >= 3 && a.p < a.LT.p * 0.75) s.push(['w', 'poultry_leg', 'البروتين ' + ar(Math.round(a.p), 0) + ' ج من ' + ar(Math.round(a.LT.p), 0), 'البروتين بيحافظ على العضل ويشبّع أكتر. زوّدي حصة دجاج أو سمك أو جبن قريش أو زبادي يوناني.']);
-    if (a.water < a.waterT * 0.7 && (!isToday || h >= 18)) s.push(['w', 'droplet', 'الماية ' + ar(a.water) + ' من ' + ar(a.waterT) + ' أكواب', 'خلّي كوباية جنبك وكوب قبل كل وجبة. العطش ساعات بيتفهم إنه جوع.']);
+    if (a.water < a.waterT * 0.7 && (!isToday || h >= 18)) s.push(['w', 'droplet', 'الماية ' + ar(a.water) + ' من ' + ar(a.waterT) + ' زجاجات 330 مل', 'خلّي زجاجة جنبك وزجاجة قبل كل وجبة. العطش ساعات بيتفهم إنه جوع.']);
     if (a.extrasN > 200) s.push(['w', 'popcorn', 'أكل برا الوجبات: ' + ar(Math.round(a.extrasN), 0) + ' سعرة', 'لو الجوع بيجي بين الوجبات، ضيفي خضار أو بروتين للسناك بدل الحاجات الجاهزة.']);
     if (a.score >= 85) s.push(['g', 'star', 'يوم ممتاز!', 'التزام بالوجبات والسعرات والماية. كده بالظبط.']);
     return s;
@@ -130,7 +130,7 @@
       if (W.logged.length >= 3 && skip >= Math.ceil(W.logged.length / 2)) s.push(['w', m.img, m.t + ' اتنسى ' + ar(skip) + ' من ' + ar(W.logged.length) + ' أيام', m.k.charAt(0) === 's' ? 'جهّزيه من بدري في علبة صغيرة. السناك بيمنع الجوع الكبير اللي بيوصّل للأكل الزيادة.' : 'الوجبة دي مهمة لتوزيع السعرات. لو مفيش وقت، اختاري وجبة جاهزة سريعة من القائمة.']);
     });
     if (W.p < LT.p * 0.8) s.push(['w', 'poultry_leg', 'متوسط البروتين ' + ar(Math.round(W.p), 0) + ' ج من ' + ar(Math.round(LT.p), 0), 'خلّي في كل وجبة رئيسية بروتين واضح: بيض، دجاج، سمك، تونة، جبن قريش، أو بقوليات.']);
-    if (W.water < st.water * 0.7) s.push(['w', 'droplet', 'متوسط الماية ' + ar(Math.round(W.water * 10) / 10) + ' أكواب في اليوم', 'الهدف ' + ar(st.water) + '. قسّميها: كوبين الصبح، كوب قبل كل وجبة، وكوبين بعد التمرين.']);
+    if (W.water < st.water * 0.7) s.push(['w', 'droplet', 'متوسط الماية ' + ar(Math.round(W.water * 10) / 10) + ' زجاجات في اليوم', 'الهدف ' + ar(st.water) + ' زجاجات 330 مل. قسّميها: كوبين الصبح، كوب قبل كل وجبة، وكوبين بعد التمرين.']);
     if (W.extras > 150) {
       var top = {}; W.days.forEach(function (x) { (x.day.extras || []).forEach(function (e) { top[e.name] = (top[e.name] || 0) + 1; }); });
       var tn = Object.keys(top).sort(function (a, b) { return top[b] - top[a]; })[0];
@@ -189,7 +189,7 @@
     var W = analyzeWeek(R.week), P = analyzeWeek(A.addDays(weekOf(R.week)[0], -1)), sugs = weekSuggestions(W, P), st = A.settings();
     var top = Object.keys(W.foods).sort(function (a, b) { return W.foods[b] - W.foods[a]; }).slice(0, 8);
     var html = '<div class="card hm-wide"><div class="rp-score">' + ring(W.score) + '<div><div class="rp-verdict">' + verdict(W.score, W.logged.length) + '</div><div class="note">' + A.fmt(W.keys[0], { day: 'numeric', month: 'long' }) + ' – ' + A.fmt(W.keys[6], { day: 'numeric', month: 'long' }) + (P.logged.length ? ' · الأسبوع اللي فات ' + ar(P.score) : '') + '</div>' +
-      '<div class="rp-kv"><div>متوسط السعرات<b class="num">' + (W.logged.length ? ar(Math.round(W.n), 0) : '—') + ' / ' + ar(st.level, 0) + '</b></div><div>الالتزام بالوجبات<b class="num">' + ar(W.adherence) + '%</b></div><div>متوسط البروتين<b class="num">' + ar(Math.round(W.p), 0) + ' ج</b></div><div>متوسط الماية<b class="num">' + ar(Math.round(W.water * 10) / 10) + ' أكواب</b></div>' +
+      '<div class="rp-kv"><div>متوسط السعرات<b class="num">' + (W.logged.length ? ar(Math.round(W.n), 0) : '—') + ' / ' + ar(st.level, 0) + '</b></div><div>الالتزام بالوجبات<b class="num">' + ar(W.adherence) + '%</b></div><div>متوسط البروتين<b class="num">' + ar(Math.round(W.p), 0) + ' ج</b></div><div>متوسط الماية<b class="num">' + ar(Math.round(W.water * 10) / 10) + ' زجاجات</b></div>' +
       (W.w0 && W.w1 && W.w0 !== W.w1 ? '<div>الوزن<b class="num">' + ar(W.w0) + ' ← ' + ar(W.w1) + '</b></div>' : '') + '<div>أيام متسجلة<b class="num">' + ar(W.logged.length) + ' من ' + ar(W.days.length) + '</b></div></div></div></div>' +
       (W.logged.length ? macroBar(W.p, W.c, W.f) : '') + '</div>' +
       '<div class="card"><h2>اقتراحات الأسبوع</h2>' + sugList(sugs) + '</div>' +
@@ -203,14 +203,14 @@
   }
   function dayText(a, sugs) {
     return 'تقرير خفّة اليومي – ' + A.fmt(a.k, { weekday: 'long', day: 'numeric', month: 'long' }) + '\n' +
-      'التقييم: ' + a.score + '/100 (' + verdict(a.score, a.logged) + ')\nالسعرات: ' + Math.round(a.n) + ' من ' + a.target + '\nالوجبات: ' + a.done + ' من 5\nالبروتين: ' + Math.round(a.p) + ' ج\nالماية: ' + a.water + ' أكواب\n\n' +
+      'التقييم: ' + a.score + '/100 (' + verdict(a.score, a.logged) + ')\nالسعرات: ' + Math.round(a.n) + ' من ' + a.target + '\nالوجبات: ' + a.done + ' من 5\nالبروتين: ' + Math.round(a.p) + ' ج\nالماية: ' + a.water + ' زجاجات\n\n' +
       a.meals.map(function (mm) { return (mm.s.done ? '✓ ' : '✗ ') + mm.m.t + ': ' + (mm.title || '—') + (mm.comps.length ? ' (' + Math.round(mm.t.n) + ' سعرة)' : ''); }).join('\n') +
       ((a.day.extras || []).length ? '\nبرا الوجبات: ' + a.day.extras.map(function (x) { return x.name + ' ' + Math.round(x.n * (x.q || 1)); }).join('، ') : '') +
       (sugs.length ? '\n\nاقتراحات:\n' + sugs.map(function (x) { return '- ' + x[2] + ': ' + x[3]; }).join('\n') : '');
   }
   function weekText(W, sugs) {
     return 'تقرير خفّة الأسبوعي – ' + A.fmt(W.keys[0], { day: 'numeric', month: 'long' }) + ' إلى ' + A.fmt(W.keys[6], { day: 'numeric', month: 'long' }) + '\n' +
-      'التقييم: ' + W.score + '/100\nمتوسط السعرات: ' + Math.round(W.n) + '\nالالتزام بالوجبات: ' + W.adherence + '%\nمتوسط البروتين: ' + Math.round(W.p) + ' ج\nمتوسط الماية: ' + (Math.round(W.water * 10) / 10) + ' أكواب\nأيام متسجلة: ' + W.logged.length + ' من ' + W.days.length +
+      'التقييم: ' + W.score + '/100\nمتوسط السعرات: ' + Math.round(W.n) + '\nالالتزام بالوجبات: ' + W.adherence + '%\nمتوسط البروتين: ' + Math.round(W.p) + ' ج\nمتوسط الماية: ' + (Math.round(W.water * 10) / 10) + ' زجاجات\nأيام متسجلة: ' + W.logged.length + ' من ' + W.days.length +
       (W.w0 && W.w1 ? '\nالوزن: ' + W.w0 + ' ← ' + W.w1 : '') + '\n\n' +
       W.days.map(function (x) { return DAYN[dow(x.k)] + ': ' + (x.logged ? Math.round(x.n) + ' سعرة، ' + x.done + '/5 وجبات، تقييم ' + x.score : 'مفيش تسجيل'); }).join('\n') +
       (sugs.length ? '\n\nاقتراحات:\n' + sugs.map(function (x) { return '- ' + x[2] + ': ' + x[3]; }).join('\n') : '');
