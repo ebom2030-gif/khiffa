@@ -304,7 +304,7 @@ tr.hl td{font-weight:700;color:var(--mint)}
   <section class="view" id="v-body" hidden>
     <div class="card">
       <div class="eyebrow">آخر قياس InBody: <span id="ibDate" class="num"></span></div>
-      <h2 style="margin-top:4px">تركيب الجسم</h2>
+      <h2 style="margin-top:4px">تركيب الجسم · Body Composition</h2>
       <div class="stats" id="ibStats"></div>
     </div>
     <div class="card"><h2>التطور بين القياسات</h2><div id="charts"></div></div>
@@ -319,19 +319,31 @@ tr.hl td{font-weight:700;color:var(--mint)}
       </form>
       <div id="mChart" style="margin-top:12px"></div>
     </div>
-    <div class="card"><h2>كل قياسات InBody</h2><div class="tbl"><table id="ibTable"></table></div></div>
-    <div class="card">
-      <h2>إضافة قياس InBody</h2>
+    <div class="card"><h2>كل قياسات InBody</h2><div class="tbl"><table id="ibTable"></table></div><p class="note" id="ibEditHint" style="margin-bottom:0">اضغطي على أي قياس لتعديله.</p></div>
+    <div class="card" id="ibCard">
+      <h2 id="ibFormTitle">إضافة قياس InBody</h2>
+      <div class="ib-up" id="ibUp">
+        <p class="note" style="margin-top:0">تصوير ورقة نتائج InBody أو رفع صورتها يملأ الخانات تلقائيًا، مع مراجعة القيم قبل الحفظ. الصورة لا تُرفع إلى أي خادم؛ القراءة تتم على الجهاز.</p>
+        <label class="btn ib-upbtn" id="ibUpBtn">رفع صورة ورقة InBody<input id="ibFile" type="file" accept="image/*,application/pdf" capture="environment" hidden></label>
+        <label class="btn ghost sm ib-upbtn" id="ibUpGal">اختيار من المعرض أو ملف PDF<input id="ibFile2" type="file" accept="image/*,application/pdf" hidden></label>
+        <div class="ib-prog" id="ibProg" hidden><div class="ib-bar"><i id="ibBar"></i></div><span id="ibProgT" class="note num">جارٍ التحضير…</span></div>
+        <div class="ib-msg" id="ibMsg" hidden></div>
+      </div>
       <form class="form" id="ibForm">
-        <label>التاريخ<input id="f-date" type="date" required></label>
-        <label>الوزن (كجم)<input id="f-weight" type="number" step="0.1" required></label>
-        <label>الكتلة العضلية SMM<input id="f-smm" type="number" step="0.1" required></label>
-        <label>كتلة الدهون BFM<input id="f-bfm" type="number" step="0.1"></label>
-        <label>نسبة الدهون PBF %<input id="f-pbf" type="number" step="0.1" required></label>
-        <label>معدل الحرق BMR<input id="f-bmr" type="number" step="1"></label>
-        <label>الدهون الحشوية<input id="f-vfl" type="number" step="1"></label>
-        <label>نسبة الخصر للورك<input id="f-whr" type="number" step="0.01"></label>
-        <div style="grid-column:1/-1"><button class="btn" type="submit">حفظ القياس</button></div>
+        <label><span class="ib-l">التاريخ<span class="en">Test Date</span></span><input id="f-date" name="date" type="date" required></label>
+        <label><span class="ib-l">الوزن<span class="en">Weight (kg)</span></span><input id="f-weight" name="weight" type="number" step="0.1" inputmode="decimal" required></label>
+        <label><span class="ib-l">كتلة العضلات الهيكلية<span class="en">Skeletal Muscle Mass – SMM (kg)</span></span><input id="f-smm" name="smm" type="number" step="0.1" inputmode="decimal" required></label>
+        <label><span class="ib-l">كتلة الدهون<span class="en">Body Fat Mass – BFM (kg)</span></span><input id="f-bfm" name="bfm" type="number" step="0.1" inputmode="decimal"></label>
+        <label><span class="ib-l">نسبة الدهون<span class="en">Percent Body Fat – PBF (%)</span></span><input id="f-pbf" name="pbf" type="number" step="0.1" inputmode="decimal" required></label>
+        <label><span class="ib-l">مؤشر كتلة الجسم<span class="en">BMI (kg/m²)</span></span><input id="f-bmi" name="bmi" type="number" step="0.1" inputmode="decimal"></label>
+        <label><span class="ib-l">معدل الأيض الأساسي<span class="en">Basal Metabolic Rate – BMR (kcal)</span></span><input id="f-bmr" name="bmr" type="number" step="1" inputmode="numeric"></label>
+        <label><span class="ib-l">مستوى الدهون الحشوية<span class="en">Visceral Fat Level – VFL</span></span><input id="f-vfl" name="vfl" type="number" step="1" inputmode="numeric"></label>
+        <label><span class="ib-l">نسبة الخصر للورك<span class="en">Waist-Hip Ratio – WHR</span></span><input id="f-whr" name="whr" type="number" step="0.01" inputmode="decimal"></label>
+        <label><span class="ib-l">الكتلة الخالية من الدهون<span class="en">Fat Free Mass – FFM (kg)</span></span><input id="f-ffm" name="ffm" type="number" step="0.1" inputmode="decimal"></label>
+        <label><span class="ib-l">إجمالي ماء الجسم<span class="en">Total Body Water – TBW (L)</span></span><input id="f-tbw" name="tbw" type="number" step="0.1" inputmode="decimal"></label>
+        <label><span class="ib-l">تقييم InBody<span class="en">InBody Score</span></span><input id="f-score" name="score" type="number" step="1" inputmode="numeric"></label>
+        <label><span class="ib-l">الوزن المستهدف<span class="en">Target Weight (kg)</span></span><input id="f-target" name="target_weight" type="number" step="0.1" inputmode="decimal"></label>
+        <div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="submit">حفظ القياس</button><button class="btn ghost" type="button" id="ibCancel" hidden>إلغاء التعديل</button></div>
       </form>
     </div>
   </section>
