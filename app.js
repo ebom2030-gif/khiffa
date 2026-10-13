@@ -25,11 +25,11 @@ const store = {
 const S = { pin: store.get('pin', null), uid: store.get('uid', null), data: null, cur: TODAY, queue: store.get('queue', []), ideaFilter: 'b' };
 
 async function api(action, payload) {
-  if (!API || /PASTE_/.test(API)) throw new Error('لازم تحط رابط Apps Script في config.js');
+  if (!API || /PASTE_/.test(API)) throw new Error('يجب وضع رابط Apps Script في config.js');
   const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, pin: S.pin, uid: S.uid, ...payload }) });
   const j = await r.json(); if (!j.ok) throw new Error(j.error || 'خطأ'); return j;
 }
-function setSync(st) { const el = $('#sync'); el.className = 'sync ' + st; el.title = { ok: 'متزامن', wait: 'جاري الحفظ…', off: 'بدون إنترنت، هيتحفظ لما النت يرجع' }[st]; }
+function setSync(st) { const el = $('#sync'); el.className = 'sync ' + st; el.title = { ok: 'متزامن', wait: 'جارٍ الحفظ…', off: 'لا يوجد اتصال، سيُحفظ عند عودة الإنترنت' }[st]; }
 function enqueue(action, payload, key) { S.queue = S.queue.filter(q => q.key !== key); S.queue.push({ action, payload, key, uid: S.uid }); store.set('queue', S.queue); flush(); }
 let flushing = false, flushTimer;
 function flush() { clearTimeout(flushTimer); flushTimer = setTimeout(doFlush, 600); }
@@ -123,7 +123,7 @@ function mealTargetKcal(k) { const t = level()[k] || {}, a = groupAvg(); return 
 // count words: 1 حبة، 2 حبتين، 3–10 حبات، 11+ حبة
 function countText(c, P) {
   const r = Math.round(c * 2) / 2, approx = Math.abs(r - c) > 0.05 ? '≈ ' : '';
-  if (r === 0.5) return approx + 'نص ' + P[1];
+  if (r === 0.5) return approx + 'نصف ' + P[1];
   if (r === 1) return approx + P[1]; if (r === 2) return approx + P[2];
   return approx + ar(r) + ' ' + (r > 2 && r <= 10 ? P[3] : P[1]);
 }
@@ -208,7 +208,7 @@ function renderToday() {
   (day.extras || []).forEach(x => ['n', 'p', 'c', 'f'].forEach(k => eaten[k] += (x[k] || 0) * (x.q || 1)));
   const left = Math.round(st0.level - eaten.n), kl = $('#kcalLeft'); // over the target shows as a negative number
   kl.textContent = left < 0 ? '-' + ar(-left, 0) : ar(left, 0); kl.dir = 'ltr'; kl.style.color = left < 0 ? 'var(--bad)' : '';
-  if (kl.nextElementSibling && kl.nextElementSibling.firstChild) kl.nextElementSibling.firstChild.nodeValue = left < 0 ? 'زيادة عن ' : 'متبقي من ';
+  if (kl.nextElementSibling && kl.nextElementSibling.firstChild) kl.nextElementSibling.firstChild.nodeValue = left < 0 ? 'أعلى من ' : 'متبقي من ';
   $('#ringFg').setAttribute('stroke', left < 0 ? 'var(--bad)' : 'var(--mint)'); $('#kcalTarget').textContent = ar(st0.level, 0);
   $('#ringFg').setAttribute('stroke-dashoffset', 326.7 * (1 - Math.min(1, eaten.n / st0.level)));
   [['P', 'p'], ['C', 'c'], ['F', 'f']].forEach(([id, k]) => { $('#b' + id).style.width = Math.min(1, eaten[k] / LT[k]) * 100 + '%'; $('#t' + id).textContent = ar(Math.round(eaten[k]), 0) + ' / ' + ar(Math.round(LT[k]), 0) + ' ج'; });
@@ -219,7 +219,7 @@ function renderToday() {
     const card = document.createElement('div'); card.className = 'card mcard' + (st.done ? ' done' : '');
     const slots = GORDER.filter(g => tgt[g]).map(g => '<span class="slot"><i style="background:' + D.GROUPS[g].color + '"></i>' + ar(tgt[g]) + ' ' + D.GROUPS[g].short + '</span>').join('');
     card.innerHTML = '<div class="mhead">' + img(m.img, 'lg') + '<div><div class="t">' + m.t + '</div><div class="tag">' + m.when + '</div><div class="slots">' + slots + '</div></div>' +
-      '<button class="chk' + (st.done ? ' on' : '') + '" aria-pressed="' + !!st.done + '" aria-label="خلّصت ' + m.t + '"' + (comps.length ? '' : ' disabled title="اختاري الوجبة الأول"') + '>✓</button></div>';
+      '<button class="chk' + (st.done ? ' on' : '') + '" aria-pressed="' + !!st.done + '" aria-label="أنهيت ' + m.t + '"' + (comps.length ? '' : ' disabled title="اختاري الوجبة أولًا"') + '>✓</button></div>';
     if (comps.length) {
       const t = totals(comps); const idea = st.mode !== 'custom' && st.idea ? D.IDEAS.find(i => i.id === st.idea) : null;
       const title = st.title || (idea ? ideaName(idea) : 'وجبة من اختيارك');
@@ -241,7 +241,7 @@ function renderToday() {
   for (let i = 1; i <= st0.water; i++) { const c = document.createElement('button'); c.className = 'cup' + (i <= bottles(day) ? ' on' : ''); c.setAttribute('aria-label', 'زجاجة ' + i); c.onclick = () => { const d = dayOf(S.cur); d.w3 = (bottles(d) === i ? i - 1 : i); saveDay({ ...d }); renderToday(); }; cups.append(c); }
   $('#waterTxt').textContent = ar(bottles(day)) + ' من ' + ar(st0.water) + ' زجاجات 330 مل (' + ar(Math.round(bottles(day) * BOTTLE / 100) / 10) + ' من ' + ar(Math.round(st0.water * BOTTLE / 100) / 10) + ' لتر)';
   const ws = (S.data.days || []).filter(d => d.weight).map(d => d.date).sort().reverse()[0];
-  $('#wLast').textContent = ws ? 'آخر وزن مسجل: ' + ar(dayOf(ws).weight) + ' كجم (' + fmt(ws, { day: 'numeric', month: 'short' }) + ')' : 'سجلي وزنك الصبح على الريق بعد الحمام.';
+  $('#wLast').textContent = ws ? 'آخر وزن مسجل: ' + ar(dayOf(ws).weight) + ' كجم (' + fmt(ws, { day: 'numeric', month: 'short' }) + ')' : 'سجّلي وزنك صباحًا على الريق بعد دخول الحمام.';
   if (document.activeElement !== $('#wIn')) $('#wIn').value = day.weight || '';
   if (document.activeElement !== $('#noteIn')) $('#noteIn').value = day.note || '';
   (window.KHIFFA_HOOKS || []).forEach(f => { try { f(day); } catch (e) { console.error(e); } });
@@ -252,7 +252,7 @@ function renderLimits() {
 }
 $('#dPrev').onclick = () => { S.cur = addDays(S.cur, -1); renderToday(); };
 $('#dNext').onclick = () => { if (S.cur >= addDays(TODAY, 6)) return; S.cur = addDays(S.cur, 1); renderToday(); };
-$('#wSave').onclick = () => { const v = parseFloat($('#wIn').value); if (!v || v < 30 || v > 250) { toast('اكتبي الوزن بالكيلو، مثلاً 88.4'); return; } const d = dayOf(S.cur); d.weight = v; saveDay({ ...d }); toast('اتسجل الوزن'); renderToday(); };
+$('#wSave').onclick = () => { const v = parseFloat($('#wIn').value); if (!v || v < 30 || v > 250) { toast('اكتبي الوزن بالكيلوغرام، مثلًا 88.4'); return; } const d = dayOf(S.cur); d.weight = v; saveDay({ ...d }); toast('تم تسجيل الوزن'); renderToday(); };
 let noteT; $('#noteIn').oninput = () => { clearTimeout(noteT); noteT = setTimeout(() => { const d = dayOf(S.cur); d.note = $('#noteIn').value.trim(); saveDay({ ...d }); }, 800); };
 
 /* ================= meal sheet ================= */
@@ -282,15 +282,15 @@ function openMealSheet(m, mode) {
       if (md === 'tune') { tuneMeal(m, st, body); return; }
       if (md === 'idea') {
         const list = D.IDEAS.filter(i => i.m === m.k && ideaAllowed(i));
-        if (!list.length) body.insertAdjacentHTML('beforeend', '<p class="note">مفيش وجبات جاهزة مناسبة للتفضيلات الحالية.</p>');
-        list.forEach(i => { const c = ideaCard(i, st.mode !== 'custom' && st.idea === i.id); c.onclick = () => { setMeal(m.k, { mode: 'idea', idea: i.id, items: null, title: null, planned: false }); closeSheet(); renderToday(); toast('اتحطت في ' + m.t); }; body.append(c); });
+        if (!list.length) body.insertAdjacentHTML('beforeend', '<p class="note">لا توجد وجبات جاهزة مناسبة للتفضيلات الحالية.</p>');
+        list.forEach(i => { const c = ideaCard(i, st.mode !== 'custom' && st.idea === i.id); c.onclick = () => { setMeal(m.k, { mode: 'idea', idea: i.id, items: null, title: null, planned: false }); closeSheet(); renderToday(); toast('أُضيفت إلى ' + m.t); }; body.append(c); });
       } else {
         const tgt = level()[m.k] || {}; const picks = { ...(st.mode === 'custom' ? st.picks : {}) };
         if (st.mode !== 'custom' && st.idea) { mealComps(m.k, st).forEach(x => { if (x.food.g === 'V') picks.V = (picks.V || []).concat(x.food.id); else picks[x.food.g] = (picks[x.food.g] || []).concat(x.food.id); }); }
         Object.keys(picks).forEach(g => { if (picks[g] && !Array.isArray(picks[g])) picks[g] = [picks[g]]; if (!picks[g]) delete picks[g]; });
         GORDER.filter(g => tgt[g]).forEach(g => {
           const G = D.GROUPS[g];
-          body.insertAdjacentHTML('beforeend', '<div class="grp-h"><i style="background:' + G.color + '"></i>' + G.name + ': ' + (tgt[g] === 1 ? 'حصة' : tgt[g] === 2 ? 'حصتين' : ar(tgt[g]) + ' حصص') + ' <span class="note" style="font-weight:400">– ' + (g === 'V' ? 'اختاري أكتر من نوع براحتك' : 'تقدري تختاري أكتر من نوع، والحصة بتتقسم بينهم') + '</span>' + '</div>');
+          body.insertAdjacentHTML('beforeend', '<div class="grp-h"><i style="background:' + G.color + '"></i>' + G.name + ': ' + (tgt[g] === 1 ? 'حصة' : tgt[g] === 2 ? 'حصتان' : ar(tgt[g]) + ' حصص') + ' <span class="note" style="font-weight:400">– ' + (g === 'V' ? 'يمكنك اختيار أكثر من نوع بحرية' : 'يمكنك اختيار أكثر من نوع، وتُقسَّم الحصة بينها') + '</span>' + '</div>');
           const grid = document.createElement('div'); grid.className = 'fgrid';
           Object.values(D.FOODS).filter(f => f.g === g && allowed(f)).forEach(f => {
             const b = document.createElement('button'); b.className = 'fbtn'; b.setAttribute('aria-pressed', (picks[g] || []).includes(f.id)); b.dataset.f = f.id;
@@ -307,9 +307,9 @@ function openMealSheet(m, mode) {
         const foot = document.createElement('div'); foot.style.cssText = 'position:sticky;bottom:-20px;background:var(--surface);padding-block:10px;display:flex;gap:10px;align-items:center;border-top:1px solid var(--line)';
         foot.innerHTML = '<span class="note num" id="shSum" style="flex:1"></span><button class="btn" id="shSave">حفظ الوجبة</button>';
         body.append(foot);
-        const updateSum = () => { const comps = mealComps(m.k, { mode: 'custom', picks }); const t = totals(comps); $('#shSum').textContent = comps.length ? ar(Math.round(t.n), 0) + ' سعرة – ' + ar(Math.round(t.p), 0) + ' ج بروتين' + ((picks.P || []).some(id => D.FOODS[id].leg) ? ' – البقوليات بتقلل النشويات' : '') : 'اختاري صنف من كل مجموعة'; };
+        const updateSum = () => { const comps = mealComps(m.k, { mode: 'custom', picks }); const t = totals(comps); $('#shSum').textContent = comps.length ? ar(Math.round(t.n), 0) + ' سعرة – ' + ar(Math.round(t.p), 0) + ' ج بروتين' + ((picks.P || []).some(id => D.FOODS[id].leg) ? ' – البقوليات تقلل النشويات' : '') : 'اختاري صنفًا من كل مجموعة'; };
         updateSum();
-        $('#shSave').onclick = () => { if (!Object.values(picks).some(v => Array.isArray(v) ? v.length : v)) { toast('اختاري صنف واحد على الأقل'); return; } setMeal(m.k, { mode: 'custom', picks, items: null, title: null, planned: false }); closeSheet(); renderToday(); toast('اتحفظت الوجبة'); };
+        $('#shSave').onclick = () => { if (!Object.values(picks).some(v => Array.isArray(v) ? v.length : v)) { toast('اختاري صنفًا واحدًا على الأقل'); return; } setMeal(m.k, { mode: 'custom', picks, items: null, title: null, planned: false }); closeSheet(); renderToday(); toast('تم حفظ الوجبة'); };
       }
     };
     draw(mode);
@@ -337,24 +337,24 @@ function tuneMeal(m, st, body) {
   const draw = () => {
     const comps = items.filter(it => it.n > 0).map(it => ({ food: D.FOODS[it.id], n: it.n })), t = totals(comps);
     const diff = Math.round(t.n - target), p = target ? Math.min(130, t.n / target * 100) : 0;
-    wrap.innerHTML = '<p class="note" style="margin:4px 0 10px">زوّدي أو قلّلي أي صنف بالحصة أو نص الحصة، أو ضيفي صنف جديد. السعرات بتتحسب على طول.</p>' +
-      '<div class="tune-sum"><div class="tune-k num"><b>' + ar(Math.round(t.n), 0) + '</b> سعرة <span class="note">من حوالي ' + ar(Math.round(target), 0) + ' للوجبة</span></div>' +
+    wrap.innerHTML = '<p class="note" style="margin:4px 0 10px">زيدي أو قلّلي أي صنف بالحصة أو نصف الحصة، أو أضيفي صنفًا جديدًا. تُحسب السعرات فورًا.</p>' +
+      '<div class="tune-sum"><div class="tune-k num"><b>' + ar(Math.round(t.n), 0) + '</b> سعرة <span class="note">من نحو ' + ar(Math.round(target), 0) + ' للوجبة</span></div>' +
       '<div class="tune-bar"><i style="width:' + Math.min(100, p) + '%;background:' + (p > 110 ? 'var(--warn)' : 'var(--mint)') + '"></i></div>' +
-      '<div class="note num">' + (Math.abs(diff) < 25 ? 'مظبوطة على الهدف' : diff > 0 ? 'أكتر من الهدف بـ ' + ar(diff, 0) + ' سعرة' : 'أقل من الهدف بـ ' + ar(-diff, 0) + ' سعرة') + ' – ' + ar(Math.round(t.p), 0) + ' ج بروتين</div></div>' +
+      '<div class="note num">' + (Math.abs(diff) < 25 ? 'مطابقة للهدف' : diff > 0 ? 'أكثر من الهدف بـ ' + ar(diff, 0) + ' سعرة' : 'أقل من الهدف بـ ' + ar(-diff, 0) + ' سعرة') + ' – ' + ar(Math.round(t.p), 0) + ' ج بروتين</div></div>' +
       '<div class="tune-list">' + items.map((it, i) => { const f = D.FOODS[it.id]; return '<div class="tune-row">' + img(f.img, 'sm') + '<div style="min-width:0"><div class="nm">' + esc(f.name) + '</div><div class="note num">' + amountText(f, it.n) + ' – ' + ar(Math.round(f.n * it.n), 0) + ' سعرة</div></div>' +
-        '<div class="tune-q"><button class="qb" data-i="' + i + '" data-d="-1" aria-label="قللي">−</button><input class="qi num" data-i="' + i + '" type="number" inputmode="decimal" min="0" step="any" value="' + qVal(f, it) + '"><button class="qb" data-i="' + i + '" data-d="1" aria-label="زوّدي">+</button></div>' +
-        '<button class="qu" data-i="' + i + '" title="غيّري الوحدة">' + uName(f, it.u) + '</button><button class="qx" data-x="' + i + '" aria-label="شيلي الصنف">×</button></div>'; }).join('') + '</div>' +
-      '<div class="grp-h" style="margin-top:14px">ضيفي صنف</div><div class="filters tune-g">' + GORDER.map(g => '<button class="fchip" data-g="' + g + '" aria-pressed="' + (addG === g) + '">' + D.GROUPS[g].name + '</button>').join('') + '</div>' +
+        '<div class="tune-q"><button class="qb" data-i="' + i + '" data-d="-1" aria-label="قلّلي">−</button><input class="qi num" data-i="' + i + '" type="number" inputmode="decimal" min="0" step="any" value="' + qVal(f, it) + '"><button class="qb" data-i="' + i + '" data-d="1" aria-label="زيدي">+</button></div>' +
+        '<button class="qu" data-i="' + i + '" title="غيّري الوحدة">' + uName(f, it.u) + '</button><button class="qx" data-x="' + i + '" aria-label="احذفي الصنف">×</button></div>'; }).join('') + '</div>' +
+      '<div class="grp-h" style="margin-top:14px">أضيفي صنفًا</div><div class="filters tune-g">' + GORDER.map(g => '<button class="fchip" data-g="' + g + '" aria-pressed="' + (addG === g) + '">' + D.GROUPS[g].name + '</button>').join('') + '</div>' +
       (addG ? '<div class="fgrid">' + Object.values(D.FOODS).filter(f => f.g === addG && allowed(f)).map(f => '<button class="fbtn" data-add="' + f.id + '">' + img(f.img) + '<span>' + esc(f.name) + '</span><span class="q num">' + amountText(f, 1) + '</span></button>').join('') + '</div>' : '') +
-      '<div class="tune-foot"><button class="btn ghost" id="tuneReset">رجّعي زي الأول</button><button class="btn" id="tuneSave">حفظ الوجبة</button></div>';
+      '<div class="tune-foot"><button class="btn ghost" id="tuneReset">استعيدي الأصل</button><button class="btn" id="tuneSave">حفظ الوجبة</button></div>';
     wrap.querySelectorAll('.qb').forEach(b => b.onclick = () => { const it = items[+b.dataset.i], f = D.FOODS[it.id]; stepQty(f, it, +b.dataset.d); draw(); });
     wrap.querySelectorAll('.qi').forEach(inp => inp.onchange = () => { const it = items[+inp.dataset.i], f = D.FOODS[it.id], v = parseFloat(inp.value); if (!(v > 0)) { draw(); return; } it.n = toN(f, it.u, v); draw(); });
     wrap.querySelectorAll('.qu').forEach(b => b.onclick = () => { const it = items[+b.dataset.i], f = D.FOODS[it.id], us = unitsOf(f); it.u = us[(us.indexOf(it.u) + 1) % us.length]; draw(); });
     wrap.querySelectorAll('.qx').forEach(b => b.onclick = () => { items.splice(+b.dataset.x, 1); draw(); });
     wrap.querySelectorAll('.tune-g .fchip').forEach(b => b.onclick = () => { addG = addG === b.dataset.g ? null : b.dataset.g; draw(); });
-    wrap.querySelectorAll('[data-add]').forEach(b => b.onclick = () => { const ex = items.find(x => x.id === b.dataset.add); if (ex) ex.n += 1; else items.push({ id: b.dataset.add, n: 1, u: unitsOf(D.FOODS[b.dataset.add])[0] }); toast('اتضاف ' + D.FOODS[b.dataset.add].name); draw(); });
+    wrap.querySelectorAll('[data-add]').forEach(b => b.onclick = () => { const ex = items.find(x => x.id === b.dataset.add); if (ex) ex.n += 1; else items.push({ id: b.dataset.add, n: 1, u: unitsOf(D.FOODS[b.dataset.add])[0] }); toast('أُضيف ' + D.FOODS[b.dataset.add].name); draw(); });
     $('#tuneReset').onclick = () => { items = mealComps(m.k, { ...st, items: null }).map(x => ({ id: x.food.id, n: x.n, u: unitsOf(x.food)[0] })); draw(); };
-    $('#tuneSave').onclick = () => { const clean = items.filter(it => it.n > 0); if (!clean.length) { toast('ضيفي صنف واحد على الأقل'); return; } setMeal(m.k, { mode: 'custom', items: clean.map(it => ({ id: it.id, n: Math.round(it.n * 1000) / 1000 })), title: title || null, planned: false }); closeSheet(); renderToday(); toast('اتحفظت الوجبة'); };
+    $('#tuneSave').onclick = () => { const clean = items.filter(it => it.n > 0); if (!clean.length) { toast('أضيفي صنفًا واحدًا على الأقل'); return; } setMeal(m.k, { mode: 'custom', items: clean.map(it => ({ id: it.id, n: Math.round(it.n * 1000) / 1000 })), title: title || null, planned: false }); closeSheet(); renderToday(); toast('تم حفظ الوجبة'); };
   };
   draw();
 }
@@ -368,8 +368,8 @@ function renderIdeas() {
   const m = D.MEALS.find(x => x.k === S.ideaFilter);
   D.IDEAS.filter(i => i.m === S.ideaFilter && ideaAllowed(i)).forEach(i => {
     const c = ideaCard(i, false);
-    c.onclick = () => { setMeal(m.k, { mode: 'idea', idea: i.id, items: null, title: null, planned: false }, TODAY); toast('اتحطت في ' + m.t + ' النهارده'); S.cur = TODAY; renderToday(); };
-    c.title = 'اضغطي عشان تحطيها في ' + m.t + ' النهارده';
+    c.onclick = () => { setMeal(m.k, { mode: 'idea', idea: i.id, items: null, title: null, planned: false }, TODAY); toast('أُضيفت إلى ' + m.t + ' اليوم'); S.cur = TODAY; renderToday(); };
+    c.title = 'اضغطي لإضافتها إلى ' + m.t + ' اليوم';
     list.append(c);
   });
   renderWeek();
@@ -397,7 +397,7 @@ function generateWeek() {
     });
     saveDay({ ...d });
   }
-  toast('اتعملت خطة ٧ أيام'); renderAll();
+  toast('تم إعداد خطة ٧ أيام'); renderAll();
 }
 function weekCountsWith(k, dayObj) {
   const c = {}; D.LIMITS.forEach(l => c[l[0]] = 0);
@@ -406,14 +406,14 @@ function weekCountsWith(k, dayObj) {
 }
 function clearWeek() {
   for (let i = 0; i < 7; i++) { const k = addDays(TODAY, i); const d = dayOf(k); if (!d.meals) continue; let ch = false; const ms = { ...d.meals }; Object.keys(ms).forEach(m => { if (ms[m].planned && !ms[m].done) { delete ms[m]; ch = true; } }); if (ch) { d.meals = ms; saveDay({ ...d }); } }
-  toast('اتمسحت الاقتراحات'); renderAll();
+  toast('تم مسح الاقتراحات'); renderAll();
 }
 $('#genWeek').onclick = generateWeek; $('#clearWeek').onclick = clearWeek;
 function renderWeek() {
   const days = []; for (let i = 0; i < 7; i++) days.push(addDays(TODAY, i));
   const any = days.some(k => Object.keys(dayOf(k).meals || {}).length);
   $('#week').innerHTML = any ? days.map(k => { const d = dayOf(k); return '<div class="wday"><div class="dn">' + fmt(k, { weekday: 'long', day: 'numeric', month: 'short' }) + '</div><div class="row2">' +
-    D.MEALS.map(m => { const st = mealState(d, m.k); const idea = st.idea && st.mode !== 'custom' ? D.IDEAS.find(i => i.id === st.idea) : null; return '<span>' + m.t + ': <b>' + (idea ? esc(ideaName(idea)) : st.mode === 'custom' ? 'من اختيارك' : '—') + '</b></span>'; }).join('') + '</div></div>'; }).join('') : '<p class="note">لسه مفيش خطة. اضغطي "اقترحي أسبوع".</p>';
+    D.MEALS.map(m => { const st = mealState(d, m.k); const idea = st.idea && st.mode !== 'custom' ? D.IDEAS.find(i => i.id === st.idea) : null; return '<span>' + m.t + ': <b>' + (idea ? esc(ideaName(idea)) : st.mode === 'custom' ? 'من اختيارك' : '—') + '</b></span>'; }).join('') + '</div></div>'; }).join('') : '<p class="note">لا توجد خطة بعد. اضغطي "اقترحي أسبوعًا".</p>';
   // shopping list from today → +6, meals not yet eaten
   const agg = {};
   days.forEach(k => { const d = dayOf(k); D.MEALS.forEach(m => { const st = mealState(d, m.k); if (st.done) return; mealComps(m.k, st).forEach(x => { agg[x.food.id] = (agg[x.food.id] || 0) + x.food.grams * x.n; }); }); });
@@ -426,24 +426,24 @@ function renderWeek() {
 
 /* ================= render: body ================= */
 function status(kind, val) {
-  const m = { pbf: [[32, 'bad', 'عالي'], [28, 'warn', 'مرتفع'], [0, 'good', 'طبيعي']], vfl: [[15, 'bad', 'عالي'], [10, 'warn', 'مرتفع'], [0, 'good', 'طبيعي']], whr: [[0.95, 'bad', 'عالي'], [0.85, 'warn', 'مرتفع'], [0, 'good', 'طبيعي']], bmi: [[30, 'bad', 'سمنة'], [25, 'warn', 'وزن زائد'], [0, 'good', 'طبيعي']] }[kind];
+  const m = { pbf: [[32, 'bad', 'عالٍ'], [28, 'warn', 'مرتفع'], [0, 'good', 'طبيعي']], vfl: [[15, 'bad', 'عالٍ'], [10, 'warn', 'مرتفع'], [0, 'good', 'طبيعي']], whr: [[0.95, 'bad', 'عالٍ'], [0.85, 'warn', 'مرتفع'], [0, 'good', 'طبيعي']], bmi: [[30, 'bad', 'سمنة'], [25, 'warn', 'وزن زائد'], [0, 'good', 'طبيعي']] }[kind];
   if (!m || val == null || val === '') return ''; const r = m.find(x => val >= x[0]); return '<span class="pill ' + r[1] + '">' + r[2] + '</span>';
 }
 const latest = () => (S.data.inbody || [])[S.data.inbody.length - 1];
 function renderBody() {
   const IB = S.data.inbody || [], ib = latest(), first = IB[0];
-  if (!ib) { $('#ibStats').innerHTML = '<div class="empty" style="grid-column:1/-1">لسه مفيش قياسات. ضيفي أول قياس من تحت.</div>'; $('#charts').innerHTML = ''; $('#ibTable').innerHTML = ''; }
+  if (!ib) { $('#ibStats').innerHTML = '<div class="empty" style="grid-column:1/-1">لا توجد قياسات بعد. أضيفي أول قياس من الأسفل.</div>'; $('#charts').innerHTML = ''; $('#ibTable').innerHTML = ''; }
   else {
     $('#ibDate').textContent = fmt(ib.date, { day: 'numeric', month: 'long', year: 'numeric' });
     const dl = (k, down) => { if (!first || first === ib || ib[k] == null || first[k] == null) return ''; const d = ib[k] - first[k]; if (Math.abs(d) < 0.05) return ''; const good = down ? d < 0 : d > 0; return '<div class="delta ' + (good ? 'good' : 'bad') + '">' + (d > 0 ? '+' : '−') + ar(Math.abs(d)) + ' من أول قياس</div>'; };
     const cards = [['الوزن', ib.weight, 'كجم', dl('weight', true), ''], ['الكتلة العضلية', ib.smm, 'كجم', dl('smm', false), ''], ['نسبة الدهون', ib.pbf, '%', dl('pbf', true), status('pbf', ib.pbf)], ['كتلة الدهون', ib.bfm, 'كجم', dl('bfm', true), ''], ['الدهون الحشوية', ib.vfl, 'مستوى', dl('vfl', true), status('vfl', ib.vfl)], ['الخصر للورك', ib.whr, 'نسبة', dl('whr', true), status('whr', ib.whr)], ['معدل الحرق BMR', ib.bmr, 'سعرة/يوم', '', ''], ['مؤشر الكتلة BMI', ib.bmi, 'كجم/م²', '', status('bmi', ib.bmi)]];
     $('#ibStats').innerHTML = cards.filter(c => c[1] != null && c[1] !== '').map(c => '<div class="stat"><div class="eyebrow">' + c[0] + c[4] + '</div><div class="v num">' + ar(c[1], 2) + ' <span class="u">' + c[2] + '</span></div>' + c[3] + '</div>').join('');
-    $('#charts').innerHTML = [['weight', 'الوزن (كجم)', 'var(--mint)'], ['smm', 'الكتلة العضلية (كجم)', 'var(--peach)'], ['pbf', 'نسبة الدهون (%)', 'var(--warn)']].map(x => spark(IB, x[0], x[1], x[2])).join('') || '<p class="note">الرسم بيظهر من تاني قياس.</p>';
-    const cols = [['date', 'التاريخ'], ['weight', 'الوزن'], ['smm', 'العضل'], ['bfm', 'الدهون كجم'], ['pbf', 'الدهون %'], ['vfl', 'الحشوية'], ['bmr', 'BMR']];
+    $('#charts').innerHTML = [['weight', 'الوزن (كجم)', 'var(--mint)'], ['smm', 'الكتلة العضلية (كجم)', 'var(--peach)'], ['pbf', 'نسبة الدهون (%)', 'var(--warn)']].map(x => spark(IB, x[0], x[1], x[2])).join('') || '<p class="note">يظهر الرسم بدءًا من القياس الثاني.</p>';
+    const cols = [['date', 'التاريخ'], ['weight', 'الوزن'], ['smm', 'العضلات'], ['bfm', 'الدهون كجم'], ['pbf', 'الدهون %'], ['vfl', 'الحشوية'], ['bmr', 'BMR']];
     $('#ibTable').innerHTML = '<tr>' + cols.map(c => '<th>' + c[1] + '</th>').join('') + '</tr>' + IB.slice().reverse().map(r => '<tr>' + cols.map(c => '<td class="num">' + (c[0] === 'date' ? fmt(r.date, { day: 'numeric', month: 'short', year: '2-digit' }) : ar(r[c[0]])) + '</td>').join('') + '</tr>').join('');
   }
   const M = (S.data.measures || []).map(m => ({ ...m, whr: m.waist && m.hip ? Math.round(m.waist / m.hip * 100) / 100 : null }));
-  $('#mChart').innerHTML = M.length ? (spark(M, 'waist', 'الوسط (سم)', 'var(--peach)') + spark(M, 'whr', 'نسبة الخصر للورك (الطبيعي أقل من ٠٫٨٥)', 'var(--mint)') + (M.length < 2 ? '<p class="note">آخر مقاس: وسط ' + ar(M[0].waist) + ' سم – ورك ' + ar(M[0].hip) + ' سم – النسبة ' + ar(M[0].whr, 2) + '</p>' : '')) : '<p class="note">لسه مفيش مقاسات.</p>';
+  $('#mChart').innerHTML = M.length ? (spark(M, 'waist', 'الوسط (سم)', 'var(--peach)') + spark(M, 'whr', 'نسبة الخصر للورك (الطبيعي أقل من ٠٫٨٥)', 'var(--mint)') + (M.length < 2 ? '<p class="note">آخر مقاس: وسط ' + ar(M[0].waist) + ' سم – ورك ' + ar(M[0].hip) + ' سم – النسبة ' + ar(M[0].whr, 2) + '</p>' : '')) : '<p class="note">لا توجد مقاسات بعد.</p>';
 }
 function spark(rows, k, label, color) {
   const pts = rows.filter(r => r[k] != null && r[k] !== ''); if (pts.length < 2) return '';
@@ -463,18 +463,18 @@ $('#ibForm').onsubmit = e => { e.preventDefault();
   const prev = latest(); if (prev && prev.target_weight) r.target_weight = prev.target_weight;
   Object.keys(r).forEach(k => r[k] == null && delete r[k]);
   upsertLocal('inbody', r); persist(); enqueue('saveInbody', { reading: r }, 'ib:' + S.uid + ':' + r.date);
-  toast('اتحفظ القياس'); e.target.reset(); $('#f-date').value = TODAY; renderAll(); };
+  toast('تم حفظ القياس'); e.target.reset(); $('#f-date').value = TODAY; renderAll(); };
 $('#mForm').onsubmit = e => { e.preventDefault();
   const m = { date: $('#m-date').value, waist: parseFloat($('#m-waist').value), hip: parseFloat($('#m-hip').value) };
   if (!m.waist || !m.hip) return; upsertLocal('measures', m); persist(); enqueue('saveMeasure', { measure: m }, 'm:' + S.uid + ':' + m.date);
-  toast('اتحفظ المقاس'); e.target.reset(); $('#m-date').value = TODAY; renderBody(); };
+  toast('تم حفظ المقاس'); e.target.reset(); $('#m-date').value = TODAY; renderBody(); };
 
 /* ================= render: plan ================= */
 function saveSettings(patch) { S.data.settings = { ...settings(), ...patch }; persist(); enqueue('saveSettings', { settings: S.data.settings }, 'set:' + S.uid); renderAll(); }
 function renderPlan() {
   const st0 = settings(), ib = latest();
   $('#levels').innerHTML = Object.keys(D.LEVELS).map(L => '<button data-l="' + L + '" aria-pressed="' + (+L === +st0.level) + '">' + ar(+L, 0) + '</button>').join('');
-  $('#levels').querySelectorAll('button').forEach(b => b.onclick = () => { saveSettings({ level: +b.dataset.l }); toast('النظام بقى ' + ar(+b.dataset.l, 0) + ' سعرة'); });
+  $('#levels').querySelectorAll('button').forEach(b => b.onclick = () => { saveSettings({ level: +b.dataset.l }); toast('أصبح النظام ' + ar(+b.dataset.l, 0) + ' سعرة'); });
   const LT = levelTotals(st0.level);
   $('#levelNote').textContent = 'المتوسط التقريبي: ' + ar(Math.round(LT.n), 0) + ' سعرة – بروتين ' + ar(Math.round(LT.p), 0) + ' ج (' + ar(Math.round(LT.p * 4 / LT.n * 100), 0) + '٪) – كارب ' + ar(Math.round(LT.c), 0) + ' ج – دهون ' + ar(Math.round(LT.f), 0) + ' ج';
   const L = level(), gs = GORDER;
@@ -491,7 +491,7 @@ function renderPlan() {
       fs.map(f => '<div class="fl">' + img(f.img, 'sm') + '<div>' + esc(f.name) + '<span class="num">' + amountText(f, 1) + (f.unit ? '، ' + esc(f.unit) : '') + '، ' + ar(f.n, 0) + ' سعرة</span></div></div>').join('') + '</div></div>'; }).join('');
   $('#free').innerHTML = D.FREE.map(x => '<li>' + esc(x) + '</li>').join('');
   $('#tips').innerHTML = D.TIPS.map(x => '<li>' + esc(x) + '</li>').join('');
-  $('#acct').textContent = 'داخل باسم: ' + S.data.me.name + (S.data.me.id !== S.data.user.id ? ' – بتعرض بيانات: ' + displayName() : '');
+  $('#acct').textContent = 'مسجّل الدخول باسم: ' + S.data.me.name + (S.data.me.id !== S.data.user.id ? ' – عرض بيانات: ' + displayName() : '');
 }
 $('#fGluten').onclick = () => saveSettings({ noGluten: !settings().noGluten });
 $('#fLactose').onclick = () => saveSettings({ noLactose: !settings().noLactose });
@@ -508,7 +508,7 @@ $('#person').onchange = e => switchUser(e.target.value);
 function people() { const me = S.data.me, ppl = (S.data.people || []).slice(); if (me && me.role === 'owner' && !ppl.some(p => p.id === me.id)) ppl.unshift({ id: me.id, name: 'حسابي' }); return ppl; }
 function nickOf(name) { return name === 'زوجتي' ? 'زوجتي وحبيبتي' : name; }
 function displayName() { const st = settings(), me = S.data.me, u = S.data.user; if (st.nick) return st.nick; if (me && me.id === u.id && me.role === 'owner') return me.name; return nickOf(u.name); }
-function switchUser(uid) { if (!uid || (S.data && uid === S.data.user.id)) return; S.uid = uid; store.set('uid', S.uid); toast('جاري فتح الحساب…'); setTimeout(() => location.reload(), 150); }
+function switchUser(uid) { if (!uid || (S.data && uid === S.data.user.id)) return; S.uid = uid; store.set('uid', S.uid); toast('جارٍ فتح الحساب…'); setTimeout(() => location.reload(), 150); }
 function renderAll() { if (!S.data) return; renderHeader(); renderToday(); renderIdeas(); renderBody(); renderPlan(); }
 function toast(m) { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 2200); }
 document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
