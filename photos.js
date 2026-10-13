@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   var d = document;
-  var U = function (id, w) { return 'https://images.unsplash.com/photo-' + id + '?w=' + (w || 800) + '&q=70&auto=format&fit=crop'; };
+  var U = function (id, w) { return 'https://images.unsplash.com/photo-' + id + '?w=' + (w || 560) + '&q=55&auto=format&fit=crop'; };
   var P = {
     morning: '1497888329096-51c27beff665', noon: '1605291535065-e1d52d2b264a', night: '1787385629709-fc09b4fb6179',
     b: '1742642415922-0039b8433318', s1: '1490474418585-ba9bad8fd0ea', l: '1670398564097-0762e1b30b3a', s2: '1641494587136-eec74f1944ae', d: '1676300186673-615bcc8d5d68',
@@ -32,6 +32,9 @@
     '.hm-hero.kph-on .hm-top h2{color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.35)}.hm-hero.kph-on .hm-top .eyebrow,.hm-hero.kph-on .hm-top .note{color:rgba(255,255,255,.88)}' +
     '.hm-hero.kph-on .hm-acc{background:rgba(255,255,255,.18);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}.hm-hero.kph-on .hm-acc button{color:#fff}' +
     '.hm-hero.kph-on .hm-acc button[aria-pressed="true"]{background:#fff;color:var(--ink)}' +
+    '.hm-hero::before,.hm-hero::after{height:200px!important}' +
+    '.hm-hero.kph-on .hm-main>div:last-child{background:color-mix(in srgb,var(--surface) 90%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-radius:18px;padding:12px 14px;box-shadow:0 8px 24px -14px rgba(0,0,0,.35)}' +
+    '.hm-hero.kph-on .hm-left{color:var(--ink)}' +
     '.hm-hero.kph-on .hm-ring{background:var(--surface);border-radius:50%;box-shadow:0 10px 30px -12px rgba(0,0,0,.45)}' +
     /* صورة صغيرة لزجاجة الماية */
     '.kthumb{width:44px;height:44px;border-radius:14px;flex:none;background:var(--sky) center/cover}' +
@@ -41,6 +44,10 @@
     '.kban::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.28))}' +
     '.mcard .kban+.mhead .fimg.lg{margin-top:-40px;box-shadow:0 0 0 4px var(--surface),0 8px 18px -8px rgba(0,0,0,.4);position:relative;z-index:1}' +
     '.mcard{overflow:hidden}' +
+    /* طبق بنفس المكونات المختارة */
+    '.kplate{position:absolute;left:14px;bottom:-26px;width:88px;height:88px;border-radius:50%;z-index:2;background:radial-gradient(circle,#fff 0 58%,#f1f1ec 59% 63%,#fff 64%);box-shadow:0 10px 24px -10px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.05)}' +
+    '.kplate .fimg,.kplate img{position:absolute;width:30px!important;height:30px!important;padding:0!important;background:none!important;box-shadow:none!important;margin:0!important;transform:translate(-50%,-50%)}' +
+    '.kban.has-plate{overflow:visible}.mcard .kban.has-plate+.mhead{padding-left:96px}' +
     /* الوجبات الجاهزة */
     '.icard{overflow:hidden}.icard .kban{grid-column:1/-1;height:104px;margin:-10px -10px 0;border-radius:18px 18px 0 0}' +
     '.icard .kban+.collage{margin-top:-34px;background:var(--surface);border-radius:14px;padding:4px;width:64px;box-shadow:0 6px 14px -8px rgba(0,0,0,.35);position:relative;z-index:1}' +
@@ -57,29 +64,97 @@
   }
   function decorate() {
     var hero = d.querySelector('.hm-hero');
-    if (hero && hero.dataset.kph !== slot()) { hero.dataset.kph = slot(); hero.style.setProperty('--kph', 'url("' + U(P[slot()], 1080) + '")'); hero.classList.add('kph-on'); }
+    if (hero && hero.dataset.kph !== slot()) { hero.dataset.kph = slot(); hero.style.setProperty('--kph', 'url("' + U(P[slot()], 760) + '")'); hero.classList.add('kph-on'); }
     d.querySelectorAll('.hm-water').forEach(function (w) {
       if (w.querySelector('.kthumb')) return;
       var t = d.createElement('i'); t.className = 'kthumb'; t.style.backgroundImage = 'url("' + U(P.water, 200) + '")'; w.insertBefore(t, w.firstChild);
     });
     d.querySelectorAll('#meals .mcard').forEach(function (c, i) {
-      if (c.firstElementChild && c.firstElementChild.classList.contains('kban')) return;
-      c.insertBefore(ban('', P[MEALS[i]] || P.salad), c.firstChild);
+      var ch = c.querySelector('.chosen'), sig = ch ? ch.textContent : '';
+      var old = c.firstElementChild && c.firstElementChild.classList.contains('kban') ? c.firstElementChild : null;
+      if (old && old.dataset.sig === sig) return;
+      if (old) old.remove();
+      var b = ban('', ch ? P[pick(sig)] : (P[MEALS[i]] || P.salad)); b.dataset.sig = sig;
+      var icons = ch ? Array.prototype.slice.call(ch.querySelectorAll('.comp .fimg, .comp img')).filter(function (x, j, a) { return !x.closest('.fimg') || x.classList.contains('fimg'); }).slice(0, 6) : [];
+      if (icons.length) { // الطبق: أيقونات المكونات المختارة مترتبة على صحن
+        var pl = d.createElement('div'); pl.className = 'kplate'; var n = icons.length;
+        icons.forEach(function (ic, j) { var k = ic.cloneNode(true), a = j / n * 2 * Math.PI - Math.PI / 2, r = n === 1 ? 0 : 23; k.style.left = (44 + r * Math.cos(a)) + 'px'; k.style.top = (44 + r * Math.sin(a)) + 'px'; pl.appendChild(k); });
+        b.appendChild(pl); b.classList.add('has-plate');
+      }
+      c.insertBefore(b, c.firstChild);
     });
     d.querySelectorAll('.icard').forEach(function (c) {
       if (c.querySelector('.kban')) return;
       c.insertBefore(ban('', P[pick(c.textContent || '')]), c.firstChild);
     });
     var bc = d.querySelector('#v-body > .card');
-    if (bc && !bc.querySelector('.kban')) bc.insertBefore(ban('body', P.body, 'كل قياس خطوة لقدّام'), bc.firstChild);
+    if (bc && !bc.querySelector('.kban')) bc.insertBefore(ban('body', P.body, 'كل قياس خطوة نحو هدفك'), bc.firstChild);
     d.querySelectorAll('.rp-score').forEach(function (s) {
       var card = s.closest('.card'); if (!card || card.querySelector('.kban')) return;
       var n = parseInt((s.querySelector('.rp-ring b') || {}).textContent, 10) || 0;
-      card.insertBefore(ban('rep', n >= 80 ? P.rTop : n >= 55 ? P.rMid : P.rLow, n >= 80 ? 'شغل ممتاز، كمّلي كده' : n >= 55 ? 'ماشية كويس' : 'يلا نشدّ حيلنا'), card.firstChild);
+      card.insertBefore(ban('rep', n >= 80 ? P.rTop : n >= 55 ? P.rMid : P.rLow, n >= 80 ? 'أداء ممتاز، استمري على هذا النحو' : n >= 55 ? 'أداء جيد، ويمكن تحسينه' : 'لنبدأ من جديد بخطوة صغيرة'), card.firstChild);
     });
   }
   var q = 0;
   new MutationObserver(function () { if (q) return; q = requestAnimationFrame(function () { q = 0; decorate(); }); }).observe(d.body, { childList: true, subtree: true });
+  // تحميل مسبق لكل الصور وقت الفراغ عشان تظهر فوراً لما تتفتح أي صفحة (والـ service worker بيحفظها)
+  setTimeout(function () { var seen = {}; Object.keys(P).forEach(function (k) { if (seen[P[k]]) return; seen[P[k]] = 1; new Image().src = U(P[k], k === 'morning' || k === 'noon' || k === 'night' ? 760 : k === 'water' ? 200 : 560); }); }, 3000);
   setInterval(decorate, 60000); // الصورة بتتغير مع وقت اليوم
   decorate();
+})();
+
+/* رسالة حب لزوجتي: بتظهر كل مرة تفتح التطبيق، ومبتختفيش غير لما تدوس عليها.
+   مفعّلة افتراضياً لحساب u2 بس (وهي فاتحة حسابها). لاحقاً كاختيار لأي مستخدم: settings.love = true / false. */
+(function () {
+  'use strict';
+  var d = document;
+  var MSG = [
+    'أحبكِ اليوم أكثر من الأمس، وأقلَّ من الغد.',
+    'أنتِ أجمل ما في أيامي، وأصدقُ دعواتي.',
+    'كل خطوةٍ تخطينها نحو صحتكِ فرحةٌ لقلبي.',
+    'أنتِ نعمةُ الله عليّ، وأنا فخورٌ بكِ دائمًا.',
+    'وجودكِ في حياتي يجعل كل شيءٍ أخفّ وأجمل.',
+    'تذكّري دائمًا: أنا معكِ في كل خطوة، وأحبكِ في كل حال.',
+    'ابتسامتكِ أجمل ما أراه في يومي.',
+    'أنتِ سكني ومودّتي ورحمتي… أحبكِ.',
+    'إصراركِ يُلهمني، واستمراركِ يُسعدني.',
+    'لو خُيّرتُ ألف مرة، لاخترتكِ في كل مرة.',
+    'قلبي معكِ أينما كنتِ، فاعتني بنفسكِ لأجلي.',
+    'كل يومٍ معكِ هديةٌ أشكر الله عليها.',
+    'اشربي ماءكِ، وتناولي وجبتكِ، وتذكّري أن هناك من يحبكِ كثيرًا.',
+    'أنتِ الأجمل في عيني، اليوم وكل يوم.',
+    'صحتكِ تهمّني لأنكِ عمري كلّه.',
+    'معكِ عرفتُ أن السعادة تفاصيلُ صغيرة… وأنتِ أجملها.'
+  ];
+  var css = d.createElement('style');
+  css.textContent =
+    '.klove{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:24px;background:rgba(20,10,14,.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:klf .4s ease both;cursor:pointer}' +
+    '.klove .in{max-width:360px;width:100%;background:linear-gradient(160deg,#fff,#fff4f2);border-radius:28px;padding:28px 24px 22px;text-align:center;box-shadow:0 30px 60px -20px rgba(120,20,40,.45);animation:klu .5s cubic-bezier(.2,.9,.3,1.2) both}' +
+    '.klove img{width:76px;height:76px;animation:klb 1.6s ease-in-out infinite}' +
+    '.klove h3{margin:10px 0 6px;font-size:15px;color:#c2415a;font-weight:700}' +
+    '.klove p{margin:0;font-size:20px;line-height:1.8;color:#2a1a1f;font-weight:600}' +
+    '.klove .sg{margin-top:14px;font-size:14px;color:#8a5a66}.klove .tp{margin-top:18px;font-size:12px;color:#b08a93}' +
+    '@keyframes klf{from{opacity:0}}@keyframes klu{from{transform:translateY(30px) scale(.94);opacity:0}}@keyframes klb{50%{transform:scale(1.12)}}' +
+    '@media (prefers-color-scheme:dark){.klove .in{background:linear-gradient(160deg,#2a1d21,#331f25)}.klove p{color:#fbe9ed}}';
+  d.head.appendChild(css);
+  var shown = false;
+  function want() {
+    var A = window.KHIFFA_APP, D = A && A.data; if (!D || !D.me || !D.user) return null;
+    if (D.user.id !== D.me.id) return false; // مش لما المالك يفتح حسابها
+    var st = A.settings ? A.settings() : {};
+    return st.love === true || (st.love !== false && D.me.id === 'u2');
+  }
+  function show() {
+    var i; try { var last = +localStorage.getItem('khiffa.love') || -1; do { i = Math.floor(Math.random() * MSG.length); } while (i === last && MSG.length > 1); localStorage.setItem('khiffa.love', i); } catch (e) { i = Math.floor(Math.random() * MSG.length); }
+    var A = window.KHIFFA_APP, o = d.createElement('div'); o.className = 'klove'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-label', 'رسالة حب');
+    o.innerHTML = '<div class="in">' + (A.img ? A.img('red_heart') : '') + '<h3>إلى زوجتي وحبيبتي</h3><p>' + MSG[i] + '</p><div class="sg">— زوجكِ المُحب</div><div class="tp">اضغطي في أي مكان للمتابعة</div></div>';
+    o.addEventListener('click', function () { o.style.transition = 'opacity .3s'; o.style.opacity = '0'; setTimeout(function () { o.remove(); }, 300); });
+    d.body.appendChild(o);
+  }
+  var t = setInterval(function () { var w = want(); if (w === null) return; clearInterval(t); if (w && !shown) { shown = true; show(); } }, 400);
+  // كل ما تفتح التطبيق تاني (رجعت له بعد ما قفلته)، وكل 30 دقيقة استخدام
+  var hid = 0, used = 0;
+  function again() { if (want() && !d.querySelector('.klove')) { used = 0; show(); } }
+  d.addEventListener('visibilitychange', function () { if (d.hidden) hid = Date.now(); else if (hid && Date.now() - hid > 120000) again(); });
+  setInterval(function () { if (!d.hidden && shown) { used += 1; if (used >= 30) again(); } }, 60000);
 })();
