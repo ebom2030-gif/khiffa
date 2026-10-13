@@ -83,13 +83,16 @@ $('#loginForm').onsubmit = e => { e.preventDefault(); const p = $('#pin').value.
 $('#logout').onclick = () => logout();
 
 /* ================= plan engine ================= */
-const settings = () => ({ level: 1600, activity: 1.375, water: 10, noGluten: false, noLactose: false, ...(S.data.settings || {}) });
+// water is counted in 330 ml bottles (older data was 250 ml cups and is converted when read)
+const BOTTLE = 330;
+const bottles = d => d.w3 != null ? d.w3 : Math.round((d.water || 0) * 250 / BOTTLE);
+const settings = () => { const s = { level: 1600, activity: 1.375, water: 8, noGluten: false, noLactose: false, ...(S.data.settings || {}) }; if (s.waterUnit !== BOTTLE) { if ((S.data.settings || {}).water) s.water = Math.max(4, Math.round(s.water * 250 / BOTTLE)); s.waterUnit = BOTTLE; } return s; };
 const level = () => D.LEVELS[settings().level] || D.LEVELS[1600];
 const allowed = f => { const st = settings(); return !(st.noGluten && f.gluten) && !(st.noLactose && f.lactose); };
 const ideaAllowed = idea => resolve(idea.parts, level()[idea.m] || {}).every(x => allowed(x.food));
 
 /* distribute a meal's exchange targets across the foods an idea (or a custom pick) lists */
-function resolve(parts, target) {
+function resolve(parts, target, split) {
   const out = []; let legS = 0;
   const order = ['P'].concat(GORDER.filter(g => g !== 'P'));
   order.forEach(g => {
@@ -97,6 +100,8 @@ function resolve(parts, target) {
     const list = (parts[g] || []).map(x => Array.isArray(x) ? { id: x[0], fixed: x[1] } : { id: x });
     if (g === 'V' && n && list.length > n) n = list.length; // vegetables: every picked type gets its own portion
     if (!n || !list.length) return;
+    // custom meals: two types in the same group share its portions equally (2 proteins → half of each)
+    if (split && g !== 'V' && list.length > 1) { const each = n / list.length; list.forEach(it => { const food = D.FOODS[it.id]; out.push({ food, n: each }); if (g === 'P' && food.leg) legS += each; }); return; }
     const counts = list.map(() => 0); let left = n;
     list.forEach((it, i) => { if (it.fixed) { const k = Math.min(it.fixed, left); counts[i] = k; left -= k; } });
     const free = list.map((it, i) => i).filter(i => !list[i].fixed);
@@ -135,7 +140,7 @@ function mealState(day, k) { return (day.meals || {})[k] || {}; }
 function mealComps(k, st) {
   const tgt = level()[k] || {};
   if (st.items && st.items.length) return st.items.filter(it => D.FOODS[it.id] && it.n > 0).map(it => ({ food: D.FOODS[it.id], n: it.n }));
-  if (st.mode === 'custom' && st.picks) return resolve(Object.fromEntries(Object.entries(st.picks).filter(([, v]) => Array.isArray(v) ? v.length : v).map(([g, id]) => [g, Array.isArray(id) ? id : [id]])), tgt);
+  if (st.mode === 'custom' && st.picks) return resolve(Object.fromEntries(Object.entries(st.picks).filter(([, v]) => Array.isArray(v) ? v.length : v).map(([g, id]) => [g, Array.isArray(id) ? id : [id]])), tgt, true);
   if (st.idea) { const idea = D.IDEAS.find(i => i.id === st.idea); if (idea) return resolve(idea.parts, tgt); }
   return [];
 }
@@ -152,7 +157,7 @@ const exKey = x => x.k || (x.id + '|' + (x.t || '') + '|' + (x.q || 1) + '|' + (
 function stampDay(day, prev) {
   const now = Date.now(); prev = prev || {};
   day.ts = { ...(prev.ts || {}), ...(day.ts || {}) };
-  ['water', 'weight', 'note'].forEach(f => { if (!same(prev[f], day[f])) day.ts[f] = now; });
+  ['water', 'w3', 'weight', 'note'].forEach(f => { if (!same(prev[f], day[f])) day.ts[f] = now; });
   const pm = prev.meals || {}, dm = day.meals || {};
   Object.keys(dm).forEach(k => { const a = pm[k], b = dm[k]; if (b && (!a || !same({ ...a, u: 0 }, { ...b, u: 0 }))) b.u = now; });
   Object.keys(pm).forEach(k => { if (!dm[k]) day.mdel = { ...(day.mdel || {}), [k]: now }; });
@@ -165,7 +170,7 @@ function stampDay(day, prev) {
 function mergeDay(a, b) {
   if (!a) return b; if (!b) return a;
   const out = { ...a, ...b }, ta = a.ts || {}, tb = b.ts || {}; out.ts = {};
-  ['water', 'weight', 'note'].forEach(f => { const src = (tb[f] || 0) > (ta[f] || 0) ? b : a; if (src[f] === undefined) delete out[f]; else out[f] = src[f]; out.ts[f] = Math.max(ta[f] || 0, tb[f] || 0); });
+  ['water', 'w3', 'weight', 'note'].forEach(f => { const src = (tb[f] || 0) > (ta[f] || 0) ? b : a; if (src[f] === undefined) delete out[f]; else out[f] = src[f]; out.ts[f] = Math.max(ta[f] || 0, tb[f] || 0); });
   const mdel = { ...(a.mdel || {}) }; Object.entries(b.mdel || {}).forEach(([k, v]) => { if (!(mdel[k] > v)) mdel[k] = v; });
   const meals = {}, am = a.meals || {}, bm = b.meals || {};
   new Set([...Object.keys(am), ...Object.keys(bm)]).forEach(k => {
@@ -202,9 +207,9 @@ function renderToday() {
   D.MEALS.forEach(m => { const st = mealState(day, m.k); if (st.done) { const t = totals(mealComps(m.k, st)); ['n', 'p', 'c', 'f'].forEach(x => eaten[x] += t[x]); } });
   (day.extras || []).forEach(x => ['n', 'p', 'c', 'f'].forEach(k => eaten[k] += (x[k] || 0) * (x.q || 1)));
   const left = Math.round(st0.level - eaten.n), kl = $('#kcalLeft'); // over the target shows as a negative number
-  kl.textContent = left < 0 ? '-' + ar(-left, 0) : ar(left, 0); kl.dir = 'ltr'; kl.style.color = left < 0 ? 'var(--warn)' : '';
+  kl.textContent = left < 0 ? '-' + ar(-left, 0) : ar(left, 0); kl.dir = 'ltr'; kl.style.color = left < 0 ? 'var(--bad)' : '';
   if (kl.nextElementSibling && kl.nextElementSibling.firstChild) kl.nextElementSibling.firstChild.nodeValue = left < 0 ? 'زيادة عن ' : 'متبقي من ';
-  $('#ringFg').setAttribute('stroke', left < 0 ? 'var(--warn)' : 'var(--mint)'); $('#kcalTarget').textContent = ar(st0.level, 0);
+  $('#ringFg').setAttribute('stroke', left < 0 ? 'var(--bad)' : 'var(--mint)'); $('#kcalTarget').textContent = ar(st0.level, 0);
   $('#ringFg').setAttribute('stroke-dashoffset', 326.7 * (1 - Math.min(1, eaten.n / st0.level)));
   [['P', 'p'], ['C', 'c'], ['F', 'f']].forEach(([id, k]) => { $('#b' + id).style.width = Math.min(1, eaten[k] / LT[k]) * 100 + '%'; $('#t' + id).textContent = ar(Math.round(eaten[k]), 0) + ' / ' + ar(Math.round(LT[k]), 0) + ' ج'; });
 
@@ -233,8 +238,8 @@ function renderToday() {
   });
   renderLimits();
   const cups = $('#cups'); cups.innerHTML = '';
-  for (let i = 1; i <= st0.water; i++) { const c = document.createElement('button'); c.className = 'cup' + (i <= (day.water || 0) ? ' on' : ''); c.setAttribute('aria-label', 'كوب ' + i); c.onclick = () => { const d = dayOf(S.cur); d.water = (d.water === i ? i - 1 : i); saveDay({ ...d }); renderToday(); }; cups.append(c); }
-  $('#waterTxt').textContent = ar(day.water || 0) + ' من ' + ar(st0.water) + ' أكواب';
+  for (let i = 1; i <= st0.water; i++) { const c = document.createElement('button'); c.className = 'cup' + (i <= bottles(day) ? ' on' : ''); c.setAttribute('aria-label', 'زجاجة ' + i); c.onclick = () => { const d = dayOf(S.cur); d.w3 = (bottles(d) === i ? i - 1 : i); saveDay({ ...d }); renderToday(); }; cups.append(c); }
+  $('#waterTxt').textContent = ar(bottles(day)) + ' من ' + ar(st0.water) + ' زجاجات 330 مل (' + ar(Math.round(bottles(day) * BOTTLE / 100) / 10) + ' من ' + ar(Math.round(st0.water * BOTTLE / 100) / 10) + ' لتر)';
   const ws = (S.data.days || []).filter(d => d.weight).map(d => d.date).sort().reverse()[0];
   $('#wLast').textContent = ws ? 'آخر وزن مسجل: ' + ar(dayOf(ws).weight) + ' كجم (' + fmt(ws, { day: 'numeric', month: 'short' }) + ')' : 'سجلي وزنك الصبح على الريق بعد الحمام.';
   if (document.activeElement !== $('#wIn')) $('#wIn').value = day.weight || '';
@@ -281,18 +286,20 @@ function openMealSheet(m, mode) {
         list.forEach(i => { const c = ideaCard(i, st.mode !== 'custom' && st.idea === i.id); c.onclick = () => { setMeal(m.k, { mode: 'idea', idea: i.id, items: null, title: null, planned: false }); closeSheet(); renderToday(); toast('اتحطت في ' + m.t); }; body.append(c); });
       } else {
         const tgt = level()[m.k] || {}; const picks = { ...(st.mode === 'custom' ? st.picks : {}) };
-        if (st.mode !== 'custom' && st.idea) { mealComps(m.k, st).forEach(x => { if (x.food.g === 'V') picks.V = (picks.V || []).concat(x.food.id); else if (!picks[x.food.g]) picks[x.food.g] = x.food.id; }); }
-        if (picks.V && !Array.isArray(picks.V)) picks.V = [picks.V];
+        if (st.mode !== 'custom' && st.idea) { mealComps(m.k, st).forEach(x => { if (x.food.g === 'V') picks.V = (picks.V || []).concat(x.food.id); else picks[x.food.g] = (picks[x.food.g] || []).concat(x.food.id); }); }
+        Object.keys(picks).forEach(g => { if (picks[g] && !Array.isArray(picks[g])) picks[g] = [picks[g]]; if (!picks[g]) delete picks[g]; });
         GORDER.filter(g => tgt[g]).forEach(g => {
           const G = D.GROUPS[g];
-          body.insertAdjacentHTML('beforeend', '<div class="grp-h"><i style="background:' + G.color + '"></i>' + G.name + ': ' + (tgt[g] === 1 ? 'حصة' : tgt[g] === 2 ? 'حصتين' : ar(tgt[g]) + ' حصص') + (g === 'V' ? ' <span class="note" style="font-weight:400">– اختاري أكتر من نوع براحتك</span>' : '') + '</div>');
+          body.insertAdjacentHTML('beforeend', '<div class="grp-h"><i style="background:' + G.color + '"></i>' + G.name + ': ' + (tgt[g] === 1 ? 'حصة' : tgt[g] === 2 ? 'حصتين' : ar(tgt[g]) + ' حصص') + ' <span class="note" style="font-weight:400">– ' + (g === 'V' ? 'اختاري أكتر من نوع براحتك' : 'تقدري تختاري أكتر من نوع، والحصة بتتقسم بينهم') + '</span>' + '</div>');
           const grid = document.createElement('div'); grid.className = 'fgrid';
           Object.values(D.FOODS).filter(f => f.g === g && allowed(f)).forEach(f => {
-            const b = document.createElement('button'); b.className = 'fbtn'; b.setAttribute('aria-pressed', g === 'V' ? (picks.V || []).includes(f.id) : picks[g] === f.id);
+            const b = document.createElement('button'); b.className = 'fbtn'; b.setAttribute('aria-pressed', (picks[g] || []).includes(f.id)); b.dataset.f = f.id;
             b.innerHTML = img(f.img) + '<span>' + esc(f.name) + '</span><span class="q num">' + amountText(f, tgt[g]) + '</span>';
             b.onclick = () => {
-              if (g === 'V') { const v = picks.V || []; picks.V = v.includes(f.id) ? v.filter(x => x !== f.id) : v.concat(f.id); b.setAttribute('aria-pressed', picks.V.includes(f.id)); updateSum(); return; }
-              picks[g] = picks[g] === f.id ? null : f.id; grid.querySelectorAll('.fbtn').forEach(x => x.setAttribute('aria-pressed', 'false')); if (picks[g]) b.setAttribute('aria-pressed', 'true'); updateSum(); };
+              const v = picks[g] || []; picks[g] = v.includes(f.id) ? v.filter(x => x !== f.id) : v.concat(f.id);
+              const sel = picks[g], share = g === 'V' || !sel.length ? tgt[g] : tgt[g] / sel.length;
+              grid.querySelectorAll('.fbtn').forEach(x => { const on = sel.includes(x.dataset.f); x.setAttribute('aria-pressed', on); x.querySelector('.q').textContent = amountText(D.FOODS[x.dataset.f], on ? share : tgt[g]); });
+              updateSum(); };
             grid.append(b);
           });
           body.append(grid);
@@ -300,7 +307,7 @@ function openMealSheet(m, mode) {
         const foot = document.createElement('div'); foot.style.cssText = 'position:sticky;bottom:-20px;background:var(--surface);padding-block:10px;display:flex;gap:10px;align-items:center;border-top:1px solid var(--line)';
         foot.innerHTML = '<span class="note num" id="shSum" style="flex:1"></span><button class="btn" id="shSave">حفظ الوجبة</button>';
         body.append(foot);
-        const updateSum = () => { const comps = mealComps(m.k, { mode: 'custom', picks }); const t = totals(comps); $('#shSum').textContent = comps.length ? ar(Math.round(t.n), 0) + ' سعرة – ' + ar(Math.round(t.p), 0) + ' ج بروتين' + (picks.P && D.FOODS[picks.P].leg ? ' – البقوليات بتقلل النشويات' : '') : 'اختاري صنف من كل مجموعة'; };
+        const updateSum = () => { const comps = mealComps(m.k, { mode: 'custom', picks }); const t = totals(comps); $('#shSum').textContent = comps.length ? ar(Math.round(t.n), 0) + ' سعرة – ' + ar(Math.round(t.p), 0) + ' ج بروتين' + ((picks.P || []).some(id => D.FOODS[id].leg) ? ' – البقوليات بتقلل النشويات' : '') : 'اختاري صنف من كل مجموعة'; };
         updateSum();
         $('#shSave').onclick = () => { if (!Object.values(picks).some(v => Array.isArray(v) ? v.length : v)) { toast('اختاري صنف واحد على الأقل'); return; } setMeal(m.k, { mode: 'custom', picks, items: null, title: null, planned: false }); closeSheet(); renderToday(); toast('اتحفظت الوجبة'); };
       }
@@ -488,7 +495,7 @@ function renderPlan() {
 }
 $('#fGluten').onclick = () => saveSettings({ noGluten: !settings().noGluten });
 $('#fLactose').onclick = () => saveSettings({ noLactose: !settings().noLactose });
-['#s-act', '#s-water'].forEach(id => $(id).onchange = () => saveSettings({ activity: parseFloat($('#s-act').value), water: Math.min(16, Math.max(4, parseInt($('#s-water').value) || 10)) }));
+['#s-act', '#s-water'].forEach(id => $(id).onchange = () => saveSettings({ activity: parseFloat($('#s-act').value), water: Math.min(16, Math.max(4, parseInt($('#s-water').value) || 8)), waterUnit: BOTTLE }));
 
 /* ================= header & shell ================= */
 function renderHeader() {
@@ -521,7 +528,7 @@ async function refreshData() {
 setInterval(() => { if (document.visibilityState === 'visible') refreshData(); }, 5 * 60 * 1000);
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 
-window.KHIFFA_APP = { D, dayOf, saveDay, toast, settings, saveSettings, level, mealComps, mealState, setMeal, openMealSheet, mealTargetKcal, amountText, ideaName, totals, levelTotals, weekKeys, weekCounts, fmt, ar, esc, img, imgURL, addDays, TODAY, people, displayName, switchUser,
+window.KHIFFA_APP = { D, bottles, BOTTLE, dayOf, saveDay, toast, settings, saveSettings, level, mealComps, mealState, setMeal, openMealSheet, mealTargetKcal, amountText, ideaName, totals, levelTotals, weekKeys, weekCounts, fmt, ar, esc, img, imgURL, addDays, TODAY, people, displayName, switchUser,
   get cur() { return S.cur; }, setCur: k => { S.cur = k; if (S.data) renderToday(); }, get data() { return S.data; }, refresh: () => { if (S.data) renderToday(); }, refreshAll: () => renderAll() };
 if (S.pin) boot(); else showLogin();
 })();
