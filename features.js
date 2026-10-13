@@ -35,7 +35,7 @@
   function addExtra(x) {
     var day = A.dayOf(A.cur), now = new Date();
     x.t = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-    day.extras = (day.extras || []).concat(x); A.saveDay(Object.assign({}, day)); A.refresh(); A.toast('اتسجل: ' + x.name);
+    day.extras = (day.extras || []).concat(x); A.saveDay(Object.assign({}, day)); A.refresh(); A.toast('تم تسجيل: ' + x.name);
   }
 
   /* ---------- زرار + ---------- */
@@ -45,16 +45,16 @@
   fab.onclick = function () {
     var s = sheet('إضافة سريعة',
       '<div class="kf-acts">' +
-      '<button class="kf-act" data-a="search">' + A.img('magnifying_glass_tilted_left') + 'سجّلي أكل<small>بالاسم أو بالوزن</small></button>' +
+      '<button class="kf-act" data-a="search">' + A.img('magnifying_glass_tilted_left') + 'سجّلي طعامًا<small>بالاسم أو بالوزن</small></button>' +
       '<button class="kf-act" data-a="scan">' + A.img('mobile_phone') + 'باركود منتج<small>زبادي، شيبسي، عصير...</small></button>' +
-      '<button class="kf-act" data-a="repeat">' + A.img('repeat_button') + 'كرّري وجبة<small>من اللي أكلتيه قبل كده</small></button>' +
-      '<button class="kf-act" data-a="water">' + A.img('droplet') + 'زجاجة ماية<small>330 مل</small></button></div>');
+      '<button class="kf-act" data-a="repeat">' + A.img('repeat_button') + 'كرّري وجبة<small>مما تناولته سابقًا</small></button>' +
+      '<button class="kf-act" data-a="water">' + A.img('droplet') + 'زجاجة ماء<small>330 مل</small></button></div>');
     s.body.querySelectorAll('.kf-act').forEach(function (b) { b.onclick = function () {
       var a = b.dataset.a; s.close();
       if (a === 'search') { go('today'); setTimeout(function () { var q = d.getElementById('qaQ'); if (q) { q.scrollIntoView({ block: 'center', behavior: 'smooth' }); q.focus(); } }, 150); }
       if (a === 'scan') scan();
       if (a === 'repeat') pickSlot();
-      if (a === 'water') { var x = A.dayOf(A.TODAY); x.w3 = A.bottles(x) + 1; A.saveDay(Object.assign({}, x)); A.refresh(); A.toast('زجاجة ماية ✓ (' + ar(x.w3) + ' من ' + ar(A.settings().water) + ')'); }
+      if (a === 'water') { var x = A.dayOf(A.TODAY); x.w3 = A.bottles(x) + 1; A.saveDay(Object.assign({}, x)); A.refresh(); A.toast('زجاجة ماء ✓ (' + ar(x.w3) + ' من ' + ar(A.settings().water) + ')'); }
     }; });
   };
 
@@ -70,18 +70,18 @@
     var vid = d.getElementById('kfVid'), msg = d.getElementById('kfMsg'), done = false;
     var found = function (code) { if (done) return; done = true; stopCam(); d.getElementById('kfCode').value = code; lookup(code, s); };
     d.getElementById('kfGo').onclick = function () { var c = d.getElementById('kfCode').value.trim(); if (c.length >= 6) { done = true; stopCam(); lookup(c, s); } };
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { msg.textContent = 'الكاميرا مش متاحة هنا، اكتبي الرقم اللي تحت الباركود.'; return; }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { msg.textContent = 'الكاميرا غير متاحة هنا، اكتبي الرقم المكتوب أسفل الباركود.'; return; }
     if ('BarcodeDetector' in window) {
       navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function (st) {
         camStream = st; vid.srcObject = st; vid.play();
         var det = new window.BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'] });
         camTimer = setInterval(function () { det.detect(vid).then(function (r) { if (r && r[0]) found(r[0].rawValue); }).catch(function () {}); }, 350);
-      }).catch(function () { msg.textContent = 'مقدرتش أفتح الكاميرا. اسمحي بالكاميرا أو اكتبي الرقم.'; });
+      }).catch(function () { msg.textContent = 'تعذّر فتح الكاميرا. اسمحي بالوصول إلى الكاميرا أو اكتبي الرقم.'; });
     } else {
       loadZX().then(function () {
         zx = new window.ZXing.BrowserMultiFormatReader();
         zx.decodeFromVideoDevice(null, vid, function (r) { if (r) found(r.getText()); });
-      }).catch(function () { msg.textContent = 'مقدرتش أشغّل الماسح. اكتبي رقم الباركود.'; });
+      }).catch(function () { msg.textContent = 'تعذّر تشغيل الماسح. اكتبي رقم الباركود.'; });
     }
   }
   function lookup(code, s) {
@@ -90,7 +90,7 @@
     var show = function (p) {
       var k100 = p.k, grams = p.serving || 100;
       res.innerHTML = '<div class="kf-prod">' + (p.img ? '<img src="' + esc(p.img) + '" alt="">' : A.img('package')) + '<div><div style="font-weight:700">' + esc(p.name) + '</div><div class="note num">' + ar(k100, 0) + ' سعرة لكل 100 ' + (p.ml ? 'مل' : 'جم') + ' – بروتين ' + ar(p.p, 1) + ' ج</div></div></div>' +
-        '<div class="row" style="margin-top:10px"><label class="note">الكمية اللي اكلتيها (' + (p.ml ? 'مل' : 'جم') + ')<input id="kfG" type="number" inputmode="decimal" value="' + grams + '" style="width:120px;display:block;margin-top:4px"></label><b class="num" id="kfK" style="font-size:20px"></b></div>' +
+        '<div class="row" style="margin-top:10px"><label class="note">الكمية التي تناولتها (' + (p.ml ? 'مل' : 'جم') + ')<input id="kfG" type="number" inputmode="decimal" value="' + grams + '" style="width:120px;display:block;margin-top:4px"></label><b class="num" id="kfK" style="font-size:20px"></b></div>' +
         '<button class="btn" id="kfAdd" style="width:100%;margin-top:10px">سجّلي</button>';
       var g = d.getElementById('kfG'), kk = d.getElementById('kfK');
       var upd = function () { kk.textContent = ar(Math.round(k100 * (parseFloat(g.value) || 0) / 100), 0) + ' سعرة'; }; g.oninput = upd; upd();
@@ -101,15 +101,15 @@
       };
     };
     if (cache[code]) return show(cache[code]);
-    res.innerHTML = '<p class="note">بدوّر على المنتج…</p>';
+    res.innerHTML = '<p class="note">جارٍ البحث عن المنتج…</p>';
     fetch('https://world.openfoodfacts.org/api/v2/product/' + encodeURIComponent(code) + '.json?fields=product_name,product_name_ar,product_name_en,brands,nutriments,serving_quantity,image_front_small_url,quantity')
       .then(function (r) { return r.json(); }).then(function (j) {
         var pr = j && j.product, n = pr && pr.nutriments;
         var k = n && (n['energy-kcal_100g'] || (n['energy_100g'] ? n['energy_100g'] / 4.184 : 0));
-        if (!pr || !k) { res.innerHTML = '<p class="note">المنتج ده مش موجود في قاعدة البيانات. سجّليه من البحث واكتبي السعرات اللي على العلبة.</p>'; return; }
+        if (!pr || !k) { res.innerHTML = '<p class="note">هذا المنتج غير موجود في قاعدة البيانات. سجّليه من البحث واكتبي السعرات المدوّنة على العلبة.</p>'; return; }
         var p = { name: (pr.product_name_ar || pr.product_name || pr.product_name_en || 'منتج') + (pr.brands ? ' – ' + pr.brands.split(',')[0] : ''), k: Math.round(k), p: +(n.proteins_100g || 0), c: +(n.carbohydrates_100g || 0), f: +(n.fat_100g || 0), serving: Math.round(+pr.serving_quantity || 0) || null, img: pr.image_front_small_url || '', ml: /ml|l\b/i.test(pr.quantity || '') };
         cache[code] = p; LS.set('bc', cache); show(p);
-      }).catch(function () { res.innerHTML = '<p class="note">مفيش اتصال بالإنترنت أو الخدمة مش متاحة دلوقتي.</p>'; });
+      }).catch(function () { res.innerHTML = '<p class="note">لا يوجد اتصال بالإنترنت أو الخدمة غير متاحة حاليًا.</p>'; });
   }
 
   /* ---------- كرّري وجبة ---------- */
@@ -131,13 +131,13 @@
   }
   function repeat(m) {
     var list = pastMeals(m.k);
-    var s = sheet('كرّري ' + m.t, list.length ? '<p class="note" style="margin:0">دوسي على أي وجبة تتسجل ' + (A.cur === A.TODAY ? 'النهارده' : 'في اليوم المفتوح') + ' بنفس الكميات.</p>' + list.map(function (x, i) {
+    var s = sheet('كرّري ' + m.t, list.length ? '<p class="note" style="margin:0">اضغطي على أي وجبة لتسجيلها ' + (A.cur === A.TODAY ? 'اليوم' : 'في اليوم المفتوح') + ' بالكميات نفسها.</p>' + list.map(function (x, i) {
       var t = A.totals(x.comps); return '<button class="kf-past" data-i="' + i + '"><div class="pics">' + x.comps.slice(0, 4).map(function (c) { return A.img(c.food.img, 'sm'); }).join('') + '</div><div style="min-width:0"><div class="nm">' + esc(x.title) + '</div><div class="note">' + A.fmt(x.key, { weekday: 'long', day: 'numeric', month: 'short' }) + '</div></div><b class="num">' + ar(Math.round(t.n), 0) + '</b></button>';
-    }).join('') : '<p class="note">لسه مفيش ' + m.t + ' متسجلة إنها اتاكلت في آخر 45 يوم.</p>');
+    }).join('') : '<p class="note">لم تُسجَّل ' + m.t + ' كوجبة مُتناوَلة في آخر 45 يومًا.</p>');
     s.body.querySelectorAll('.kf-past').forEach(function (b) { b.onclick = function () {
       var x = list[+b.dataset.i];
       A.setMeal(m.k, { mode: 'custom', items: x.comps.map(function (c) { return { id: c.food.id, n: c.n }; }), title: x.title, done: true, planned: false }, A.cur);
-      s.close(); A.refresh(); A.toast('اتسجلت ' + m.t + ' ✓');
+      s.close(); A.refresh(); A.toast('تم تسجيل ' + m.t + ' ✓');
     }; });
   }
   function addRepeatButtons() {
@@ -162,10 +162,10 @@
     var old = d.getElementById('kfLvl'); if (old) old.remove();
     var sg = suggestLevel(), st = A.settings(); if (!sg || sg.level === st.level || LS.get('lvlSkip', 0) === sg.level) return;
     var c = d.createElement('div'); c.className = 'card hm-wide'; c.id = 'kfLvl';
-    c.innerHTML = '<div class="kf-lvl">' + A.img('balance_scale') + '<div><b>السعرات المناسبة دلوقتي ' + ar(sg.level, 0) + ' بدل ' + ar(st.level, 0) + '</b><div class="note">حسب آخر وزن (' + ar(sg.cur) + ' كجم) وآخر InBody: الحرق الأساسي حوالي ' + ar(sg.bmr, 0) + '، ومع النشاط ' + ar(sg.tdee, 0) + '، ناقص 500 للتخسيس.</div>' +
-      '<div class="row" style="margin-top:8px"><button class="btn sm" id="kfLvlOk">طبّقي ' + ar(sg.level, 0) + '</button><button class="btn ghost sm" id="kfLvlNo">مش دلوقتي</button></div></div></div>';
+    c.innerHTML = '<div class="kf-lvl">' + A.img('balance_scale') + '<div><b>السعرات المناسبة الآن ' + ar(sg.level, 0) + ' بدلًا من ' + ar(st.level, 0) + '</b><div class="note">حسب آخر وزن (' + ar(sg.cur) + ' كجم) وآخر InBody: الحرق الأساسي نحو ' + ar(sg.bmr, 0) + '، ومع النشاط ' + ar(sg.tdee, 0) + '، مطروحًا منه 500 لإنقاص الوزن.</div>' +
+      '<div class="row" style="margin-top:8px"><button class="btn sm" id="kfLvlOk">طبّقي ' + ar(sg.level, 0) + '</button><button class="btn ghost sm" id="kfLvlNo">ليس الآن</button></div></div></div>';
     var first = home.querySelector('.card'); home.insertBefore(c, first ? first.nextSibling : null);
-    d.getElementById('kfLvlOk').onclick = function () { A.saveSettings({ level: sg.level }); A.toast('النظام بقى ' + ar(sg.level, 0) + ' سعرة'); };
+    d.getElementById('kfLvlOk').onclick = function () { A.saveSettings({ level: sg.level }); A.toast('أصبح النظام ' + ar(sg.level, 0) + ' سعرة'); };
     d.getElementById('kfLvlNo').onclick = function () { LS.set('lvlSkip', sg.level); c.remove(); };
   }
 
@@ -181,21 +181,21 @@
   function checkRemind() {
     if (!remindOn() || !A.data) return;
     var now = new Date(), h = now.getHours() + now.getMinutes() / 60, day = A.dayOf(A.TODAY), st = A.settings();
-    D.MEALS.forEach(function (m) { if (h >= TIMES[m.k] + 0.5 && h < TIMES[m.k] + 3 && !A.mealState(day, m.k).done) notify(m.k, 'خفّة – ' + m.t, 'لسه ما سجلتيش ' + m.t + '. سجّليه بضغطة من التطبيق.'); });
+    D.MEALS.forEach(function (m) { if (h >= TIMES[m.k] + 0.5 && h < TIMES[m.k] + 3 && !A.mealState(day, m.k).done) notify(m.k, 'خفّة – ' + m.t, 'لم تسجّلي ' + m.t + ' بعد. سجّليها بضغطة من التطبيق.'); });
     var expect = Math.floor(st.water * Math.min(1, Math.max(0, (h - 8) / 13)));
-    if (h >= 11 && A.bottles(day) < expect - 1) notify('w' + Math.floor(h / 3), 'خفّة – الماية', 'اشربي زجاجة ماية. لحد دلوقتي ' + ar(A.bottles(day)) + ' من ' + ar(st.water) + '.');
+    if (h >= 11 && A.bottles(day) < expect - 1) notify('w' + Math.floor(h / 3), 'خفّة – الماء', 'اشربي زجاجة ماء. حتى الآن ' + ar(A.bottles(day)) + ' من ' + ar(st.water) + '.');
   }
   setInterval(checkRemind, 10 * 60 * 1000);
   function remindToggle() {
     var acct = d.getElementById('acct'); if (!acct || d.getElementById('kfRem')) return;
     var row = d.createElement('div'); row.className = 'row'; row.id = 'kfRem'; row.style.margin = '10px 0';
-    row.innerHTML = '<span class="note">تذكير بالماية والوجبات:</span><button class="fchip" id="kfRemBtn"></button><span class="note" style="width:100%">بيشتغل طول ما التطبيق مفتوح أو في الخلفية. على الآيفون لازم يكون متثبت على الشاشة الرئيسية.</span>';
+    row.innerHTML = '<span class="note">تذكير بالماء والوجبات:</span><button class="fchip" id="kfRemBtn"></button><span class="note" style="width:100%">يعمل ما دام التطبيق مفتوحًا أو في الخلفية. على الآيفون يجب أن يكون مثبّتًا على الشاشة الرئيسية.</span>';
     acct.parentNode.insertBefore(row, acct.nextSibling);
-    var b = d.getElementById('kfRemBtn'), paint = function () { b.textContent = remindOn() ? 'شغّال ✓' : 'شغّلي'; b.setAttribute('aria-pressed', remindOn()); };
+    var b = d.getElementById('kfRemBtn'), paint = function () { b.textContent = remindOn() ? 'مُفعّل ✓' : 'فعّلي'; b.setAttribute('aria-pressed', remindOn()); };
     b.onclick = function () {
       if (remindOn()) { LS.set('remind', false); paint(); return; }
-      if (!('Notification' in window)) { A.toast('المتصفح ده مش بيدعم التنبيهات'); return; }
-      Notification.requestPermission().then(function (p) { LS.set('remind', p === 'granted'); paint(); if (p === 'granted') { A.toast('التذكير اشتغل'); checkRemind(); } else A.toast('محتاجة تسمحي بالتنبيهات من إعدادات المتصفح'); });
+      if (!('Notification' in window)) { A.toast('هذا المتصفح لا يدعم التنبيهات'); return; }
+      Notification.requestPermission().then(function (p) { LS.set('remind', p === 'granted'); paint(); if (p === 'granted') { A.toast('تم تفعيل التذكير'); checkRemind(); } else A.toast('يلزم السماح بالتنبيهات من إعدادات المتصفح'); });
     };
     paint();
   }
