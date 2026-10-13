@@ -50,6 +50,70 @@
   d.head.appendChild(css);
   d.querySelector('meta[name="theme-color"]') && d.querySelector('meta[name="theme-color"]').setAttribute('content', '#1FA971');
 
+  /* ---------- login: food-app welcome screen ---------- */
+  var lcss = d.createElement('style');
+  lcss.textContent =
+    '#login.kf-login{min-height:100dvh;padding:0;gap:0;justify-content:flex-start;align-items:stretch;background:var(--bg);text-align:right}' +
+    '.lg-hero{position:relative;overflow:hidden;background:linear-gradient(160deg,#1FA971 0%,#12865A 60%,#0E6E4A 100%);color:#fff;padding:calc(36px + env(safe-area-inset-top,0px)) 24px 86px;min-height:46vh;display:flex;flex-direction:column;justify-content:flex-end}' +
+    '.lg-hero::before{content:"";position:absolute;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.18),transparent 65%);top:-160px;left:-140px}' +
+    '.lg-hero::after{content:"";position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(255,122,89,.35),transparent 70%);bottom:-120px;right:-80px}' +
+    '.lg-brand{position:relative;z-index:1;display:flex;align-items:center;gap:12px}' +
+    '.lg-brand img{width:56px;height:56px;border-radius:16px;background:#fff;padding:6px;box-shadow:0 8px 20px -8px rgba(0,0,0,.35)}' +
+    '.lg-brand .logo{color:#fff;font-size:40px;line-height:1}' +
+    '.lg-hero h1{position:relative;z-index:1;margin:18px 0 6px;font-size:26px;line-height:1.35;font-weight:700}' +
+    '.lg-hero p{position:relative;z-index:1;margin:0;font-size:15px;opacity:.9;max-width:420px}' +
+    '.lg-food{position:absolute;inset:0;pointer-events:none;z-index:0}' +
+    '.lg-food img{position:absolute;width:64px;height:64px;filter:drop-shadow(0 10px 14px rgba(0,0,0,.25));animation:lgFloat 6s ease-in-out infinite}' +
+    '.lg-food img:nth-child(1){top:7%;left:6%;width:72px;height:72px}.lg-food img:nth-child(2){top:8%;left:42%;animation-delay:-1.5s}' +
+    '.lg-food img:nth-child(3){top:30%;left:26%;width:52px;height:52px;animation-delay:-3s}.lg-food img:nth-child(4){top:12%;right:10%;width:56px;height:56px;animation-delay:-2s}' +
+    '.lg-food img:nth-child(5){top:24%;left:40%;width:48px;height:48px;animation-delay:-4s}' +
+    '@keyframes lgFloat{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-10px) rotate(4deg)}}' +
+    '@media (prefers-reduced-motion:reduce){.lg-food img{animation:none}}' +
+    '.lg-panel{position:relative;z-index:2;margin:-56px 16px 0;display:flex;flex-direction:column;align-items:center;gap:14px;padding-bottom:28px}' +
+    '#login.kf-login #loginForm{max-width:420px!important;border-radius:26px;padding:24px 22px;box-shadow:0 20px 40px -20px rgba(29,42,37,.35)}' +
+    '.lg-title{font-size:20px;font-weight:700;margin:0 0 4px}.lg-sub{font-size:14px;color:var(--muted);margin:0 0 16px}' +
+    '#login.kf-login #loginForm label.eyebrow{display:none}' +
+    '.lg-pin{position:relative}' +
+    '#login.kf-login #pin{height:60px;border-radius:18px!important;border:1.5px solid var(--line)!important;background:var(--bg);font-size:26px!important;letter-spacing:.5em!important;margin:0 0 14px!important;transition:border-color .2s,box-shadow .2s}' +
+    '#login.kf-login #pin:focus{outline:0;border-color:var(--mint)!important;box-shadow:0 0 0 4px var(--mint-soft)}' +
+    '.lg-eye{position:absolute;left:10px;top:14px;border:0;background:none;color:var(--muted);font:inherit;font-size:13px;cursor:pointer;padding:6px}' +
+    '#login.kf-login #loginForm button[type="submit"]{height:54px;font-size:17px;border-radius:18px}' +
+    '#login.kf-login .err{color:var(--bad);margin:10px 0 0;text-align:center}' +
+    '.lg-feats{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:420px}' +
+    '.lg-feats span{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border-radius:999px;padding:6px 12px 6px 8px;font-size:13px;box-shadow:var(--shadow)}' +
+    '.lg-feats img{width:22px;height:22px}' +
+    '.lg-foot{font-size:12px;color:var(--muted);margin-top:4px}' +
+    '#login.kf-login .inst-card{max-width:420px!important;margin-top:0!important;border-radius:22px}' +
+    '@media (min-width:900px){#login.kf-login{flex-direction:row;align-items:stretch}' +
+      '.lg-hero{flex:1.1;min-height:100dvh;padding:56px;justify-content:center}.lg-hero h1{font-size:40px}.lg-hero p{font-size:17px}' +
+      '.lg-food img{width:96px!important;height:96px!important}' +
+      '.lg-panel{flex:.9;margin:0;justify-content:center;padding:40px}}';
+  d.head.appendChild(lcss);
+  function loginScreen() {
+    var L = d.getElementById('login'), form = d.getElementById('loginForm');
+    if (!L || !form || L.classList.contains('kf-login') || !A) return;
+    L.classList.add('kf-login');
+    Array.prototype.slice.call(L.children).forEach(function (c) { if (c !== form && !c.hasAttribute('data-inst')) c.remove(); });
+    var u = A.imgURL;
+    var hero = d.createElement('div'); hero.className = 'lg-hero';
+    hero.innerHTML = '<div class="lg-food">' + ['avocado', 'green_salad', 'strawberry', 'red_apple', 'broccoli'].map(function (n) { return '<img src="' + u(n) + '" alt="">'; }).join('') + '</div>' +
+      '<div class="lg-brand"><img src="icon-192.png" alt=""><div class="logo">خفّة</div></div>' +
+      '<h1>أكل صحي بطعم حلو،<br>ووزن بينزل بخفّة.</h1><p>نظام البدائل الغذائية، السعرات، الماية، والوزن… كله في مكان واحد وبخطوة واحدة.</p>';
+    var panel = d.createElement('div'); panel.className = 'lg-panel';
+    L.insertBefore(hero, L.firstChild); L.insertBefore(panel, hero.nextSibling);
+    panel.appendChild(form);
+    form.insertAdjacentHTML('afterbegin', '<h2 class="lg-title">أهلاً وسهلاً</h2><p class="lg-sub">رمز الدخول بتاعك، وبعدها كل حاجة جاهزة.</p>');
+    var pin = d.getElementById('pin'), wrap = d.createElement('div'); wrap.className = 'lg-pin';
+    pin.parentNode.insertBefore(wrap, pin); wrap.appendChild(pin);
+    var eye = d.createElement('button'); eye.type = 'button'; eye.className = 'lg-eye'; eye.textContent = 'إظهار';
+    eye.onclick = function () { var sh = pin.type === 'password'; pin.type = sh ? 'text' : 'password'; eye.textContent = sh ? 'إخفاء' : 'إظهار'; pin.focus(); };
+    wrap.appendChild(eye);
+    var btn = form.querySelector('button[type="submit"]'); if (btn) btn.textContent = 'دخول';
+    panel.insertAdjacentHTML('beforeend', '<div class="lg-feats">' + [['bar_chart', 'تقارير يومية وأسبوعية'], ['fork_and_knife_with_plate', 'وجبات جاهزة بالبدائل'], ['droplet', 'متابعة الماية'], ['mobile_phone', 'باركود المنتجات']].map(function (f) { return '<span><img src="' + u(f[0]) + '" alt="">' + f[1] + '</span>'; }).join('') + '</div><div class="lg-foot">خفّة – من ARKIQO</div>');
+    var inst = L.querySelector('[data-inst]'); if (inst) panel.insertBefore(inst, panel.querySelector('.lg-feats'));
+  }
+  loginScreen(); setTimeout(loginScreen, 0);
+
   var ICON = { home: 'house', today: 'green_salad', reports: 'bar_chart', ideas: 'fork_and_knife_with_plate', body: 'straight_ruler', plan: 'clipboard' };
   function icons() {
     if (!A) return;
