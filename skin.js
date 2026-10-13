@@ -52,7 +52,7 @@
 
   /* ---------- login: real lifestyle photography (Unsplash, free licence), crossfading ---------- */
   var PH = ['photo-1562771242-7d077824055a', 'photo-1494390248081-4e521a5940db', 'photo-1746796751590-a8c0f15d4900', 'photo-1598410924570-6e37b6c54fe6'];
-  var phURL = function (id, w) { return 'https://images.unsplash.com/' + id + '?w=' + (w || 1080) + '&q=72&auto=format&fit=crop'; };
+  var phURL = function (id, w) { return 'https://images.unsplash.com/' + id + '?w=' + (w || 1080) + '&q=60&auto=format&fit=crop'; };
   var lcss = d.createElement('style');
   lcss.textContent =
     '#login.kf-login{position:relative;min-height:100dvh;padding:0;gap:0;display:block;text-align:right;color:#fff;background:#0E1A15;overflow:hidden}' +
@@ -97,11 +97,13 @@
     L.classList.add('kf-login');
     Array.prototype.slice.call(L.children).forEach(function (c) { if (c !== form && !c.hasAttribute('data-inst')) c.remove(); });
     var ph = d.createElement('div'); ph.className = 'lg-photos';
-    ph.innerHTML = PH.map(function (id, i) { return '<div' + (i ? '' : ' class="on"') + ' style="background-image:url(' + phURL(id, innerWidth > 900 ? 1600 : 1080) + ')"></div>'; }).join('');
+    var pw = innerWidth > 900 ? 1280 : 820;
+    ph.innerHTML = PH.map(function (id, i) { return '<div' + (i ? ' data-bg="' + phURL(id, pw) + '"' : ' class="on" style="background-image:url(' + phURL(id, pw) + ')"') + '></div>'; }).join('');
+    setTimeout(function () { ph.querySelectorAll('[data-bg]').forEach(function (x) { x.style.backgroundImage = 'url(' + x.dataset.bg + ')'; }); }, 2500); // الصور التانية بعد ما الأولى تظهر
     var shade = d.createElement('div'); shade.className = 'lg-shade';
     var inn = d.createElement('div'); inn.className = 'lg-in';
     inn.innerHTML = '<div class="lg-brand"><img src="icon-192.png" alt=""><b>خفّة</b></div>' +
-      '<div class="lg-copy"><h1>صحتك أسلوب حياة.</h1><p>أكل متوازن، حركة كل يوم، وماية كفاية… وخفّة بتتابع معاك خطوة بخطوة.</p><div class="lg-dots">' + PH.map(function (x, i) { return '<i' + (i ? '' : ' class="on"') + '></i>'; }).join('') + '</div></div>';
+      '<div class="lg-copy"><h1>صحتك أسلوب حياة.</h1><p>أكلٌ متوازن، وحركةٌ يومية، وماءٌ كافٍ… وخفّة ترافقك خطوةً بخطوة.</p><div class="lg-dots">' + PH.map(function (x, i) { return '<i' + (i ? '' : ' class="on"') + '></i>'; }).join('') + '</div></div>';
     L.insertBefore(ph, L.firstChild); L.insertBefore(shade, ph.nextSibling); L.insertBefore(inn, shade.nextSibling);
     inn.querySelector('.lg-copy').appendChild(form);
     var pin = d.getElementById('pin'), wrap = d.createElement('div'); wrap.className = 'lg-pin';
