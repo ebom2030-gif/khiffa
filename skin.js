@@ -50,67 +50,72 @@
   d.head.appendChild(css);
   d.querySelector('meta[name="theme-color"]') && d.querySelector('meta[name="theme-color"]').setAttribute('content', '#1FA971');
 
-  /* ---------- login: food-app welcome screen ---------- */
+  /* ---------- login: real lifestyle photography (Unsplash, free licence), crossfading ---------- */
+  var PH = ['photo-1781726966436-6391425049ad', 'photo-1580916846078-19be39005e32', 'photo-1558017487-06bf9f82613a', 'photo-1673006768205-b9a7bc6842a5'];
+  var phURL = function (id, w) { return 'https://images.unsplash.com/' + id + '?w=' + (w || 1080) + '&q=72&auto=format&fit=crop'; };
   var lcss = d.createElement('style');
   lcss.textContent =
-    '#login.kf-login{min-height:100dvh;padding:0;gap:0;justify-content:flex-start;align-items:stretch;background:var(--bg);text-align:right}' +
-    '.lg-hero{position:relative;overflow:hidden;background:linear-gradient(160deg,#1FA971 0%,#12865A 60%,#0E6E4A 100%);color:#fff;padding:calc(36px + env(safe-area-inset-top,0px)) 24px 86px;min-height:46vh;display:flex;flex-direction:column;justify-content:flex-end}' +
-    '.lg-hero::before{content:"";position:absolute;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.18),transparent 65%);top:-160px;left:-140px}' +
-    '.lg-hero::after{content:"";position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(255,122,89,.35),transparent 70%);bottom:-120px;right:-80px}' +
-    '.lg-brand{position:relative;z-index:1;display:flex;align-items:center;gap:12px}' +
-    '.lg-brand img{width:56px;height:56px;border-radius:16px;background:#fff;padding:6px;box-shadow:0 8px 20px -8px rgba(0,0,0,.35)}' +
-    '.lg-brand .logo{color:#fff;font-size:40px;line-height:1}' +
-    '.lg-hero h1{position:relative;z-index:1;margin:18px 0 6px;font-size:26px;line-height:1.35;font-weight:700}' +
-    '.lg-hero p{position:relative;z-index:1;margin:0;font-size:15px;opacity:.9;max-width:420px}' +
-    '.lg-food{position:absolute;inset:0;pointer-events:none;z-index:0}' +
-    '.lg-food img{position:absolute;width:64px;height:64px;filter:drop-shadow(0 10px 14px rgba(0,0,0,.25));animation:lgFloat 6s ease-in-out infinite}' +
-    '.lg-food img:nth-child(1){top:7%;left:6%;width:72px;height:72px}.lg-food img:nth-child(2){top:8%;left:42%;animation-delay:-1.5s}' +
-    '.lg-food img:nth-child(3){top:30%;left:26%;width:52px;height:52px;animation-delay:-3s}.lg-food img:nth-child(4){top:12%;right:10%;width:56px;height:56px;animation-delay:-2s}' +
-    '.lg-food img:nth-child(5){top:24%;left:40%;width:48px;height:48px;animation-delay:-4s}' +
-    '@keyframes lgFloat{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-10px) rotate(4deg)}}' +
-    '@media (prefers-reduced-motion:reduce){.lg-food img{animation:none}}' +
-    '.lg-panel{position:relative;z-index:2;margin:-56px 16px 0;display:flex;flex-direction:column;align-items:center;gap:14px;padding-bottom:28px}' +
-    '#login.kf-login #loginForm{max-width:420px!important;border-radius:26px;padding:24px 22px;box-shadow:0 20px 40px -20px rgba(29,42,37,.35)}' +
-    '.lg-title{font-size:20px;font-weight:700;margin:0 0 4px}.lg-sub{font-size:14px;color:var(--muted);margin:0 0 16px}' +
+    '#login.kf-login{position:relative;min-height:100dvh;padding:0;gap:0;display:block;text-align:right;color:#fff;background:#0E1A15;overflow:hidden}' +
+    '.lg-photos{position:absolute;inset:0}' +
+    '.lg-photos div{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transform:scale(1.08);transition:opacity 1.6s ease,transform 7s ease-out}' +
+    '.lg-photos div.on{opacity:1;transform:scale(1)}' +
+    '.lg-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,16,12,.55) 0%,rgba(8,16,12,0) 22%,rgba(8,16,12,.05) 40%,rgba(8,16,12,.78) 66%,rgba(8,16,12,.95) 100%)}' +
+    '.lg-in{position:relative;z-index:2;min-height:100dvh;display:flex;flex-direction:column;padding:calc(22px + env(safe-area-inset-top,0px)) 24px calc(22px + env(safe-area-inset-bottom,0px));box-sizing:border-box;max-width:520px;margin:0 auto}' +
+    '.lg-brand{display:flex;align-items:center;gap:10px}' +
+    '.lg-brand img{width:38px;height:38px;border-radius:12px}' +
+    '.lg-brand b{font-size:24px;font-weight:700;letter-spacing:.01em}' +
+    '.lg-copy{margin-top:auto}' +
+    '.lg-copy h1{margin:0 0 8px;font-size:32px;line-height:1.3;font-weight:700}' +
+    '.lg-copy p{margin:0 0 14px;font-size:15px;line-height:1.7;opacity:.85;max-width:380px}' +
+    '.lg-dots{display:flex;gap:6px;margin-bottom:20px}.lg-dots i{width:6px;height:6px;border-radius:6px;background:rgba(255,255,255,.4);transition:all .4s}.lg-dots i.on{width:22px;background:#fff}' +
+    '#login.kf-login #loginForm{all:unset;display:block}' +
     '#login.kf-login #loginForm label.eyebrow{display:none}' +
     '.lg-pin{position:relative}' +
-    '#login.kf-login #pin{height:60px;border-radius:18px!important;border:1.5px solid var(--line)!important;background:var(--bg);font-size:26px!important;letter-spacing:.5em!important;margin:0 0 14px!important;transition:border-color .2s,box-shadow .2s}' +
-    '#login.kf-login #pin:focus{outline:0;border-color:var(--mint)!important;box-shadow:0 0 0 4px var(--mint-soft)}' +
-    '.lg-eye{position:absolute;left:10px;top:14px;border:0;background:none;color:var(--muted);font:inherit;font-size:13px;cursor:pointer;padding:6px}' +
-    '#login.kf-login #loginForm button[type="submit"]{height:54px;font-size:17px;border-radius:18px}' +
-    '#login.kf-login .err{color:var(--bad);margin:10px 0 0;text-align:center}' +
-    '.lg-feats{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:420px}' +
-    '.lg-feats span{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border-radius:999px;padding:6px 12px 6px 8px;font-size:13px;box-shadow:var(--shadow)}' +
-    '.lg-feats img{width:22px;height:22px}' +
-    '.lg-foot{font-size:12px;color:var(--muted);margin-top:4px}' +
-    '#login.kf-login .inst-card{max-width:420px!important;margin-top:0!important;border-radius:22px}' +
-    '@media (min-width:900px){#login.kf-login{flex-direction:row;align-items:stretch}' +
-      '.lg-hero{flex:1.1;min-height:100dvh;padding:56px;justify-content:center}.lg-hero h1{font-size:40px}.lg-hero p{font-size:17px}' +
-      '.lg-food img{width:96px!important;height:96px!important}' +
-      '.lg-panel{flex:.9;margin:0;justify-content:center;padding:40px}}';
+    '#login.kf-login #pin{display:block;box-sizing:border-box;width:100%;height:58px;border:1px solid rgba(255,255,255,.35)!important;border-radius:16px!important;background:rgba(255,255,255,.12)!important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#fff;font-size:24px!important;letter-spacing:.5em!important;text-align:center;margin:0 0 12px!important}' +
+    '#login.kf-login #pin::placeholder{color:rgba(255,255,255,.55)}' +
+    '#login.kf-login #pin:focus{outline:0;border-color:#fff!important;background:rgba(255,255,255,.18)!important}' +
+    '.lg-eye{position:absolute;left:12px;top:14px;border:0;background:none;color:rgba(255,255,255,.75);font:inherit;font-size:13px;cursor:pointer;padding:6px}' +
+    '#login.kf-login #loginForm button[type="submit"]{display:block;width:100%;height:58px;border:0;border-radius:16px;background:#fff;color:#0E1A15;font:inherit;font-weight:700;font-size:17px;cursor:pointer}' +
+    '#login.kf-login #loginForm button[type="submit"]:active{transform:scale(.98)}' +
+    '#login.kf-login .err{color:#FFB9A6;margin:12px 0 0;text-align:center;font-weight:600}' +
+    '#login.kf-login [data-inst]{display:none!important}' +
+    '.lg-inst{display:block;margin:14px auto 0;border:0;background:none;color:#fff;opacity:.7;font:inherit;font-size:13px;cursor:pointer}' +
+    '@media (min-width:900px){' +
+      '.lg-in{max-width:none;margin:0;width:44%;min-width:420px;position:absolute;inset:0 auto 0 0;background:#FBFAF7;color:#1D2A25;padding:56px 64px;justify-content:center}' +
+      '.lg-shade{background:linear-gradient(90deg,rgba(8,16,12,.15),rgba(8,16,12,.55))}' +
+      '.lg-copy{margin-top:40px}.lg-copy p{opacity:1;color:#6F7C76}.lg-dots i{background:#D7DCD6}.lg-dots i.on{background:#1FA971}' +
+      '.lg-brand{position:absolute;top:44px;right:64px}' +
+      '#login.kf-login #pin{background:#F2F3EE!important;border-color:#E3E6DF!important;color:#1D2A25}#login.kf-login #pin::placeholder{color:#A3ABA6}' +
+      '#login.kf-login #pin:focus{border-color:#1FA971!important;background:#fff!important}.lg-eye{color:#6F7C76}' +
+      '#login.kf-login #loginForm button[type="submit"]{background:#1FA971;color:#fff}' +
+      '.lg-inst{color:#6F7C76}#login.kf-login .err{color:#E5484D}' +
+    '}';
   d.head.appendChild(lcss);
   function loginScreen() {
     var L = d.getElementById('login'), form = d.getElementById('loginForm');
-    if (!L || !form || L.classList.contains('kf-login') || !A) return;
+    if (!L || !form || L.classList.contains('kf-login')) return;
     L.classList.add('kf-login');
     Array.prototype.slice.call(L.children).forEach(function (c) { if (c !== form && !c.hasAttribute('data-inst')) c.remove(); });
-    var u = A.imgURL;
-    var hero = d.createElement('div'); hero.className = 'lg-hero';
-    hero.innerHTML = '<div class="lg-food">' + ['avocado', 'green_salad', 'strawberry', 'red_apple', 'broccoli'].map(function (n) { return '<img src="' + u(n) + '" alt="">'; }).join('') + '</div>' +
-      '<div class="lg-brand"><img src="icon-192.png" alt=""><div class="logo">خفّة</div></div>' +
-      '<h1>أكل صحي بطعم حلو،<br>ووزن بينزل بخفّة.</h1><p>نظام البدائل الغذائية، السعرات، الماية، والوزن… كله في مكان واحد وبخطوة واحدة.</p>';
-    var panel = d.createElement('div'); panel.className = 'lg-panel';
-    L.insertBefore(hero, L.firstChild); L.insertBefore(panel, hero.nextSibling);
-    panel.appendChild(form);
-    form.insertAdjacentHTML('afterbegin', '<h2 class="lg-title">أهلاً وسهلاً</h2><p class="lg-sub">رمز الدخول بتاعك، وبعدها كل حاجة جاهزة.</p>');
+    var ph = d.createElement('div'); ph.className = 'lg-photos';
+    ph.innerHTML = PH.map(function (id, i) { return '<div' + (i ? '' : ' class="on"') + ' style="background-image:url(' + phURL(id, innerWidth > 900 ? 1600 : 1080) + ')"></div>'; }).join('');
+    var shade = d.createElement('div'); shade.className = 'lg-shade';
+    var inn = d.createElement('div'); inn.className = 'lg-in';
+    inn.innerHTML = '<div class="lg-brand"><img src="icon-192.png" alt=""><b>خفّة</b></div>' +
+      '<div class="lg-copy"><h1>صحتك أسلوب حياة.</h1><p>أكل متوازن، حركة كل يوم، وماية كفاية… وخفّة بتتابع معاك خطوة بخطوة.</p><div class="lg-dots">' + PH.map(function (x, i) { return '<i' + (i ? '' : ' class="on"') + '></i>'; }).join('') + '</div></div>';
+    L.insertBefore(ph, L.firstChild); L.insertBefore(shade, ph.nextSibling); L.insertBefore(inn, shade.nextSibling);
+    inn.querySelector('.lg-copy').appendChild(form);
     var pin = d.getElementById('pin'), wrap = d.createElement('div'); wrap.className = 'lg-pin';
-    pin.parentNode.insertBefore(wrap, pin); wrap.appendChild(pin);
+    pin.parentNode.insertBefore(wrap, pin); wrap.appendChild(pin); pin.placeholder = 'رمز الدخول';
+    pin.addEventListener('input', function () { pin.style.letterSpacing = pin.value ? '' : '0'; }); pin.style.letterSpacing = '0';
     var eye = d.createElement('button'); eye.type = 'button'; eye.className = 'lg-eye'; eye.textContent = 'إظهار';
     eye.onclick = function () { var sh = pin.type === 'password'; pin.type = sh ? 'text' : 'password'; eye.textContent = sh ? 'إخفاء' : 'إظهار'; pin.focus(); };
     wrap.appendChild(eye);
     var btn = form.querySelector('button[type="submit"]'); if (btn) btn.textContent = 'دخول';
-    panel.insertAdjacentHTML('beforeend', '<div class="lg-feats">' + [['bar_chart', 'تقارير يومية وأسبوعية'], ['fork_and_knife_with_plate', 'وجبات جاهزة بالبدائل'], ['droplet', 'متابعة الماية'], ['mobile_phone', 'باركود المنتجات']].map(function (f) { return '<span><img src="' + u(f[0]) + '" alt="">' + f[1] + '</span>'; }).join('') + '</div><div class="lg-foot">خفّة – من ARKIQO</div>');
-    var inst = L.querySelector('[data-inst]'); if (inst) panel.insertBefore(inst, panel.querySelector('.lg-feats'));
+    var link = d.createElement('button'); link.type = 'button'; link.className = 'lg-inst'; link.textContent = 'ثبّت التطبيق على الموبايل';
+    link.onclick = function () { var b = L.querySelector('[data-inst] [data-a="go"]'); if (b) b.click(); else location.hash = 'install'; };
+    form.appendChild(link);
+    var k = 0, slides = ph.children, dots = inn.querySelectorAll('.lg-dots i');
+    setInterval(function () { if (L.hidden) return; slides[k].classList.remove('on'); dots[k].classList.remove('on'); k = (k + 1) % slides.length; slides[k].classList.add('on'); dots[k].classList.add('on'); }, 6000);
   }
   loginScreen(); setTimeout(loginScreen, 0);
 
