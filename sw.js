@@ -1,5 +1,5 @@
 // خفّة — offline shell. Bump VERSION on every release so phones pick up the new files.
-const VERSION = 'khiffa-v12';
+const VERSION = 'khiffa-v13';
 const IMG = 'khiffa-img';
 const SHELL = ['./', 'index.html', 'config.js', 'data.js', 'app.js', 'theme.js', 'search.js', 'dashboard.js', 'reports.js', 'features.js', 'skin.js', 'photos.js', 'install.js', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL))); self.skipWaiting(); });
@@ -9,12 +9,14 @@ self.addEventListener('activate', e => {
 });
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-  if (e.request.method === 'GET' && url.hostname === 'images.unsplash.com') { // photos: cache first so they show offline
+  if (e.request.method === 'GET' && (url.hostname === 'images.unsplash.com' || url.hostname === 'cdn.jsdelivr.net')) { // photos + 3D icons: cache first = instant + offline
     e.respondWith(caches.open(IMG).then(c => c.match(e.request).then(hit => hit || fetch(e.request).then(r => { c.put(e.request, r.clone()); return r; }))));
     return;
   }
   if (e.request.method !== 'GET' || url.origin !== location.origin) return; // API + fonts go to network
   // network first, fall back to cache (so updates show up as soon as they're online)
-  e.respondWith(fetch(e.request).then(r => { const copy = r.clone(); caches.open(VERSION).then(c => c.put(e.request, copy)); return r; })
-    .catch(() => caches.match(e.request).then(r => r || caches.match('index.html'))));
+  // network first (updates show right away), but if the network is slow (>2.5s) serve the saved copy
+  const net = fetch(e.request).then(r => { const copy = r.clone(); caches.open(VERSION).then(c => c.put(e.request, copy)); return r; });
+  const slow = new Promise(res => setTimeout(res, 2500)).then(() => caches.match(e.request)).then(r => r || net);
+  e.respondWith(Promise.race([net.catch(() => slow), slow]).catch(() => caches.match(e.request).then(r => r || caches.match('index.html'))));
 });
