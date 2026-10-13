@@ -201,7 +201,10 @@ function renderToday() {
   const eaten = { n: 0, p: 0, c: 0, f: 0 };
   D.MEALS.forEach(m => { const st = mealState(day, m.k); if (st.done) { const t = totals(mealComps(m.k, st)); ['n', 'p', 'c', 'f'].forEach(x => eaten[x] += t[x]); } });
   (day.extras || []).forEach(x => ['n', 'p', 'c', 'f'].forEach(k => eaten[k] += (x[k] || 0) * (x.q || 1)));
-  $('#kcalLeft').textContent = ar(Math.max(0, Math.round(st0.level - eaten.n)), 0); $('#kcalTarget').textContent = ar(st0.level, 0);
+  const left = Math.round(st0.level - eaten.n), kl = $('#kcalLeft'); // over the target shows as a negative number
+  kl.textContent = left < 0 ? '-' + ar(-left, 0) : ar(left, 0); kl.dir = 'ltr'; kl.style.color = left < 0 ? 'var(--warn)' : '';
+  if (kl.nextElementSibling && kl.nextElementSibling.firstChild) kl.nextElementSibling.firstChild.nodeValue = left < 0 ? 'زيادة عن ' : 'متبقي من ';
+  $('#ringFg').setAttribute('stroke', left < 0 ? 'var(--warn)' : 'var(--mint)'); $('#kcalTarget').textContent = ar(st0.level, 0);
   $('#ringFg').setAttribute('stroke-dashoffset', 326.7 * (1 - Math.min(1, eaten.n / st0.level)));
   [['P', 'p'], ['C', 'c'], ['F', 'f']].forEach(([id, k]) => { $('#b' + id).style.width = Math.min(1, eaten[k] / LT[k]) * 100 + '%'; $('#t' + id).textContent = ar(Math.round(eaten[k]), 0) + ' / ' + ar(Math.round(LT[k]), 0) + ' ج'; });
 
