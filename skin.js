@@ -63,6 +63,7 @@
     '.lg-in{position:relative;z-index:2;min-height:100dvh;display:flex;flex-direction:column;padding:calc(22px + env(safe-area-inset-top,0px)) 24px calc(22px + env(safe-area-inset-bottom,0px));box-sizing:border-box;max-width:520px;margin:0 auto}' +
     '.lg-brand{display:flex;align-items:center;gap:10px}' +
     '.lg-brand img{width:38px;height:38px;border-radius:12px}' +
+    '.lg-brand .logo-wm{height:34px;width:auto;color:inherit;display:block}' +
     '.lg-brand b{font-size:24px;font-weight:700;letter-spacing:.01em}' +
     '.lg-copy{margin-top:auto}' +
     '.lg-copy h1{margin:0 0 8px;font-size:32px;line-height:1.3;font-weight:700}' +
@@ -102,7 +103,7 @@
     setTimeout(function () { ph.querySelectorAll('[data-bg]').forEach(function (x) { x.style.backgroundImage = 'url(' + x.dataset.bg + ')'; }); }, 2500); // الصور التانية بعد ما الأولى تظهر
     var shade = d.createElement('div'); shade.className = 'lg-shade';
     var inn = d.createElement('div'); inn.className = 'lg-in';
-    inn.innerHTML = '<div class="lg-brand"><img src="icon-192.png" alt=""><b>خفّة</b></div>' +
+    inn.innerHTML = '<div class="lg-brand"><img src="icon-192.png" alt="">' + ((d.querySelector('.logo-wm') || {}).outerHTML || '<b>خفّة</b>') + '</div>' +
       '<div class="lg-copy"><h1>صحتك أسلوب حياة.</h1><p>أكلٌ متوازن، وحركةٌ يومية، وماءٌ كافٍ… وخفّة ترافقك خطوةً بخطوة.</p><div class="lg-dots">' + PH.map(function (x, i) { return '<i' + (i ? '' : ' class="on"') + '></i>'; }).join('') + '</div></div>';
     L.insertBefore(ph, L.firstChild); L.insertBefore(shade, ph.nextSibling); L.insertBefore(inn, shade.nextSibling);
     inn.querySelector('.lg-copy').appendChild(form);
