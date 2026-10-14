@@ -8,6 +8,7 @@
   var d = document, A = window.KHIFFA_APP, CFG = window.KHIFFA_CONFIG || {};
   var MEALS = [['b', 'الفطور', '09:00'], ['s1', 'سناك الصباح', '11:30'], ['l', 'الغداء', '14:30'], ['s2', 'سناك العصر', '17:30'], ['d', 'العشاء', '20:30']];
   var BEFORE = [5, 10, 15, 30];
+  var BASE = location.pathname.replace(/[^/]*$/, ''); // '/khiffa/' على GitHub أو '/' على الدومين
 
   var css = d.createElement('style');
   css.textContent =
@@ -37,7 +38,7 @@
     osReady = new Promise(function (res) {
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       window.OneSignalDeferred.push(function (OS) {
-        OS.init({ appId: CFG.ONESIGNAL_APP_ID, serviceWorkerPath: 'khiffa/sw.js', serviceWorkerParam: { scope: '/khiffa/' }, notifyButton: { enable: false }, allowLocalhostAsSecureOrigin: true })
+        OS.init({ appId: CFG.ONESIGNAL_APP_ID, serviceWorkerPath: BASE.slice(1) + 'sw.js', serviceWorkerParam: { scope: BASE }, notifyButton: { enable: false }, allowLocalhostAsSecureOrigin: true })
           .then(function () { res(OS); }).catch(function () { res(null); });
       });
       var s = d.createElement('script'); s.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js'; s.defer = true; d.head.appendChild(s);
