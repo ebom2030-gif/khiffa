@@ -64,7 +64,7 @@
   var saved = null; try { saved = JSON.parse(localStorage.getItem('khiffa.tab')); } catch (e) {}
   if (saved === 'reports') setTimeout(function () { btn.click(); }, 0);
 
-  var R = { mode: 'day', day: A.TODAY, week: A.TODAY };
+  var R = { mode: 'day', day: new Date().getHours() < 18 ? A.addDays(A.TODAY, -1) : A.TODAY, week: A.TODAY }; // صباحًا يفتح على أمس بدل يوم لم يبدأ
 
   /* ---------- analysis ---------- */
   function analyzeDay(k) {

@@ -43,7 +43,7 @@
       if (!box) {
         box = d.createElement('div'); box.className = 'kq';
         var isIdeas = !!body.querySelector('.icard');
-        box.innerHTML = '<input type="search" enterkeyhint="search" placeholder="' + (isIdeas ? 'ابحثي في الوجبات الجاهزة… (مثلًا: دجاج، بيض، شوفان)' : 'ابحثي عن صنف… (مثلًا: توست، زبادي، تفاح)') + '" aria-label="بحث">';
+        box.innerHTML = '<input type="search" enterkeyhint="search" placeholder="' + (isIdeas ? 'ابحثي: دجاج، بيض، شوفان…' : 'ابحثي: توست، زبادي، تفاح…') + '" aria-label="بحث">';
         var seg = body.querySelector('.seg');
         if (seg && seg.parentNode === body) seg.insertAdjacentElement('afterend', box); else body.insertBefore(box, body.firstChild);
         var inp = box.querySelector('input');

@@ -192,9 +192,19 @@ function mergeDay(a, b) {
 }
 function saveDay(day) { stampDay(day, rawDay(day.date)); day.updated = new Date().toISOString(); upsertLocal('days', day); persist(); enqueue('saveDay', { day }, 'day:' + S.uid + ':' + day.date); }
 function setMeal(k, patch, dateKey = S.cur) {
-  const d = dayOf(dateKey); const cur = mealState(d, k); const next = { ...cur, ...patch };
+  const d = dayOf(dateKey); const cur = mealState(d, k);
+  const choose = patch.done === undefined && patch.planned !== true && ('idea' in patch || 'items' in patch || 'picks' in patch);
+  if (choose && dateKey <= TODAY) patch = { ...patch, done: true }; // اختيار وجبة اليوم = تُحسب فورًا
+  if (choose || 'done' in patch) S.undo = { k, dateKey, prev: (d.meals || {})[k] ? JSON.parse(JSON.stringify(d.meals[k])) : null };
+  const next = { ...cur, ...patch };
   const comps = mealComps(k, next); Object.assign(next, mealSummary(comps));
   d.meals = { ...(d.meals || {}), [k]: next }; saveDay({ ...d });
+}
+function undoMeal() {
+  const u = S.undo; if (!u) return; S.undo = null;
+  const d = dayOf(u.dateKey), ms = { ...(d.meals || {}) };
+  if (u.prev) ms[u.k] = u.prev; else delete ms[u.k];
+  d.meals = ms; saveDay({ ...d }); renderAll(); toast('تم التراجع');
 }
 function weekKeys(k) { const d = parseKey(k); const back = (d.getDay() + 1) % 7; const out = []; for (let i = 0; i <= back; i++) out.push(addDays(k, -i)); return out; }
 function weekCounts(k, planned) {
@@ -234,12 +244,10 @@ function renderToday() {
         (idea && idea.how ? '<p class="note" style="margin:6px 0 0">' + esc(idea.how) + '</p>' : '') + '</div>');
     }
     const act = document.createElement('div'); act.className = 'mact';
-    act.innerHTML = '<button class="btn ghost sm" data-a="idea">' + (comps.length ? 'غيّري الوجبة' : 'اختاري وجبة جاهزة') + '</button><button class="btn ghost sm" data-a="custom">ركّبي بنفسك</button>' + (comps.length ? '<button class="btn ghost sm" data-a="tune">عدّلي الكميات</button>' : '');
+    act.innerHTML = '<button class="btn ' + (comps.length ? 'ghost ' : '') + 'sm" data-a="open">' + (comps.length ? 'تغيير الوجبة أو الكميات' : 'اختاري الوجبة') + '</button>';
     card.append(act);
-    card.querySelector('.chk').onclick = () => { if (!comps.length) return; setMeal(m.k, { done: !st.done, planned: false }); renderToday(); };
-    act.querySelector('[data-a="idea"]').onclick = () => openMealSheet(m, 'idea');
-    act.querySelector('[data-a="custom"]').onclick = () => openMealSheet(m, 'custom');
-    const tb = act.querySelector('[data-a="tune"]'); if (tb) tb.onclick = () => openMealSheet(m, 'tune');
+    card.querySelector('.chk').onclick = () => { if (!comps.length) return; setMeal(m.k, { done: !st.done, planned: false }); renderToday(); toast(st.done ? 'أُلغي تسجيل ' + m.t : 'بالهناء والشفاء ✓', undoMeal); };
+    act.querySelector('[data-a="open"]').onclick = () => openMealSheet(m, 'idea');
     box.append(card);
   });
   renderLimits();
@@ -283,13 +291,13 @@ function openMealSheet(m, mode) {
   sheet(m.t, body => {
     const st = mealState(dayOf(S.cur), m.k);
     const draw = md => {
-      body.innerHTML = '<div class="seg"><button data-md="idea" aria-pressed="' + (md === 'idea') + '">وجبات جاهزة</button><button data-md="custom" aria-pressed="' + (md === 'custom') + '">ركّبي بنفسك</button><button data-md="tune" aria-pressed="' + (md === 'tune') + '">عدّلي الكميات</button></div>';
-      body.querySelectorAll('.seg button').forEach(b => b.onclick = () => draw(b.dataset.md));
+      body.innerHTML = '<div class="seg"><button data-md="idea" aria-pressed="' + (md === 'idea') + '">وجبات جاهزة</button><button data-md="custom" aria-pressed="' + (md === 'custom') + '">ركّبي بنفسك</button><button data-md="tune" aria-pressed="' + (md === 'tune') + '">الكميات</button>' + (window.KHIFFA_REPEAT ? '<button data-md="repeat">وجبة سابقة</button>' : '') + '</div>';
+      body.querySelectorAll('.seg button').forEach(b => b.onclick = () => { if (b.dataset.md === 'repeat') { closeSheet(); window.KHIFFA_REPEAT(m); return; } draw(b.dataset.md); });
       if (md === 'tune') { tuneMeal(m, st, body); return; }
       if (md === 'idea') {
         const list = D.IDEAS.filter(i => i.m === m.k && ideaAllowed(i));
         if (!list.length) body.insertAdjacentHTML('beforeend', '<p class="note">لا توجد وجبات جاهزة مناسبة للتفضيلات الحالية.</p>');
-        list.forEach(i => { const c = ideaCard(i, st.mode !== 'custom' && st.idea === i.id); c.onclick = () => { setMeal(m.k, { mode: 'idea', idea: i.id, items: null, title: null, planned: false }); closeSheet(); renderToday(); toast('أُضيفت إلى ' + m.t); }; body.append(c); });
+        list.forEach(i => { const c = ideaCard(i, st.mode !== 'custom' && st.idea === i.id); c.onclick = () => { setMeal(m.k, { mode: 'idea', idea: i.id, items: null, title: null, planned: false }); closeSheet(); renderAll(); toast((S.cur <= TODAY ? 'سُجّلت ' : 'أُضيفت إلى ') + m.t + ' ✓', undoMeal); }; body.append(c); });
       } else {
         const tgt = level()[m.k] || {}; const picks = { ...(st.mode === 'custom' ? st.picks : {}) };
         if (st.mode !== 'custom' && st.idea) { mealComps(m.k, st).forEach(x => { if (x.food.g === 'V') picks.V = (picks.V || []).concat(x.food.id); else picks[x.food.g] = (picks[x.food.g] || []).concat(x.food.id); }); }
@@ -315,7 +323,7 @@ function openMealSheet(m, mode) {
         body.append(foot);
         const updateSum = () => { const comps = mealComps(m.k, { mode: 'custom', picks }); const t = totals(comps); $('#shSum').textContent = comps.length ? ar(Math.round(t.n), 0) + ' سعرة – ' + ar(Math.round(t.p), 0) + ' ج بروتين' + ((picks.P || []).some(id => D.FOODS[id].leg) ? ' – البقوليات تقلل النشويات' : '') : 'اختاري صنفًا من كل مجموعة'; };
         updateSum();
-        $('#shSave').onclick = () => { if (!Object.values(picks).some(v => Array.isArray(v) ? v.length : v)) { toast('اختاري صنفًا واحدًا على الأقل'); return; } setMeal(m.k, { mode: 'custom', picks, items: null, title: null, planned: false }); closeSheet(); renderToday(); toast('تم حفظ الوجبة'); };
+        $('#shSave').onclick = () => { if (!Object.values(picks).some(v => Array.isArray(v) ? v.length : v)) { toast('اختاري صنفًا واحدًا على الأقل'); return; } setMeal(m.k, { mode: 'custom', picks, items: null, title: null, planned: false }); closeSheet(); renderAll(); toast('تم حفظ ' + m.t + ' ✓', undoMeal); };
       }
     };
     draw(mode);
@@ -360,7 +368,7 @@ function tuneMeal(m, st, body) {
     wrap.querySelectorAll('.tune-g .fchip').forEach(b => b.onclick = () => { addG = addG === b.dataset.g ? null : b.dataset.g; draw(); });
     wrap.querySelectorAll('[data-add]').forEach(b => b.onclick = () => { const ex = items.find(x => x.id === b.dataset.add); if (ex) ex.n += 1; else items.push({ id: b.dataset.add, n: 1, u: unitsOf(D.FOODS[b.dataset.add])[0] }); toast('أُضيف ' + D.FOODS[b.dataset.add].name); draw(); });
     $('#tuneReset').onclick = () => { items = mealComps(m.k, { ...st, items: null }).map(x => ({ id: x.food.id, n: x.n, u: unitsOf(x.food)[0] })); draw(); };
-    $('#tuneSave').onclick = () => { const clean = items.filter(it => it.n > 0); if (!clean.length) { toast('أضيفي صنفًا واحدًا على الأقل'); return; } setMeal(m.k, { mode: 'custom', items: clean.map(it => ({ id: it.id, n: Math.round(it.n * 1000) / 1000 })), title: title || null, planned: false }); closeSheet(); renderToday(); toast('تم حفظ الوجبة'); };
+    $('#tuneSave').onclick = () => { const clean = items.filter(it => it.n > 0); if (!clean.length) { toast('أضيفي صنفًا واحدًا على الأقل'); return; } setMeal(m.k, { mode: 'custom', items: clean.map(it => ({ id: it.id, n: Math.round(it.n * 1000) / 1000 })), title: title || null, planned: false }); closeSheet(); renderAll(); toast('تم حفظ ' + m.t + ' ✓', undoMeal); };
   };
   draw();
 }
@@ -516,7 +524,11 @@ function nickOf(name) { return name === 'زوجتي' ? 'زوجتي وحبيبت�
 function displayName() { const st = settings(), me = S.data.me, u = S.data.user; if (st.nick) return st.nick; if (me && me.id === u.id && me.role === 'owner') return me.name; return nickOf(u.name); }
 function switchUser(uid) { if (!uid || (S.data && uid === S.data.user.id)) return; S.uid = uid; store.set('uid', S.uid); toast('جارٍ فتح الحساب…'); setTimeout(() => location.reload(), 150); }
 function renderAll() { if (!S.data) return; renderHeader(); renderToday(); renderIdeas(); renderBody(); renderPlan(); }
-function toast(m) { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 2200); }
+function toast(m, undo) {
+  const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toast.h);
+  if (undo) { const b = document.createElement('button'); b.className = 'tundo'; b.textContent = 'تراجع'; b.onclick = e => { e.stopPropagation(); t.hidden = true; undo(); }; t.append(' ', b); }
+  toast.h = setTimeout(() => t.hidden = true, undo ? 5000 : 2200);
+}
 document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
   document.querySelectorAll('#tabs button').forEach(x => x.setAttribute('aria-selected', x === b));
   document.querySelectorAll('section.view').forEach(v => v.hidden = v.id !== 'v-' + b.dataset.v);
@@ -534,7 +546,7 @@ async function refreshData() {
 setInterval(() => { if (document.visibilityState === 'visible') refreshData(); }, 5 * 60 * 1000);
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 
-window.KHIFFA_APP = { D, bottles, BOTTLE, dayOf, saveDay, toast, settings, saveSettings, level, mealComps, mealState, setMeal, openMealSheet, mealTargetKcal, amountText, ideaName, totals, levelTotals, weekKeys, weekCounts, fmt, ar, esc, img, imgURL, addDays, TODAY, people, displayName, switchUser,
+window.KHIFFA_APP = { undoMeal, D, bottles, BOTTLE, dayOf, saveDay, toast, settings, saveSettings, level, mealComps, mealState, setMeal, openMealSheet, mealTargetKcal, amountText, ideaName, totals, levelTotals, weekKeys, weekCounts, fmt, ar, esc, img, imgURL, addDays, TODAY, people, displayName, switchUser,
   // [accounts] api + session helpers for accounts.js
   api, logout, get me() { return S.data && S.data.me; },
   startSession(token) { S.token = token; store.set('token', token); S.pin = null; store.del('pin'); S.uid = null; store.del('uid'); $('#loginErr').hidden = true; boot(); },

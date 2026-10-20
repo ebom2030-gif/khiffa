@@ -140,7 +140,8 @@
       s.close(); A.refresh(); A.toast('تم تسجيل ' + m.t + ' ✓');
     }; });
   }
-  function addRepeatButtons() {
+  window.KHIFFA_REPEAT = function (m) { repeat(m); }; // يُفتح من تبويب «وجبة سابقة» داخل نافذة الوجبة
+  function addRepeatButtons() { return; // استُبدل بالتبويب داخل النافذة
     var cards = d.querySelectorAll('#meals .mcard');
     cards.forEach(function (c, i) {
       var act = c.querySelector('.mact'), m = D.MEALS[i]; if (!act || !m || act.querySelector('[data-rep]')) return;

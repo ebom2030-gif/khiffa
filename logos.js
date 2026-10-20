@@ -75,6 +75,7 @@
   function card() {
     var plan = d.getElementById('v-plan'), D = A && A.data;
     if (!plan || !D || !D.me) return;
+    if (D.me.role !== 'owner') { var old = d.getElementById('klCard'); if (old) old.remove(); return; } // قرار الهوية للمالك فقط
     var c = d.getElementById('klCard');
     if (!c) { c = d.createElement('div'); c.className = 'card'; c.id = 'klCard'; var after = d.getElementById('krmCard'); plan.insertBefore(c, after ? after.nextSibling : (plan.children[1] || null)); }
     var v = cur();

@@ -24,7 +24,7 @@
     '.krm .bf{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}.krm .bf button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 14px;font:inherit}' +
     '.krm .bf button[aria-pressed=true]{background:var(--mint);border-color:var(--mint);color:#fff}' +
     '.krm .act{display:flex;gap:10px;margin-top:6px}.krm .act .btn{flex:1}' +
-    '.krm .lbl{font-weight:700;margin:12px 0 4px}';
+    '.krm .lbl{font-weight:700;margin:12px 0 4px}.krm .kx{display:flex;flex-direction:column;gap:8px;margin:4px 0 14px}.krm .kx .sw{font-size:14px;color:var(--ink)}';
   d.head.appendChild(css);
 
   function own() { var D = A && A.data; return D && D.me && D.user && D.me.id === D.user.id; }
@@ -67,7 +67,9 @@
     o.innerHTML = '<div class="in"><h2>' + (first ? 'مواعيد وجباتكِ ⏰' : 'مواعيد الوجبات والتنبيهات') + '</h2>' +
       '<p class="sub">اختاري الوقت الذي يناسبكِ لكل وجبة، وسيصلكِ تنبيه على الجوال قبلها حتى لو كان التطبيق مغلقًا. يمكنكِ تعديلها في أي وقت من صفحة «النظام».</p>' +
       MEALS.map(function (m) { var v = mt[m[0]] === undefined ? m[2] : mt[m[0]]; return '<div class="row' + (v ? '' : ' off') + '" data-k="' + m[0] + '">' + img(m[0]) + '<b>' + m[1] + '</b><span style="display:flex;align-items:center;gap:8px"><input type="time" value="' + (v || m[2]) + '" aria-label="موعد ' + m[1] + '"><label class="sw"><input type="checkbox"' + (v ? ' checked' : '') + '> تنبيه</label></span></div>'; }).join('') +
-      '<div class="lbl">التنبيه قبل الوجبة بـ</div><div class="bf">' + BEFORE.map(function (b) { return '<button type="button" data-b="' + b + '" aria-pressed="' + (+rm.before === b) + '">' + b + ' دقائق</button>'; }).join('') + '</div>' +
+      '<div class="lbl">التنبيه قبل الوجبة بـ</div><div class="bf">' + BEFORE.map(function (b) { return '<button type="button" data-b="' + b + '" aria-pressed="' + (+rm.before === b) + '">' + b + (b > 10 ? ' دقيقة' : ' دقائق') + '</button>'; }).join('') + '</div>' +
+      '<div class="lbl">تنبيهات أخرى</div><div class="kx">' +
+      [['water', 'تذكير بشرب الماء خلال اليوم'], ['weight', 'تذكير بوزن الصباح'], ['summary', 'ملخص آخر اليوم']].map(function (x) { return '<label class="sw"><input type="checkbox" data-x="' + x[0] + '"' + (rm[x[0]] !== false ? ' checked' : '') + '> ' + x[1] + '</label>'; }).join('') + '</div>' +
       '<label class="sw" style="font-size:14px;margin-bottom:12px"><input type="checkbox" id="krmOn"' + (rm.on !== false ? ' checked' : '') + '> تفعيل الإشعارات على هذا الجوال</label>' +
       '<div class="act"><button class="btn" id="krmSave">حفظ المواعيد</button>' + (first ? '<button class="btn ghost" id="krmLater">لاحقًا</button>' : '<button class="btn ghost" id="krmLater">إلغاء</button>') + '</div></div>';
     d.body.appendChild(o);
@@ -80,7 +82,8 @@
       var mt2 = {}; o.querySelectorAll('.row').forEach(function (r) { mt2[r.dataset.k] = r.querySelector('input[type=checkbox]').checked ? r.querySelector('input[type=time]').value : ''; });
       var bsel = o.querySelector('.bf button[aria-pressed=true]'), on = o.querySelector('#krmOn').checked;
       var tz = 'Asia/Riyadh'; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (e) {}
-      A.saveSettings({ mt: mt2, rm: { on: on, before: bsel ? +bsel.dataset.b : 10 }, tz: tz });
+      var rm2 = { on: on, before: bsel ? +bsel.dataset.b : 10 }; o.querySelectorAll('[data-x]').forEach(function (c) { rm2[c.dataset.x] = c.checked; });
+      A.saveSettings({ mt: mt2, rm: rm2, tz: tz });
       close();
       if (on) askPermission().then(function (ok) { A.toast(ok ? 'تم حفظ المواعيد وتفعيل الإشعارات ✓' : 'تم حفظ المواعيد. اسمحي بالإشعارات من إعدادات المتصفح لتصلكِ التنبيهات'); });
       else A.toast('تم حفظ المواعيد');
@@ -99,7 +102,7 @@
     var s = st(), mt = s.mt || {}, rm = s.rm || {};
     var list = MEALS.filter(function (m) { return mt[m[0]]; }).map(function (m) { return m[1] + ' ' + mt[m[0]]; }).join(' · ');
     c.innerHTML = '<h2>مواعيد الوجبات والتنبيهات</h2><p class="note" style="margin:6px 0 10px;line-height:1.8">' +
-      (s.mt ? (list || 'لا توجد تنبيهات مفعّلة') + (rm.on === false ? ' — الإشعارات متوقفة' : ' — التنبيه قبل الوجبة بـ ' + (rm.before || 10) + ' دقائق') : 'لم تُحدَّد مواعيد الوجبات بعد.') +
+      (s.mt ? (list || 'لا توجد تنبيهات مفعّلة') + (rm.on === false ? ' — الإشعارات متوقفة' : ' — التنبيه قبل الوجبة بـ ' + (rm.before || 10) + ((rm.before || 10) > 10 ? ' دقيقة' : ' دقائق') + [['water', 'الماء'], ['weight', 'الوزن'], ['summary', 'ملخص اليوم']].filter(function (x) { return rm[x[0]] !== false; }).map(function (x) { return ' · ' + x[1]; }).join('')) : 'لم تُحدَّد مواعيد الوجبات بعد.') +
       '</p><button class="btn sm" id="krmEdit">' + (s.mt ? 'تعديل المواعيد' : 'تحديد المواعيد') + '</button>';
     c.querySelector('#krmEdit').onclick = function () { open(false); };
   }

@@ -247,6 +247,9 @@
     '.klove p{margin:0;font-size:20px;line-height:1.8;color:#2a1a1f;font-weight:600}' +
     '.klove .sg{margin-top:14px;font-size:14px;color:#8a5a66}.klove .tp{margin-top:18px;font-size:12px;color:#b08a93}' +
     '@keyframes klf{from{opacity:0}}@keyframes klu{from{transform:translateY(30px) scale(.94);opacity:0}}@keyframes klb{50%{transform:scale(1.12)}}' +
+    '.klove.kb{inset:calc(10px + env(safe-area-inset-top,0px)) 12px auto 12px;padding:0;background:none;-webkit-backdrop-filter:none;backdrop-filter:none;display:block}' +
+    '.klove.kb .in{max-width:520px;margin:0 auto;padding:12px 16px;border-radius:20px;display:flex;align-items:center;gap:12px;text-align:start;box-shadow:0 14px 30px -12px rgba(120,20,40,.45)}' +
+    '.klove.kb img{width:38px;height:38px;flex:none}.klove.kb h3,.klove.kb .sg{display:none}.klove.kb p{font-size:15px;line-height:1.7}.klove.kb .tp{display:none}' +
     '@media (prefers-color-scheme:dark){.klove .in{background:linear-gradient(160deg,#2a1d21,#331f25)}.klove p{color:#fbe9ed}}';
   d.head.appendChild(css);
   var shown = false;
@@ -256,13 +259,13 @@
     var st = A.settings ? A.settings() : {};
     return st.love === true || (st.love !== false && D.me.id === 'u2');
   }
-  function show() {
+  function show(banner) {
     // بتلف على كل الرسائل بترتيب عشوائي من غير تكرار لحد ما تخلص
     var i, q = []; try { q = JSON.parse(localStorage.getItem('khiffa.loveq') || '[]'); } catch (e) {}
     q = q.filter(function (x) { return x < MSG.length; });
     if (!q.length) { for (var k = 0; k < MSG.length; k++) q.push(k); for (k = q.length - 1; k > 0; k--) { var r = Math.floor(Math.random() * (k + 1)), t = q[k]; q[k] = q[r]; q[r] = t; } }
     i = q.shift(); try { localStorage.setItem('khiffa.loveq', JSON.stringify(q)); } catch (e) {}
-    var A = window.KHIFFA_APP, o = d.createElement('div'); o.className = 'klove'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-label', 'رسالة حب');
+    var A = window.KHIFFA_APP, o = d.createElement('div'); o.className = 'klove' + (banner ? ' kb' : ''); o.setAttribute('role', 'dialog'); o.setAttribute('aria-label', 'رسالة حب');
     o.innerHTML = '<div class="in">' + (A.img ? A.img('red_heart') : '') + '<h3>إلى زوجتي وحبيبتي</h3><p>' + MSG[i] + '</p><div class="sg">— زوجكِ المُحب</div><div class="tp">اضغطي في أي مكان للمتابعة</div></div>';
     o.addEventListener('click', function () { o.style.transition = 'opacity .3s'; o.style.opacity = '0'; setTimeout(function () { o.remove(); }, 300); });
     d.body.appendChild(o);
@@ -275,7 +278,7 @@
   var t = setInterval(function () { var w = want(); if (w === null) return; clearInterval(t); if (w && !shown) { shown = true; show(); } }, 400);
   // كل ما تفتح التطبيق تاني (رجعت له بعد ما قفلته)، وكل 30 دقيقة استخدام
   var hid = 0, used = 0;
-  function again() { if (want() && !d.querySelector('.klove')) { used = 0; show(); } }
+  function again(banner) { if (want() && !d.querySelector('.klove')) { used = 0; show(banner); } }
   d.addEventListener('visibilitychange', function () { if (d.hidden) hid = Date.now(); else if (hid && Date.now() - hid > 120000) again(); });
-  setInterval(function () { if (!d.hidden && shown) { used += 1; if (used >= 30) again(); } }, 60000);
+  setInterval(function () { if (!d.hidden && shown) { used += 1; if (used >= 30) again(true); } }, 60000);
 })();
