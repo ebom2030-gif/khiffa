@@ -46,7 +46,7 @@
     var s = sheet('إضافة سريعة',
       '<div class="kf-acts">' +
       '<button class="kf-act" data-a="search">' + A.img('magnifying_glass_tilted_left') + 'سجّلي طعامًا<small>بالاسم أو بالوزن</small></button>' +
-      '<button class="kf-act" data-a="scan">' + A.img('mobile_phone') + 'باركود منتج<small>زبادي، شيبسي، عصير...</small></button>' +
+      '<button class="kf-act" data-a="scan">' + A.img('mobile_phone') + 'باركود منتج<small>زبادي، رقائق البطاطس، عصير...</small></button>' +
       '<button class="kf-act" data-a="repeat">' + A.img('repeat_button') + 'كرّري وجبة<small>مما تناولته سابقًا</small></button>' +
       '<button class="kf-act" data-a="water">' + A.img('droplet') + 'زجاجة ماء<small>330 مل</small></button></div>');
     s.body.querySelectorAll('.kf-act').forEach(function (b) { b.onclick = function () {

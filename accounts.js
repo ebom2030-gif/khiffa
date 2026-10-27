@@ -4,7 +4,7 @@
   'use strict';
   var d = document, A = window.KHIFFA_APP;
   if (!A) return;
-  var ROLE = { owner: 'مالك', dietitian: 'أخصائي تغذية', client: 'عميل' };
+  var ROLE = { owner: 'مالك المنصة', admin: 'مدير', dietitian: 'أخصائي تغذية', client: 'مستخدم' };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var ls = {
     get: function (k) { try { var v = localStorage.getItem('khiffa.' + k); return v ? JSON.parse(v) : null; } catch (e) { return null; } },
@@ -149,32 +149,32 @@
       var det = d.createElement('details'); det.className = 'ac-det'; det.id = 'acPw';
       card.insertBefore(det, out || null);
     }
-    var key = me.id + '|' + me.username + '|' + me.hasPassword + '|' + me.name;
+    var key = me.id + '|' + me.username + '|' + me.hasPassword + '|' + me.name + '|' + me.email + '|' + me.phone;
     if (box.dataset.k === key) return; box.dataset.k = key;
     box.innerHTML = '<div class="ac-me"><div class="ac-av">' + initial(me.name) + '</div><div><b>' + esc(me.name) + '</b>' +
       '<p class="note">' + ((me.phone || me.email || me.username) ? '<bdi dir="ltr">' + esc(me.phone || me.email || me.username) + '</bdi> · ' : '') + badge(me.role) + '</p></div></div>';
     var det2 = d.getElementById('acPw'), first = !me.hasPassword;
     det2.innerHTML = '<summary>' + (first ? 'إنشاء كلمة مرور' : 'تغيير كلمة المرور') + '</summary><form class="ac-form" id="acPwForm" autocomplete="off">' +
-      (first ? '<p class="note" style="margin:0">الدخول لهذا الحساب يتم برمز حاليًا. بعد إنشاء كلمة المرور يصبح الدخول باسم المستخدم وكلمة المرور، ويتوقف الرمز القديم.</p>' : '') +
-      (first && !me.username ? '<label>اسم المستخدم (بالإنجليزية)<input name="username" dir="ltr" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name"></label>' : '') +
+      (first ? '<p class="note" style="margin:0">الدخول لهذا الحساب يتم برمز حاليًا. اربط رقم الهاتف أو البريد بكلمة مرور. يقبل حقل كلمة المرور الرموز مثل @، ويتوقف رمز الدخول القديم بعد الحفظ.</p>' : '') +
+      (first ? '<label>رقم الهاتف مع رمز الدولة أو البريد الإلكتروني<input name="identity" dir="ltr" autocomplete="username" autocapitalize="none" spellcheck="false" required placeholder="name@example.com" value="' + esc(me.phone || me.email || '') + '"></label>' : '') +
       (!first ? '<label>كلمة المرور الحالية<input name="old" type="password" dir="ltr" autocomplete="current-password"></label>' : '') +
-      '<div class="ac-row2"><label>كلمة المرور الجديدة<input name="new" type="password" dir="ltr" autocomplete="new-password" minlength="6"></label>' +
+      '<div class="ac-row2"><label>كلمة المرور الجديدة<input name="new" type="password" dir="ltr" autocomplete="new-password" minlength="8"></label>' +
       '<label>تأكيد كلمة المرور<input name="new2" type="password" dir="ltr" autocomplete="new-password"></label></div>' +
       '<p class="ac-msg" id="acPwMsg"></p><div><button class="btn" type="submit">حفظ كلمة المرور</button></div></form>';
     d.getElementById('acPwForm').onsubmit = function (e) {
       e.preventDefault();
       var f = e.target, m = d.getElementById('acPwMsg'), b = f.querySelector('button[type="submit"]');
       var nw = f.new.value, n2 = f.new2.value;
-      if (nw.length < 6) return msg(m, 'كلمة المرور يجب ألا تقل عن ٦ أحرف');
+      if (nw.length < 8 || nw.length > 128) return msg(m, 'كلمة المرور من 8 إلى 128 حرفًا، وتقبل الرموز مثل @');
       if (nw !== n2) return msg(m, 'كلمتا المرور غير متطابقتين');
       var body = { newPassword: nw, ua: ua() };
       if (f.old) body.oldPassword = f.old.value;
-      if (f.username) { body.username = f.username.value.trim(); if (!body.username) return msg(m, 'اسم المستخدم مطلوب'); }
+      if(first){body.identity=f.elements.namedItem('identity').value.trim();body.password=nw;if(!body.identity)return msg(m,'رقم الهاتف أو البريد مطلوب');}
       busy(b, true);
-      A.api('changePassword', body).then(function (j) {
+      A.api(first ? 'linkIdentity' : 'changePassword', body).then(function (j) {
         if (j.token) A.setToken(j.token);
         if (j.me) Object.assign(A.me, j.me);
-        if (body.username) ls.set('lastUser', body.username);
+        if (body.identity) ls.set('lastUser', body.identity);
         A.toast('تم حفظ كلمة المرور'); accountCard();
       }).catch(function (x) { msg(m, x.message); }).then(function () { busy(b, false); });
     };
@@ -184,7 +184,7 @@
   var usersCache = null, loading = false;
   function adminCard() {
     var me = A.me, plan = d.getElementById('v-plan'), card = d.getElementById('acAdmin');
-    if (!me || me.role !== 'owner' || !plan) { if (card) card.remove(); return; }
+    if (!me || !(me.role === 'owner' || (me.role === 'admin' && me.permissions && me.permissions.users)) || !plan) { if (card) card.remove(); return; }
     if (!card) {
       card = d.createElement('div'); card.className = 'card'; card.id = 'acAdmin';
       card.innerHTML = '<div class="ac-head"><h2>إدارة المستخدمين</h2><button class="btn sm" id="acAdd">+ إضافة مستخدم</button></div>' +
@@ -204,9 +204,9 @@
   function nameOf(id) { var u = (usersCache || []).filter(function (x) { return String(x.id) === String(id); })[0]; return u ? u.name : ''; }
   function paintUsers() {
     var list = d.getElementById('acList'); if (!list || !usersCache) return;
-    var me = A.me, us = usersCache.slice().sort(function (a, b) { var o = { owner: 0, dietitian: 1, client: 2 }; return (o[a.role] - o[b.role]) || (a.active === b.active ? 0 : a.active ? -1 : 1); });
+    var me = A.me, us = usersCache.slice().sort(function (a, b) { var o = { owner: 0, admin: 1, dietitian: 2, client: 3 }; return (o[a.role] - o[b.role]) || (a.active === b.active ? 0 : a.active ? -1 : 1); });
     var cnt = function (r) { return usersCache.filter(function (u) { return u.role === r && u.active; }).length; };
-    d.getElementById('acSum').innerHTML = '<span class="ac-badge">العملاء: ' + cnt('client') + '</span><span class="ac-badge dietitian">الأخصائيون: ' + cnt('dietitian') + '</span>' +
+    d.getElementById('acSum').innerHTML = '<span class="ac-badge">المستخدمون: ' + cnt('client') + '</span><span class="ac-badge dietitian">الأخصائيون: ' + cnt('dietitian') + '</span>' +
       (usersCache.some(function (u) { return !u.active; }) ? '<span class="ac-badge off">موقوف: ' + usersCache.filter(function (u) { return !u.active; }).length + '</span>' : '');
     if (!us.length) { list.innerHTML = '<div class="ac-empty">لا يوجد مستخدمون بعد</div>'; return; }
     list.innerHTML = us.map(function (u) {
@@ -250,17 +250,17 @@
   function userModal(u) {
     var isNew = !u, me = A.me, self = u && String(u.id) === String(me.id);
     var coaches = (usersCache || []).filter(function (x) { return x.role === 'dietitian' && x.active; });
-    var roleOpts = ['client', 'dietitian', 'owner'].map(function (r) { return '<option value="' + r + '"' + ((u ? u.role : 'client') === r ? ' selected' : '') + '>' + ROLE[r] + '</option>'; }).join('');
+    var roleOpts = (self && me.role==='owner' ? ['owner'] : ['client','dietitian','admin']).map(function (r) { return '<option value="' + r + '"' + ((u ? u.role : 'client') === r ? ' selected' : '') + '>' + ROLE[r] + '</option>'; }).join('');
     var m = modal('<h3>' + (isNew ? 'إضافة مستخدم' : 'تعديل المستخدم') + '</h3><p class="ac-sub">' + (isNew ? 'حساب جديد يدخل باسم المستخدم وكلمة المرور.' : 'تعديل بيانات «' + esc(u.name) + '».') + '</p>' +
       '<form class="ac-form" id="acUForm" autocomplete="off">' +
       '<label>الاسم<input name="name" required value="' + esc(u ? u.name : '') + '"></label>' +
       '<div class="ac-row2"><label>اسم المستخدم<input name="username" dir="ltr" autocapitalize="none" spellcheck="false" placeholder="name" value="' + esc(u ? u.username : '') + '"></label>' +
-      '<label>الدور<select name="role"' + (self ? ' disabled' : '') + '>' + roleOpts + '</select></label></div>' +
+      '<label>الدور<select name="role"' + (self || me.role!=='owner' ? ' disabled' : '') + '>' + roleOpts + '</select></label></div>' +
       '<label>البريد الإلكتروني<input name="email" type="email" dir="ltr" value="' + esc(u ? u.email : '') + '"></label>' +
       '<label id="acCoachL">الأخصائي المتابع<select name="coach"><option value="">— بدون —</option>' + coaches.map(function (c) { return '<option value="' + esc(c.id) + '"' + (u && String(u.coach) === String(c.id) ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</select></label>' +
       (isNew ? '<label>كلمة المرور الأولية<span class="ac-gen"><input name="password" dir="ltr" autocomplete="new-password" minlength="6" placeholder="٦ أحرف على الأقل"><button type="button" class="btn ghost sm" id="acGen">توليد</button></span></label>' : '') +
       (!isNew && !self ? '<label class="ac-chk"><input type="checkbox" name="active"' + (u.active ? ' checked' : '') + '> الحساب مفعّل</label>' : '') +
-      '<p class="ac-msg" id="acUMsg"></p>' +
+      (me.role==='owner' ? '<fieldset><legend>صلاحيات المدير فقط</legend>'+[['users','إدارة حسابات المستخدمين'],['content','إدارة المحتوى العام'],['support','إدارة الدعم'],['clients','الاطلاع على بيانات المتابعة']].map(function(x){return '<label class="ac-chk"><input type="checkbox" name="perm_'+x[0]+'"'+(u&&u.permissions&&u.permissions[x[0]]?' checked':'')+'>'+x[1]+'</label>';}).join('')+'</fieldset>' : '') + '<p class="ac-msg" id="acUMsg"></p>' +
       '<div class="ac-foot"><button class="btn" type="submit">' + (isNew ? 'إضافة' : 'حفظ') + '</button><button class="btn ghost" type="button" data-close>إلغاء</button></div></form>');
     var f = m.el.querySelector('#acUForm'), coachL = m.el.querySelector('#acCoachL');
     var syncCoach = function () { coachL.hidden = f.role.value !== 'client'; };
@@ -271,10 +271,10 @@
       e.preventDefault();
       var mm = m.el.querySelector('#acUMsg'), b = f.querySelector('button[type="submit"]');
       var body = { name: f.name.value.trim(), username: f.username.value.trim().toLowerCase(), role: f.role.value, email: f.email.value.trim(), coach: f.role.value === 'client' ? f.coach.value : '', active: f.active ? f.active.checked : (u ? u.active : true) };
-      if (u) body.id = u.id;
+      if (u) body.id = u.id; if(me.role==='owner'){body.permissions={};['users','content','support','clients'].forEach(function(k){body.permissions[k]=f.elements.namedItem('perm_'+k).checked;});}
       if (!body.name) return msg(mm, 'الاسم مطلوب');
-      if (!/^[a-z0-9._-]{3,32}$/.test(body.username)) return msg(mm, 'اسم المستخدم من ٣ إلى ٣٢ حرفًا إنجليزيًا أو رقمًا (ويُسمح بـ . _ -)');
-      if (isNew) { body.password = f.password.value; if (body.password.length < 6) return msg(mm, 'كلمة المرور الأولية يجب ألا تقل عن ٦ أحرف'); }
+      if (body.username && !/^[a-z0-9._-]{3,32}$/.test(body.username)) return msg(mm, 'اسم المستخدم من ٣ إلى ٣٢ حرفًا إنجليزيًا أو رقمًا (ويُسمح بـ . _ -)');
+      if(isNew&&!body.username)body.username='user_'+Date.now(); if (isNew) { body.password = f.password.value; if (body.password.length < 6) return msg(mm, 'كلمة المرور الأولية يجب ألا تقل عن ٦ أحرف'); }
       busy(b, true);
       A.api('saveUser', body).then(function () {
         m.close(); A.toast(isNew ? 'تمت إضافة المستخدم' : 'تم حفظ التعديلات');
@@ -307,3 +307,4 @@
   (window.KHIFFA_HOOKS = window.KHIFFA_HOOKS || []).push(render);
   render();
 })();
+

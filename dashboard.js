@@ -288,7 +288,7 @@
     sec.querySelectorAll('.hm-day').forEach(function (b) { b.onclick = function () { openDay(b.dataset.k); }; });
     sec.querySelectorAll('.hm-chk').forEach(function (b) { b.onclick = function (e) {
       e.stopPropagation(); var s = A.mealState(A.dayOf(A.TODAY), b.dataset.c);
-      A.setMeal(b.dataset.c, { done: !s.done, planned: false }, A.TODAY); if (!s.done) A.toast('بالهنا والشفا'); A.refresh();
+      A.setMeal(b.dataset.c, { done: !s.done, planned: false }, A.TODAY); if (!s.done) A.toast('تم تسجيل الوجبة، وبالصحة والعافية'); A.refresh();
     }; });
     sec.querySelectorAll('.hm-meal').forEach(function (row) {
       var open = function () { var m = D.MEALS.find(function (x) { return x.k === row.dataset.m; }); A.setCur(A.TODAY); A.openMealSheet(m, A.mealComps(m.k, A.mealState(A.dayOf(A.TODAY), m.k)).length ? 'tune' : 'idea'); };
@@ -301,6 +301,7 @@
       g.onclick = function () { openDay(g.dataset.k); };
     });
     d.getElementById('hmGoBody').onclick = function () { go('body'); };
+    (window.KHIFFA_HOME_HOOKS||[]).forEach(function(fn){try{fn();}catch(e){console.error(e);}});
   }
 
   (window.KHIFFA_HOOKS = window.KHIFFA_HOOKS || []).push(function () { render(); });

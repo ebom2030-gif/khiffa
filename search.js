@@ -4,18 +4,18 @@
   var d = document;
   // [name, portion, kcal, protein, carbs, fat, aliases, img, limitTag]  — typical home/restaurant portions, approximate values
   var COMMON = [
-    // سندوتشات وفطار
-    ['سندوتش فول', 'رغيف بلدي صغير', 330, 14, 52, 7, 'ساندوتش فول,فول', 'stuffed_flatbread'],
-    ['سندوتش طعمية', 'رغيف بلدي صغير', 350, 11, 45, 15, 'فلافل,طعميه,ساندوتش طعمية', 'falafel'],
-    ['سندوتش جبنة بيضاء', 'رغيف صغير', 280, 12, 35, 10, 'جبنه,ساندوتش جبنة', 'sandwich'],
-    ['سندوتش بيض', 'رغيف صغير', 320, 15, 33, 14, 'ساندوتش بيض', 'sandwich', 'egg'],
-    ['سندوتش شاورما دجاج', 'متوسط', 450, 28, 45, 17, 'شاورما فراخ,شورما', 'stuffed_flatbread'],
-    ['سندوتش شاورما لحم', 'متوسط', 520, 26, 44, 26, 'شاورما لحمة', 'stuffed_flatbread', 'red'],
-    ['سندوتش كبدة', 'متوسط', 400, 22, 40, 16, 'كبده اسكندراني', 'stuffed_flatbread', 'liver'],
-    ['سندوتش تونة', 'توست', 300, 20, 30, 10, 'ساندوتش تونه', 'sandwich', 'tuna'],
-    ['سندوتش حلوم', 'صامولي', 350, 16, 32, 17, 'حلومي', 'sandwich'],
-    ['برجر لحم', 'سندوتش', 550, 28, 45, 28, 'برجر,همبرجر', 'sandwich', 'red'],
-    ['برجر دجاج', 'سندوتش', 480, 24, 48, 21, 'تشيكن برجر,برجر فراخ', 'sandwich'],
+    // شطيرةات وفطار
+    ['شطيرة فول', 'رغيف بلدي صغير', 330, 14, 52, 7, 'ساندوتش فول,فول', 'stuffed_flatbread'],
+    ['شطيرة طعمية', 'رغيف بلدي صغير', 350, 11, 45, 15, 'فلافل,طعميه,ساندوتش طعمية', 'falafel'],
+    ['شطيرة جبنة بيضاء', 'رغيف صغير', 280, 12, 35, 10, 'جبنه,ساندوتش جبنة', 'sandwich'],
+    ['شطيرة بيض', 'رغيف صغير', 320, 15, 33, 14, 'ساندوتش بيض', 'sandwich', 'egg'],
+    ['شطيرة شاورما دجاج', 'متوسط', 450, 28, 45, 17, 'شاورما فراخ,شورما', 'stuffed_flatbread'],
+    ['شطيرة شاورما لحم', 'متوسط', 520, 26, 44, 26, 'شاورما لحمة', 'stuffed_flatbread', 'red'],
+    ['شطيرة كبدة', 'متوسط', 400, 22, 40, 16, 'كبده اسكندراني', 'stuffed_flatbread', 'liver'],
+    ['شطيرة تونة', 'توست', 300, 20, 30, 10, 'ساندوتش تونه', 'sandwich', 'tuna'],
+    ['شطيرة حلوم', 'صامولي', 350, 16, 32, 17, 'حلومي', 'sandwich'],
+    ['برجر لحم', 'شطيرة', 550, 28, 45, 28, 'برجر,همبرجر', 'sandwich', 'red'],
+    ['برجر دجاج', 'شطيرة', 480, 24, 48, 21, 'تشيكن برجر,برجر فراخ', 'sandwich'],
     ['حواوشي', 'رغيف', 550, 25, 45, 30, 'حواوشى', 'stuffed_flatbread', 'red'],
     ['بيتزا', 'شريحة متوسطة', 285, 12, 36, 10, 'بيتزا', 'flatbread'],
     ['فطيرة زعتر', 'قطعة', 280, 6, 35, 13, 'مناقيش,منقوشة', 'flatbread'],
@@ -62,7 +62,7 @@
     ['سموذي فواكه', 'كوب', 180, 3, 40, 1, 'سموذي', 'cup_with_straw'],
     ['بروتين شيك بالماء', 'سكوب', 120, 24, 3, 1.5, 'بروتين,واي', 'cup_with_straw'],
     ['ماء', 'كوب', 0, 0, 0, 0, 'مياه,مويه,ماية', 'droplet'],
-    // حلويات وسناكات
+    // حلويات ووجبة خفيفةات
     ['شوكولاتة', 'لوح صغير ٤٠ ج', 215, 3, 24, 12, 'شيكولاتة,شوكولا,جالكسي,كيت كات', 'chestnut'],
     ['بسكويت', 'قطعتين', 100, 1, 14, 4.5, 'بسكوت', 'rice_cracker'],
     ['كيك', 'شريحة', 350, 4, 50, 15, 'كيكة,تورتة', 'pancakes'],
@@ -106,7 +106,7 @@
     ['فتة', 'طبق', 600, 25, 70, 25, 'فته', 'curry_rice', 'red'],
     ['جريش', 'طبق', 300, 10, 45, 9, 'هريس', 'steaming_bowl'],
     ['سمبوسة', 'قطعة', 130, 3, 12, 8, 'سمبوسك', 'rice_cracker'],
-    ['فاهيتا دجاج', 'سندوتش', 450, 28, 45, 16, 'فاهيتا', 'stuffed_flatbread'],
+    ['فاهيتا دجاج', 'شطيرة', 450, 28, 45, 16, 'فاهيتا', 'stuffed_flatbread'],
     ['سوشي', '٦ قطع', 250, 9, 38, 7, 'سوشى', 'rice_cracker']
   ];
 
@@ -122,7 +122,8 @@
     ITEMS.push({ id: 'f-' + k, name: f.name, portion: 'حصة: ' + f.grams + (f.g === 'M' ? ' مل' : ' ج') + (f.unit ? ' (' + f.unit + ')' : ''), n: f.n, p: f.p, c: f.c, f: f.f, key: norm(f.name), img: f.img, tag: f.limit, grams: f.grams, ml: f.g === 'M', pcs: (D.PIECES || {})[k] });
   });
 
-  function search(q) {
+  function refreshFoods(){ITEMS=ITEMS.filter(it=>it.id.indexOf('f-')!==0);Object.keys(D.FOODS).forEach(function(k){var f=D.FOODS[k];if(f.hidden)return;ITEMS.push({id:'f-'+k,name:f.name,portion:'حصة: '+f.grams+(f.g==='M'?' ملليلتر':' جرام')+(f.unit?' ('+f.unit+')':''),n:f.n,p:f.p,c:f.c,f:f.f,key:norm(f.name),img:f.img,tag:f.limit,grams:f.grams,ml:f.g==='M',pcs:(D.PIECES||{})[k]});});}
+  function search(q) { refreshFoods();
     q = norm(q); if (!q) return [];
     var words = q.split(' ');
     var scored = [];
@@ -131,7 +132,7 @@
       if (nm === q) s = 100; else if (nm.indexOf(q) === 0) s = 80; else if (it.key.indexOf(q) >= 0) s = 60;
       else if (words.every(function (w) { return it.key.indexOf(w) >= 0; })) s = 40;
       else if (words.some(function (w) { return w.length > 2 && it.key.indexOf(w) >= 0; })) s = 15;
-      if (s) scored.push([s - (it.id.charAt(0) === 'f' ? 5 : 0), it]);
+      if (s) scored.push([s - (it.id.charAt(0) === 'f' ? -5 : 0), it]);
     });
     return scored.sort(function (a, b) { return b[0] - a[0]; }).slice(0, 8).map(function (x) { return x[1]; });
   }
@@ -156,10 +157,10 @@
     '.qa-row .x{border:0;background:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 6px}';
   d.head.appendChild(css);
 
-  var card = d.createElement('div'); card.className = 'card qa'; card.id = 'quickAdd';
+  var card = d.createElement('div'); window.KHIFFA_QUICK_CARD=card; card.className = 'card qa'; card.id = 'quickAdd';
   card.innerHTML = '<h2 style="margin:0">سجّلي أي طعام أو مشروب</h2>' +
     '<div class="qa-in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>' +
-    '<input id="qaQ" type="search" placeholder="مثلاً: سندوتش فول، قهوة، موزة" autocomplete="off" enterkeyhint="search"></div>' +
+    '<input id="qaQ" type="search" aria-label="البحث عن طعام أو مشروب" placeholder="مثلاً: شطيرة فول، قهوة، موزة" autocomplete="off" enterkeyhint="search"></div>' +
     '<div class="qa-res" id="qaRes"></div><div class="qa-log" id="qaLog" hidden></div>';
   var meals = d.getElementById('meals');
   meals.parentNode.insertBefore(card, meals);
@@ -178,14 +179,14 @@
     var q = d.createElement('div'); q.className = 'qa-qty'; var chosen = 1;
     q.innerHTML = '<span class="note">الكمية:</span>' + QTY.map(function (x) { return '<button data-q="' + x[0] + '" aria-pressed="' + (x[0] === 1) + '">' + x[1] + '</button>'; }).join('');
     var amt = '';
-    var upd = function () { add.textContent = 'أضيفي (' + A.ar(Math.round(it.n * chosen), 0) + ' سعرة)'; };
+    var upd = function () { add.disabled=!(Number.isFinite(chosen)&&chosen>0&&chosen<=10000); add.textContent = 'أضيفي (' + A.ar(Math.round(it.n * chosen), 0) + ' سعرة)'; };
     q.querySelectorAll('button').forEach(function (b) { b.onclick = function () { chosen = +b.dataset.q; amt = ''; q.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); q.querySelectorAll('input').forEach(function (x) { x.value = ''; }); upd(); }; });
     // exact amount typed by hand: grams / ml, pieces, or a multiple of the portion — calories follow automatically
-    var ins = it.grams ? [['g', it.ml ? 'الكمية بالمل' : 'الوزن بالجرام']] : [['x', 'عدد الحصص (مثلاً 1.5)']];
-    if (it.pcs) ins.push(['pc', 'عدد ال' + it.pcs[3]]);
+    var ins = [['x','عدد الحصص']];if(it.grams)ins.push(['g',it.ml?'الكمية بالملليلتر':'الوزن بالجرام']);
+    if (it.pcs) ins.push(['pc', 'عدد الثمار أو الحبات']);
     q.insertAdjacentHTML('beforeend', '<div style="display:flex;gap:6px;flex-wrap:wrap;width:100%">' + ins.map(function (x) { return '<input class="qa-in" data-u="' + x[0] + '" type="number" inputmode="decimal" min="0" step="any" placeholder="' + x[1] + '" style="width:150px">'; }).join('') + '</div>');
     q.querySelectorAll('.qa-in').forEach(function (inp) { inp.oninput = function () {
-      var v = parseFloat(inp.value); if (!(v > 0)) return;
+      var v = parseFloat(inp.value); if (!(v > 0)||!Number.isFinite(v)) {chosen=0;amt='';upd();return;}
       q.querySelectorAll('.qa-in').forEach(function (x) { if (x !== inp) x.value = ''; });
       q.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
       var u = inp.dataset.u;
@@ -197,7 +198,7 @@
     var act = d.createElement('div'); act.className = 'mact';
     var add = d.createElement('button'); add.className = 'btn'; add.textContent = 'أضيفي (' + A.ar(it.n, 0) + ' سعرة)';
     var cancel = d.createElement('button'); cancel.className = 'btn ghost'; cancel.textContent = 'إلغاء';
-    add.onclick = function () { save(it, Math.round(chosen * 1000) / 1000, amt); };
+    add.onclick = function () { if(!(chosen>0)||!Number.isFinite(chosen))return; save(it, Math.round(chosen * 1000) / 1000, amt); };
     cancel.onclick = function () { $res.innerHTML = ''; $q.value = ''; };
     act.append(add, cancel); $res.append(act);
   }
@@ -210,7 +211,7 @@
     };
   }
   function save(it, q, amt) {
-    var day = A.dayOf(A.cur); var now = new Date();
+    var day = A.dayOf(card.closest('#v-home')?A.TODAY:A.cur); var now = new Date();
     var ex = (day.extras || []).slice();
     ex.push({ id: it.id, name: it.name, portion: it.portion, q: q, n: it.n, p: it.p, c: it.c, f: it.f, img: it.img, tag: it.tag || null, amt: amt || null, t: String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') });
     day.extras = ex; A.saveDay(Object.assign({}, day));
@@ -240,3 +241,4 @@
   (window.KHIFFA_HOOKS = window.KHIFFA_HOOKS || []).push(render);
   A.refresh();
 })();
+

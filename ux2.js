@@ -37,7 +37,7 @@
   try { if (JSON.parse(localStorage.getItem('khiffa.tab')) === 'today') localStorage.setItem('khiffa.tab', '"home"'); } catch (e) {}
 
   /* ---------- صفحة النظام ---------- */
-  var SETTINGS = [/مستوى السعرات/, /مواعيد الوجبات/, /تفضيلات الأكل/, /^حسابي|^الحساب/, /إدارة المستخدمين/, /شكل الشعار/];
+  var SETTINGS = [/مستوى السعرات/, /مواعيد الوجبات/, /تفضيلات الأكل/, /^حسابي|^الحساب/, /إدارة المستخدمين/, /شكل الشعار/, /المتابعة مع أخصائي/, /المساعدة وحسابي/];
   function title(c) { var h = c.querySelector('h2'); return h ? h.textContent.trim() : ''; }
   function planOrder() {
     var plan = d.getElementById('v-plan'); if (!plan) return;
@@ -48,7 +48,7 @@
     cards.forEach(function (c) { if (top.indexOf(c) < 0) rest.push(c); });
     var lbl = plan.querySelector('.kgroup');
     if (!lbl) { lbl = d.createElement('div'); lbl.className = 'kgroup'; lbl.textContent = 'دليل النظام والمراجع — اضغطي على أي عنوان لفتحه'; }
-    var want = top.concat([lbl], rest), cur = Array.prototype.filter.call(plan.children, function (c) { return want.indexOf(c) >= 0; });
+    top.forEach(function(c){c.classList.remove('kcol');}); var want = top.concat([lbl], rest), cur = Array.prototype.filter.call(plan.children, function (c) { return want.indexOf(c) >= 0; });
     var same = cur.length === want.length && cur.every(function (c, i) { return c === want[i]; });
     if (!same) want.forEach(function (c) { plan.appendChild(c); });
     rest.forEach(function (c) {
@@ -103,3 +103,4 @@
   (window.KHIFFA_HOOKS = window.KHIFFA_HOOKS || []).push(run);
   setInterval(run, 1200);
 })();
+

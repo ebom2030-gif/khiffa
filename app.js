@@ -25,6 +25,8 @@ const store = {
 const S = { pin: store.get('pin', null), uid: store.get('uid', null), data: null, cur: TODAY, queue: store.get('queue', []), ideaFilter: 'b' };
 // [accounts] session token from username/password login (accounts.js); the PIN stays only for legacy accounts
 S.token = store.get('token', null);
+// Open the signed-in account by default; a manual switch is consumed once.
+let switchTarget = null; try { switchTarget = sessionStorage.getItem('khiffa.switchTarget'); sessionStorage.removeItem('khiffa.switchTarget'); } catch (e) {} S.uid = switchTarget || null;
 const authed = () => !!(S.token || S.pin);
 const isAuthErr = e => !!(e && (e.auth || /رمز/.test(e.message)));
 
@@ -333,7 +335,7 @@ function openMealSheet(m, mode) {
 /* ================= fine-tune quantities: any item, any amount ================= */
 // quantity units for the editor: pieces (countable foods), grams / ml, or exchange portions
 const unitsOf = f => piecesOf(f) ? ['pc', 'g', 'x'] : ['g', 'x'];
-const uName = (f, u) => u === 'pc' ? piecesOf(f)[1] : u === 'g' ? (f.g === 'M' ? 'مل' : 'جرام') : 'حصة';
+const uName = (f, u) => u === 'pc' ? (f.pieceLabel || piecesOf(f)[1]) : u === 'g' ? (f.g === 'M' ? 'مل' : 'جرام') : 'حصة';
 function qVal(f, it) { const r = v => Math.round(v * 100) / 100; return it.u === 'pc' ? r(it.n * piecesOf(f)[0]) : it.u === 'g' ? Math.round(it.n * f.grams) : r(it.n); }
 function toN(f, u, v) { return u === 'pc' ? v / piecesOf(f)[0] : u === 'g' ? v / f.grams : v; }
 function stepQty(f, it, dir) {
@@ -357,13 +359,13 @@ function tuneMeal(m, st, body) {
       '<div class="note num">' + (Math.abs(diff) < 25 ? 'مطابقة للهدف' : diff > 0 ? 'أكثر من الهدف بـ ' + ar(diff, 0) + ' سعرة' : 'أقل من الهدف بـ ' + ar(-diff, 0) + ' سعرة') + ' – ' + ar(Math.round(t.p), 0) + ' ج بروتين</div></div>' +
       '<div class="tune-list">' + items.map((it, i) => { const f = D.FOODS[it.id]; return '<div class="tune-row">' + img(f.img, 'sm') + '<div style="min-width:0"><div class="nm">' + esc(f.name) + '</div><div class="note num">' + amountText(f, it.n) + ' – ' + ar(Math.round(f.n * it.n), 0) + ' سعرة</div></div>' +
         '<div class="tune-q"><button class="qb" data-i="' + i + '" data-d="-1" aria-label="قلّلي">−</button><input class="qi num" data-i="' + i + '" type="number" inputmode="decimal" min="0" step="any" value="' + qVal(f, it) + '"><button class="qb" data-i="' + i + '" data-d="1" aria-label="زيدي">+</button></div>' +
-        '<button class="qu" data-i="' + i + '" title="غيّري الوحدة">' + uName(f, it.u) + '</button><button class="qx" data-x="' + i + '" aria-label="احذفي الصنف">×</button></div>'; }).join('') + '</div>' +
+        '<select class="qu" data-i="' + i + '" aria-label="وحدة قياس ' + esc(f.name) + '">' + unitsOf(f).map(u=>'<option value="'+u+'"'+(u===it.u?' selected':'')+'>'+uName(f,u)+'</option>').join('') + '</select><button class="qx" data-x="' + i + '" aria-label="احذفي الصنف">×</button></div>'; }).join('') + '</div>' +
       '<div class="grp-h" style="margin-top:14px">أضيفي صنفًا</div><div class="filters tune-g">' + GORDER.map(g => '<button class="fchip" data-g="' + g + '" aria-pressed="' + (addG === g) + '">' + D.GROUPS[g].name + '</button>').join('') + '</div>' +
       (addG ? '<div class="fgrid">' + Object.values(D.FOODS).filter(f => f.g === addG && allowed(f)).map(f => '<button class="fbtn" data-add="' + f.id + '">' + img(f.img) + '<span>' + esc(f.name) + '</span><span class="q num">' + amountText(f, 1) + '</span></button>').join('') + '</div>' : '') +
       '<div class="tune-foot"><button class="btn ghost" id="tuneReset">استعيدي الأصل</button><button class="btn" id="tuneSave">حفظ الوجبة</button></div>';
     wrap.querySelectorAll('.qb').forEach(b => b.onclick = () => { const it = items[+b.dataset.i], f = D.FOODS[it.id]; stepQty(f, it, +b.dataset.d); draw(); });
     wrap.querySelectorAll('.qi').forEach(inp => inp.onchange = () => { const it = items[+inp.dataset.i], f = D.FOODS[it.id], v = parseFloat(inp.value); if (!(v > 0)) { draw(); return; } it.n = toN(f, it.u, v); draw(); });
-    wrap.querySelectorAll('.qu').forEach(b => b.onclick = () => { const it = items[+b.dataset.i], f = D.FOODS[it.id], us = unitsOf(f); it.u = us[(us.indexOf(it.u) + 1) % us.length]; draw(); });
+    wrap.querySelectorAll('.qu').forEach(b => b.onchange = () => { items[+b.dataset.i].u=b.value; draw(); });
     wrap.querySelectorAll('.qx').forEach(b => b.onclick = () => { items.splice(+b.dataset.x, 1); draw(); });
     wrap.querySelectorAll('.tune-g .fchip').forEach(b => b.onclick = () => { addG = addG === b.dataset.g ? null : b.dataset.g; draw(); });
     wrap.querySelectorAll('[data-add]').forEach(b => b.onclick = () => { const ex = items.find(x => x.id === b.dataset.add); if (ex) ex.n += 1; else items.push({ id: b.dataset.add, n: 1, u: unitsOf(D.FOODS[b.dataset.add])[0] }); toast('أُضيف ' + D.FOODS[b.dataset.add].name); draw(); });
@@ -490,7 +492,7 @@ function renderPlan() {
   $('#levels').innerHTML = Object.keys(D.LEVELS).map(L => '<button data-l="' + L + '" aria-pressed="' + (+L === +st0.level) + '">' + ar(+L, 0) + '</button>').join('');
   $('#levels').querySelectorAll('button').forEach(b => b.onclick = () => { saveSettings({ level: +b.dataset.l }); toast('أصبح النظام ' + ar(+b.dataset.l, 0) + ' سعرة'); });
   const LT = levelTotals(st0.level);
-  $('#levelNote').textContent = 'المتوسط التقريبي: ' + ar(Math.round(LT.n), 0) + ' سعرة – بروتين ' + ar(Math.round(LT.p), 0) + ' ج (' + ar(Math.round(LT.p * 4 / LT.n * 100), 0) + '٪) – كارب ' + ar(Math.round(LT.c), 0) + ' ج – دهون ' + ar(Math.round(LT.f), 0) + ' ج';
+  $('#levelNote').textContent = 'المتوسط التقريبي: ' + ar(Math.round(LT.n), 0) + ' سعرة – بروتين ' + ar(Math.round(LT.p), 0) + ' ج (' + ar(Math.round(LT.p * 4 / LT.n * 100), 0) + '٪) – كربوهيدرات ' + ar(Math.round(LT.c), 0) + ' ج – دهون ' + ar(Math.round(LT.f), 0) + ' ج';
   const L = level(), gs = GORDER;
   $('#xtbl').innerHTML = '<tr><th>الوجبة</th>' + gs.map(g => '<th>' + D.GROUPS[g].short + '</th>').join('') + '</tr>' +
     D.MEALS.map(m => '<tr><td>' + m.t + '</td>' + gs.map(g => '<td class="num">' + (L[m.k][g] ? ar(L[m.k][g]) : '–') + '</td>').join('') + '</tr>').join('') +
@@ -519,10 +521,10 @@ function renderHeader() {
   sel.innerHTML = ppl.map(p => '<option value="' + esc(p.id) + '"' + (p.id === S.data.user.id ? ' selected' : '') + '>' + esc(p.id === S.data.me.id ? 'حسابي' : nickOf(p.name)) + '</option>').join('');
 }
 $('#person').onchange = e => switchUser(e.target.value);
-function people() { const me = S.data.me, ppl = (S.data.people || []).slice(); if (me && (me.role === 'owner' || me.role === 'dietitian') && !ppl.some(p => p.id === me.id)) ppl.unshift({ id: me.id, name: 'حسابي' }); return ppl; }
+function people() { const me = S.data.me, ppl = (S.data.people || []).slice(); if (me && !ppl.some(p => p.id === me.id)) ppl.unshift({ id: me.id, name: 'حسابي' }); return ppl; }
 function nickOf(name) { return name === 'زوجتي' ? 'زوجتي وحبيبتي' : name; }
 function displayName() { const st = settings(), me = S.data.me, u = S.data.user; if (st.nick) return st.nick; if (me && me.id === u.id && me.role === 'owner') return me.name; return nickOf(u.name); }
-function switchUser(uid) { if (!uid || (S.data && uid === S.data.user.id)) return; S.uid = uid; store.set('uid', S.uid); toast('جارٍ فتح الحساب…'); setTimeout(() => location.reload(), 150); }
+function switchUser(uid) { if (!uid || (S.data && uid === S.data.user.id)) return; S.uid = uid; store.set('uid', S.uid); try { sessionStorage.setItem('khiffa.switchTarget', uid); } catch (e) {} toast('جارٍ فتح الحساب…'); setTimeout(() => location.reload(), 150); }
 function renderAll() { if (!S.data) return; renderHeader(); renderToday(); renderIdeas(); renderBody(); renderPlan(); }
 function toast(m, undo) {
   const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toast.h);
@@ -554,4 +556,6 @@ window.KHIFFA_APP = { undoMeal, D, bottles, BOTTLE, dayOf, saveDay, toast, setti
   get cur() { return S.cur; }, setCur: k => { S.cur = k; if (S.data) renderToday(); }, get data() { return S.data; }, refresh: () => { if (S.data) renderToday(); }, refreshAll: () => renderAll() };
 if (authed()) boot(); else showLogin();
 })();
+
+
 

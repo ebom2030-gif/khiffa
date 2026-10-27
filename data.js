@@ -81,6 +81,11 @@ window.KHIFFA_DATA = (function () {
     ['blueberry','F','توت',100,'ثلاثة أرباع كوب',57,0.7,14.5,0.3,'blueberries',''],
     ['pear','F','كمثرى',100,'نصف حبة كبيرة',57,0.4,15.2,0.1,'pear',''],
     ['peach','F','خوخ',150,'حبة كبيرة',59,1.4,14.3,0.4,'peach',''],
+    ['grapefruit','F','جريب فروت',154,'نصف ثمرة متوسطة',60,1,15,0,'tangerine',''],
+    ['nectarine','F','نكتارين',140,'ثمرة متوسطة',60,1,15,0.5,'peach',''],
+    ['plum','F','برقوق',120,'نحو ثمرة ونصف',55.63,0,15.1,0,'cherries',''],
+    ['cherry','F','كرز',80,'نحو 12 حبة',57.14,0.57,14.86,0,'cherries',''],
+    ['lemon','V','عصير ليمون طازج دون سكر',58,'عصير ثمرة متوسطة',15,0,5,0,'lemon',''],
     ['guava','F','جوافة',90,'حبة متوسطة',61,2.3,12.9,0.9,'green_apple',''],
     ['pomegranate','F','رمان',75,'نصف حبة صغيرة',62,1.3,14,0.9,'cherries',''],
 
@@ -147,9 +152,9 @@ window.KHIFFA_DATA = (function () {
 
   const MEALS = [
     { k: 'b',  t: 'الفطور', when: 'بعد الاستيقاظ بساعة إلى ٣ ساعات', img: 'shallow_pan_of_food' },
-    { k: 's1', t: 'سناك الصباح', when: 'بعد الفطور بساعتين', img: 'red_apple' },
+    { k: 's1', t: 'وجبة خفيفة الصباح', when: 'بعد الفطور بساعتين', img: 'red_apple' },
     { k: 'l',  t: 'الغداء', when: 'بعد الفطور بـ٣–٤ ساعات، وقبل التمرين بـ٣ ساعات', img: 'curry_rice' },
-    { k: 's2', t: 'سناك العصر', when: 'بعد الغداء بساعتين أو قبل التمرين بنصف ساعة', img: 'glass_of_milk' },
+    { k: 's2', t: 'وجبة خفيفة العصر', when: 'بعد الغداء بساعتين أو قبل التمرين بنصف ساعة', img: 'glass_of_milk' },
     { k: 'd',  t: 'العشاء', when: 'بعد التمرين، وقبل النوم بـ٣ ساعات', img: 'green_salad' }
   ];
 
@@ -169,7 +174,7 @@ window.KHIFFA_DATA = (function () {
     { id: 'b-turkey', m: 'b', name: 'ساندوتش ديك رومي بالأفوكادو', how: 'توست بر بشرائح ديك رومي وأفوكادو مهروس وخس وطماطم.', parts: { P: ['turkey'], S: ['toast'], Fa: ['avocado'], V: ['salad', 'tomato'] } },
     { id: 'b-pancake', m: 'b', name: 'بان كيك شوفان', how: 'اخلطي الشوفان المطحون مع البيض وبياض البيض والقرفة، واصنعي منه أقراصًا في مقلاة غير لاصقة.', parts: { S: ['oats'], P: ['eggwhite', ['egg', 1]], Fa: ['pb'] } },
 
-    // سناك الصبح
+    // وجبة خفيفة الصبح
     ...['apple', 'banana', 'orange', 'strawberry', 'watermelon', 'grapes', 'dates', 'kiwi', 'mango', 'pineapple', 'blueberry', 'pear', 'peach', 'guava', 'pomegranate', 'melon', 'mandarin']
       .map(f => ({ id: 's1-' + f, m: 's1', name: null, how: '', parts: { F: [f] } })),
 
@@ -190,7 +195,7 @@ window.KHIFFA_DATA = (function () {
     { id: 'l-bigsalad', m: 'l', name: 'سلطة دجاج مشوي كبيرة', how: 'خس وجرجير وطماطم وخيار وفلفل، وفوقها دجاج مشوي وخبز محمص وتتبيلة زيت زيتون وليمون.', parts: { S: ['khubz'], P: ['chicken'], Fa: ['oliveoil'], V: ['lettuce', 'arugula', 'tomato', 'cucumber', 'pepper'] } },
     { id: 'l-okra', m: 'l', name: 'بامية باللحم مع أرز', how: 'بامية بصلصة الطماطم مع لحم قليل الدهن، وأرز.', parts: { S: ['rice'], P: ['lamb'], Fa: ['oliveoil'], V: ['okra', 'tomato'] } },
 
-    // سناك العصر
+    // وجبة خفيفة العصر
     { id: 's2-yogberry', m: 's2', name: 'زبادي بالتوت', how: 'علبة زبادي مع توت طازج أو مجمّد.', parts: { F: ['blueberry'], M: ['yogurt'] } },
     { id: 's2-milkdates', m: 's2', name: 'حليب بالتمر', how: 'كوب حليب مع حبتين تمر.', parts: { F: ['dates'], M: ['milk'] } },
     { id: 's2-smoothie', m: 's2', name: 'سموذي موز بالحليب', how: 'اخلطي الموز مع الحليب والقرفة والثلج.', parts: { F: ['banana'], M: ['milk'] } },
@@ -229,7 +234,7 @@ window.KHIFFA_DATA = (function () {
     'الماء ٢–٢٫٥ لتر في اليوم على الأقل (٨–١٠ أكواب).',
     'البروتين باودر بعد التمرين: السكوب ≈ ١٢٠ سعرة و٢٤ جم بروتين = ٣ حصص بروتين، فقلّلي بروتين العشاء.',
     'عند الجوع: ٣ أكواب فشار بدون زيت = حصة نشويات، أو خضار بلا حدود.',
-    'تناولي طعامك ببطء: الوجبة الرئيسية ٢٠–٣٠ دقيقة، والسناك ١٠–١٥ دقيقة.'
+    'تناولي طعامك ببطء: الوجبة الرئيسية ٢٠–٣٠ دقيقة، والوجبة خفيفة ١٠–١٥ دقيقة.'
   ];
 
   /* countable foods: pieces in ONE exchange + [one, two, 3–10] words, so amounts can be shown and edited by the piece or by weight */
@@ -241,5 +246,12 @@ window.KHIFFA_DATA = (function () {
     egg: [1, 'بيضة', 'بيضتين', 'بيضات'], toast: [1, 'شريحة', 'شريحتين', 'شرائح']
   };
 
-  return { GROUPS, FOODS, LEVELS, MEALS, IDEAS, LIMITS, FREE, TIPS, PIECES };
+  const FRUIT_WEIGHTS = {apple:[242,'ثمرة كبيرة'],banana:[126,'ثمرة متوسطة دون القشر'],orange:[154,'ثمرة متوسطة دون القشر'],mandarin:[109,'ثمرة متوسطة دون القشر'],kiwi:[74,'ثمرة متوسطة دون القشر'],pear:[166,'ثمرة متوسطة'],peach:[147,'ثمرة متوسطة دون النواة'],grapefruit:[308,'ثمرة متوسطة دون القشر'],nectarine:[140,'ثمرة متوسطة دون النواة'],plum:[75.5,'ثمرة متوسطة دون النواة'],cherry:[140/21,'حبة دون النواة'],strawberry:[147/8,'حبة متوسطة']};
+  Object.keys(FRUIT_WEIGHTS).forEach(id=>{const f=FOODS[id],ref=FRUIT_WEIGHTS[id];PIECES[id]=[f.grams/ref[0],f.g==='F'?'ثمرة':'حبة','ثمرتين','ثمرات'];f.pieceGrams=ref[0];f.pieceLabel=ref[1];});
+  // FDA raw edible serving: grams, kcal, protein, carbohydrate, fat. Values are rounded by the source.
+  const FDA_FRUITS={apple:[242,130,1,34,0],banana:[126,110,1,30,0],orange:[154,80,1,19,0],mandarin:[109,50,1,13,0],kiwi:[148,90,1,20,1],pear:[166,100,1,26,0],peach:[147,60,1,15,.5],grapefruit:[154,60,1,15,0],nectarine:[140,60,1,15,.5],plum:[151,70,1,19,0],cherry:[140,100,1,26,0],strawberry:[147,50,1,11,0],pineapple:[112,50,1,13,0],watermelon:[280,80,1,21,0]};
+  Object.keys(FDA_FRUITS).forEach(id=>{const f=FOODS[id],r=FDA_FRUITS[id],scale=f.grams/r[0];['n','p','c','f'].forEach((k,i)=>f[k]=Math.round(r[i+1]*scale*100)/100);f.source='FDA raw fruit';});
+  const FOOD_SOURCES=[{name:'هيئة الغذاء والدواء الأمريكية: الفواكه النيئة ووزن الجزء المأكول',url:'https://www.fda.gov/food/nutrition-food-labeling-and-critical-foods/raw-fruits-poster-text-version-accessible-version'}];
+  return { FRUIT_WEIGHTS, FOOD_SOURCES, GROUPS, FOODS, LEVELS, MEALS, IDEAS, LIMITS, FREE, TIPS, PIECES };
 })();
+
