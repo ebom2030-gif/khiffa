@@ -211,7 +211,7 @@
     }
     // weight trend across two weeks
     var wl = (A.data.days || []).filter(function (x) { return x.weight && x.date >= A.addDays(A.TODAY, -21); }).map(function (x) { return +x.weight; });
-    if (wl.length >= 3) { var dw = wl[wl.length - 1] - wl[0]; if (Math.abs(dw) < 0.3 && W.adherence >= 70) s.push(['', 'balance_scale', 'الوزن ثابت تقريبًا منذ 3 أسابيع', 'رغم أن الالتزام جيد. هذا طبيعي أحيانًا (احتباس الماء). إذا استمر أسبوعين آخرين، فأجري قياس InBody وراجعي مستوى النشاط أو اخفضي مستوى السعرات درجة.']); else if (dw <= -0.5) s.push(['g', 'party_popper', 'خسرت ' + ar(Math.round(-dw * 10) / 10) + ' كجم في آخر 3 أسابيع', 'نزول صحي وثابت. أحسنتِ!']); }
+    if (wl.length >= 3) { var dw = wl[wl.length - 1] - wl[0]; if (Math.abs(dw) < 0.3 && W.adherence >= 70) s.push(['', 'balance_scale', 'الوزن ثابت تقريبًا منذ 3 أسابيع', 'رغم أن الالتزام جيد. هذا طبيعي أحيانًا (احتباس الماء). إذا استمر أسبوعين آخرين، فأجري قياس تركيب الجسم وراجعي مستوى النشاط أو اخفضي مستوى السعرات درجة.']); else if (dw <= -0.5) s.push(['g', 'party_popper', 'خسرت ' + ar(Math.round(-dw * 10) / 10) + ' كجم في آخر 3 أسابيع', 'نزول صحي وثابت. أحسنتِ!']); }
     if (W.adherence >= 80) s.push(['g', 'star', 'التزام ' + ar(W.adherence) + '% بالوجبات', 'هذا ممتاز، والسر في الاستمرارية.']);
     return s;
   }

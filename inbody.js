@@ -127,7 +127,7 @@
   var KEYS = { weight: 'f-weight', smm: 'f-smm', bfm: 'f-bfm', pbf: 'f-pbf', bmi: 'f-bmi', bmr: 'f-bmr', vfl: 'f-vfl', whr: 'f-whr', ffm: 'f-ffm', tbw: 'f-tbw', score: 'f-score', target_weight: 'f-target' };
   // fields the current app.js submit handler does not read (it keeps date, weight, smm, bfm, pbf, bmr, vfl, whr)
   var EXTRA = ['bmi', 'ffm', 'tbw', 'score', 'target_weight'];
-  var NAME = { weight: 'الوزن · Weight', smm: 'كتلة العضلات الهيكلية · SMM', bfm: 'كتلة الدهون · BFM', pbf: 'نسبة الدهون · PBF', bmi: 'مؤشر كتلة الجسم · BMI', bmr: 'معدل الأيض الأساسي · BMR', vfl: 'مستوى الدهون الحشوية · VFL', whr: 'نسبة الخصر للورك · WHR', ffm: 'الكتلة الخالية من الدهون · FFM', tbw: 'إجمالي ماء الجسم · TBW', score: 'تقييم InBody · InBody Score', target_weight: 'الوزن المستهدف · Target Weight' };
+  var NAME = { weight: 'الوزن', smm: 'كتلة العضلات الهيكلية', bfm: 'كتلة الدهون', pbf: 'نسبة الدهون', bmi: 'مؤشر كتلة الجسم', bmr: 'معدل الأيض الأساسي', vfl: 'مستوى الدهون الحشوية', whr: 'نسبة الخصر للورك', ffm: 'الكتلة الخالية من الدهون', tbw: 'إجمالي ماء الجسم', score: 'تقييم تركيب الجسم', target_weight: 'الوزن المستهدف' };
 
   var css = d.createElement('style');
   css.textContent =
@@ -165,20 +165,20 @@
       d.querySelectorAll('#ibStats .stat .eyebrow').forEach(function (e) {
         if (e.dataset.bi) return; var tn = e.firstChild; if (!tn || tn.nodeType !== 3) return;
         var k = tn.nodeValue.trim(), m = STAT[k]; if (!m) return;
-        tn.nodeValue = m[0] + ' '; var en = d.createElement('span'); en.className = 'en'; en.textContent = m[1]; e.appendChild(en); e.dataset.bi = 1;
+        tn.nodeValue = m[0] + ' '; var en = d.createElement('span'); en.className = 'en'; en.textContent = ''; en.hidden = true; e.appendChild(en); e.dataset.bi = 1;
       });
       // extra tiles for values app.js does not show
       var st = $('ibStats'), ib = (A.data && A.data.inbody || []).slice(-1)[0];
       if (st && ib && !st.querySelector('.ib-x') && st.querySelector('.stat')) {
-        [['ffm', 'الكتلة الخالية من الدهون', 'Fat Free Mass – FFM', 'كجم'], ['tbw', 'إجمالي ماء الجسم', 'Total Body Water – TBW', 'لتر'], ['score', 'تقييم InBody', 'InBody Score', '/100'], ['target_weight', 'الوزن المستهدف', 'Target Weight', 'كجم']].forEach(function (x) {
+        [['ffm', 'الكتلة الخالية من الدهون', 'Fat Free Mass – FFM', 'كجم'], ['tbw', 'إجمالي ماء الجسم', 'Total Body Water – TBW', 'لتر'], ['score', 'تقييم تركيب الجسم', 'InBody Score', '/100'], ['target_weight', 'الوزن المستهدف', 'Target Weight', 'كجم']].forEach(function (x) {
           if (ib[x[0]] == null || ib[x[0]] === '') return;
           var el = d.createElement('div'); el.className = 'stat ib-x';
-          el.innerHTML = '<div class="eyebrow" data-bi="1">' + x[1] + ' <span class="en">' + x[2] + '</span></div><div class="v num">' + A.ar(ib[x[0]], 2) + ' <span class="u">' + x[3] + '</span></div>';
+          el.innerHTML = '<div class="eyebrow" data-bi="1">' + x[1] + ' <span class="en" hidden></span></div><div class="v num">' + A.ar(ib[x[0]], 2) + ' <span class="u">' + x[3] + '</span></div>';
           st.appendChild(el);
         });
       }
-      d.querySelectorAll('#ibTable th').forEach(function (th) { if (th.dataset.bi) return; var k = th.textContent.trim(); if (TH[k]) { th.innerHTML = A.esc(k) + '<small>' + TH[k] + '</small>'; th.dataset.bi = 1; } });
-      d.querySelectorAll('#charts .legend').forEach(function (l) { var k = l.textContent.trim(); if (LEG[k]) l.textContent = LEG[k]; });
+      d.querySelectorAll('#ibTable th').forEach(function (th) { if (th.dataset.bi) return; var k = th.textContent.trim(); if (TH[k]) { th.innerHTML = A.esc(k === 'BMR' ? 'الأيض الأساسي' : k); th.dataset.bi = 1; } });
+      d.querySelectorAll('#charts .legend').forEach(function (l) { var k = l.textContent.trim(); if (LEG[k]) l.textContent = k; });
     } finally { busy = false; }
   }
   var mo = new MutationObserver(function () { relabel(); });
@@ -194,7 +194,7 @@
   function setEditing(r) {
     editing = r ? r.date : null;
     form.classList.toggle('ib-editing', !!r); $('ibCancel').hidden = !r;
-    $('ibFormTitle').textContent = r ? 'تعديل قياس ' + A.fmt(r.date, { day: 'numeric', month: 'long', year: 'numeric' }) : 'إضافة قياس InBody';
+    $('ibFormTitle').textContent = r ? 'تعديل قياس ' + A.fmt(r.date, { day: 'numeric', month: 'long', year: 'numeric' }) : 'إضافة قياس تركيب الجسم';
   }
   $('ibTable').addEventListener('click', function (e) {
     var tr = e.target.closest('tr'); if (!tr) return;

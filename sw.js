@@ -1,10 +1,10 @@
 // إشعارات OneSignal (لازم تكون أول سطر في الـ service worker)
 try { importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js'); } catch (e) {}
 // خفّة — offline shell. Bump VERSION on every release so phones pick up the new files.
-const VERSION = 'khiffa-v21';
+const VERSION = 'khiffa-v22';
 const IMG = 'khiffa-img';
-const SHELL = ['./', 'index.html', 'config.js', 'data.js', 'app.js', 'theme.js', 'search.js', 'dashboard.js', 'reports.js', 'features.js', 'skin.js', 'photos.js', 'reminders.js', 'ux.js', 'ux2.js', 'inbody.js', 'print.js', 'accounts.js', 'logos.js', 'install.js', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
-self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL))); self.skipWaiting(); });
+const SHELL = ['./', 'index.html', 'config.js', 'data.js', 'app.js', 'theme.js', 'search.js', 'dashboard.js', 'reports.js', 'features.js', 'skin.js', 'photos.js', 'reminders.js', 'ux.js', 'ux2.js', 'inbody.js', 'print.js', 'accounts.js', 'logos.js', 'install.js', 'community.js', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
+self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)));  });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION && k !== IMG).map(k => caches.delete(k)))));
   self.clients.claim();
@@ -22,3 +22,5 @@ self.addEventListener('fetch', e => {
   const slow = new Promise(res => setTimeout(res, 2500)).then(() => caches.match(e.request)).then(r => r || net);
   e.respondWith(Promise.race([net.catch(() => slow), slow]).catch(() => caches.match(e.request).then(r => r || caches.match('index.html'))));
 });
+
+self.addEventListener('message', e => { if(e.data && e.data.type === 'KHIFFA_ACTIVATE') self.skipWaiting(); });

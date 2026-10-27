@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>خفّة – Khiffa</title>
-<meta name="description" content="متابعة يومية لنظامك الغذائي: البدائل، الماء، الوزن، وقياسات InBody.">
+<title>خفّة</title>
+<meta name="description" content="متابعة يومية لنظامك الغذائي: البدائل، الماء، الوزن، وقياسات تركيب الجسم.">
 <meta name="theme-color" content="#2f9e7a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="خفّة">
@@ -305,7 +305,7 @@ tr.hl td{font-weight:700;color:var(--mint)}
   <!-- BODY -->
   <section class="view" id="v-body" hidden>
     <div class="card">
-      <div class="eyebrow">آخر قياس InBody: <span id="ibDate" class="num"></span></div>
+      <div class="eyebrow">آخر قياس تركيب الجسم: <span id="ibDate" class="num"></span></div>
       <h2 style="margin-top:4px">تركيب الجسم · Body Composition</h2>
       <div class="stats" id="ibStats"></div>
     </div>
@@ -321,11 +321,11 @@ tr.hl td{font-weight:700;color:var(--mint)}
       </form>
       <div id="mChart" style="margin-top:12px"></div>
     </div>
-    <div class="card"><h2>كل قياسات InBody</h2><div class="tbl"><table id="ibTable"></table></div><p class="note" id="ibEditHint" style="margin-bottom:0">اضغطي على أي قياس لتعديله.</p></div>
+    <div class="card"><h2>كل قياسات تركيب الجسم</h2><div class="tbl"><table id="ibTable"></table></div><p class="note" id="ibEditHint" style="margin-bottom:0">اضغطي على أي قياس لتعديله.</p></div>
     <div class="card" id="ibCard">
-      <h2 id="ibFormTitle">إضافة قياس InBody</h2>
+      <h2 id="ibFormTitle">إضافة قياس تركيب الجسم</h2>
       <div class="ib-up" id="ibUp">
-        <p class="note" style="margin-top:0">تصوير ورقة نتائج InBody أو رفع صورتها يملأ الخانات تلقائيًا، مع مراجعة القيم قبل الحفظ. الصورة لا تُرفع إلى أي خادم؛ القراءة تتم على الجهاز.</p>
+        <p class="note" style="margin-top:0">تصوير ورقة نتائج تركيب الجسم أو رفع صورتها يملأ الخانات تلقائيًا، مع مراجعة القيم قبل الحفظ. الصورة لا تُرفع إلى أي خادم؛ القراءة تتم على الجهاز.</p>
         <label class="btn ib-upbtn" id="ibUpBtn">رفع صورة ورقة InBody<input id="ibFile" type="file" accept="image/*,application/pdf" capture="environment" hidden></label>
         <label class="btn ghost sm ib-upbtn" id="ibUpGal">اختيار من المعرض أو ملف PDF<input id="ibFile2" type="file" accept="image/*,application/pdf" hidden></label>
         <div class="ib-prog" id="ibProg" hidden><div class="ib-bar"><i id="ibBar"></i></div><span id="ibProgT" class="note num">جارٍ التحضير…</span></div>

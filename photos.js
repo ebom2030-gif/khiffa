@@ -85,6 +85,8 @@
     });
     d.querySelectorAll('.icard').forEach(function (c) {
       if (c.querySelector('.kban')) return;
+      var idea = window.KHIFFA_DATA.IDEAS.find(function(i){return i.id===c.dataset.idea;});
+      if(idea && idea.image){var banner=d.createElement('div');banner.className='kban';var picture=d.createElement('img');picture.src=idea.image;picture.alt=idea.name;picture.loading='lazy';picture.style.cssText='width:100%;height:100%;object-fit:cover';banner.appendChild(picture);c.insertBefore(banner,c.firstChild);return;}
       c.insertBefore(ban('', P[pick(c.textContent || '')]), c.firstChild);
     });
     var bc = d.querySelector('#v-body > .card');
@@ -98,7 +100,7 @@
   var q = 0;
   new MutationObserver(function () { if (q) return; q = requestAnimationFrame(function () { q = 0; decorate(); }); }).observe(d.body, { childList: true, subtree: true });
   // تحميل مسبق لكل الصور وقت الفراغ عشان تظهر فوراً لما تتفتح أي صفحة (والـ service worker بيحفظها)
-  setTimeout(function () { var seen = {}; Object.keys(P).forEach(function (k) { if (seen[P[k]]) return; seen[P[k]] = 1; new Image().src = U(P[k], k === 'morning' || k === 'noon' || k === 'night' ? 760 : k === 'water' ? 200 : 560); }); }, 3000);
+  // Images load on demand; service worker retains previously viewed assets.
   setInterval(decorate, 60000); // الصورة بتتغير مع وقت اليوم
   decorate();
 })();

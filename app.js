@@ -1,4 +1,4 @@
-/* خفّة – Khiffa — app logic */
+/* خفّة — app logic */
 (function () {
 'use strict';
 const D = window.KHIFFA_DATA;
@@ -54,10 +54,10 @@ window.addEventListener('online', flush);
 
 async function boot() {
   const cached = store.get('data:' + (S.uid || 'me'), null);
-  if (cached) { S.data = cached; showApp(); }
+  if (cached) { S.data = cached; if(window.KHIFFA_CONTENT) window.KHIFFA_CONTENT(cached.content || []); showApp(); }
   try {
     const j = await api('bootstrap', {});
-    S.data = j.data; S.uid = j.data.user.id; store.set('uid', S.uid);
+    S.data = j.data; if(window.KHIFFA_CONTENT) window.KHIFFA_CONTENT(j.data.content || []); S.uid = j.data.user.id; store.set('uid', S.uid);
     mergeQueue(); store.set('queue', S.queue); persist(); showApp(); flush();
   } catch (e) {
     if (isAuthErr(e)) { logout(e.message); return; }
@@ -94,7 +94,7 @@ const BOTTLE = 330;
 const bottles = d => d.w3 != null ? d.w3 : Math.round((d.water || 0) * 250 / BOTTLE);
 const settings = () => { const s = { level: 1600, activity: 1.375, water: 8, noGluten: false, noLactose: false, ...(S.data.settings || {}) }; if (s.waterUnit !== BOTTLE) { if ((S.data.settings || {}).water) s.water = Math.max(4, Math.round(s.water * 250 / BOTTLE)); s.waterUnit = BOTTLE; } return s; };
 const level = () => D.LEVELS[settings().level] || D.LEVELS[1600];
-const allowed = f => { const st = settings(); return !(st.noGluten && f.gluten) && !(st.noLactose && f.lactose); };
+const allowed = f => { if(f.hidden) return false; const st = settings(); return !(st.noGluten && f.gluten) && !(st.noLactose && f.lactose); };
 const ideaAllowed = idea => resolve(idea.parts, level()[idea.m] || {}).every(x => allowed(x.food));
 
 /* distribute a meal's exchange targets across the foods an idea (or a custom pick) lists */
@@ -145,7 +145,7 @@ function amountText(food, n) {
 function mealState(day, k) { return (day.meals || {})[k] || {}; }
 function mealComps(k, st) {
   const tgt = level()[k] || {};
-  if (st.items && st.items.length) return st.items.filter(it => D.FOODS[it.id] && it.n > 0).map(it => ({ food: D.FOODS[it.id], n: it.n }));
+  if (st.items && st.items.length) return st.items.filter(it => (it.food || D.FOODS[it.id]) && it.n > 0).map(it => ({ food: it.food || D.FOODS[it.id], n: it.n }));
   if (st.mode === 'custom' && st.picks) return resolve(Object.fromEntries(Object.entries(st.picks).filter(([, v]) => Array.isArray(v) ? v.length : v).map(([g, id]) => [g, Array.isArray(id) ? id : [id]])), tgt, true);
   if (st.idea) { const idea = D.IDEAS.find(i => i.id === st.idea); if (idea) return resolve(idea.parts, tgt); }
   return [];
@@ -163,7 +163,7 @@ const exKey = x => x.k || (x.id + '|' + (x.t || '') + '|' + (x.q || 1) + '|' + (
 function stampDay(day, prev) {
   const now = Date.now(); prev = prev || {};
   day.ts = { ...(prev.ts || {}), ...(day.ts || {}) };
-  ['water', 'w3', 'weight', 'note'].forEach(f => { if (!same(prev[f], day[f])) day.ts[f] = now; });
+  ['water', 'w3', 'weight', 'note', 'steps', 'activeKcal'].forEach(f => { if (!same(prev[f], day[f])) day.ts[f] = now; });
   const pm = prev.meals || {}, dm = day.meals || {};
   Object.keys(dm).forEach(k => { const a = pm[k], b = dm[k]; if (b && (!a || !same({ ...a, u: 0 }, { ...b, u: 0 }))) b.u = now; });
   Object.keys(pm).forEach(k => { if (!dm[k]) day.mdel = { ...(day.mdel || {}), [k]: now }; });
@@ -176,7 +176,7 @@ function stampDay(day, prev) {
 function mergeDay(a, b) {
   if (!a) return b; if (!b) return a;
   const out = { ...a, ...b }, ta = a.ts || {}, tb = b.ts || {}; out.ts = {};
-  ['water', 'w3', 'weight', 'note'].forEach(f => { const src = (tb[f] || 0) > (ta[f] || 0) ? b : a; if (src[f] === undefined) delete out[f]; else out[f] = src[f]; out.ts[f] = Math.max(ta[f] || 0, tb[f] || 0); });
+  ['water', 'w3', 'weight', 'note', 'steps', 'activeKcal'].forEach(f => { const src = (tb[f] || 0) > (ta[f] || 0) ? b : a; if (src[f] === undefined) delete out[f]; else out[f] = src[f]; out.ts[f] = Math.max(ta[f] || 0, tb[f] || 0); });
   const mdel = { ...(a.mdel || {}) }; Object.entries(b.mdel || {}).forEach(([k, v]) => { if (!(mdel[k] > v)) mdel[k] = v; });
   const meals = {}, am = a.meals || {}, bm = b.meals || {};
   new Set([...Object.keys(am), ...Object.keys(bm)]).forEach(k => {
@@ -190,13 +190,13 @@ function mergeDay(a, b) {
   out.updated = (a.updated || '') > (b.updated || '') ? a.updated : b.updated;
   return out;
 }
-function saveDay(day) { stampDay(day, rawDay(day.date)); day.updated = new Date().toISOString(); upsertLocal('days', day); persist(); enqueue('saveDay', { day }, 'day:' + S.uid + ':' + day.date); }
+function saveDay(day) { Object.keys(day.meals || {}).forEach(k=>{const m=day.meals[k];if(m&&m.idea&&!m.items){const comps=mealComps(k,m);m.items=comps.map(c=>({id:c.food.id,n:c.n,food:JSON.parse(JSON.stringify(c.food))}));}}); stampDay(day, rawDay(day.date)); day.updated = new Date().toISOString(); upsertLocal('days', day); persist(); enqueue('saveDay', { day }, 'day:' + S.uid + ':' + day.date); }
 function setMeal(k, patch, dateKey = S.cur) {
   const d = dayOf(dateKey); const cur = mealState(d, k);
   const choose = patch.done === undefined && patch.planned !== true && ('idea' in patch || 'items' in patch || 'picks' in patch);
   if (choose && dateKey <= TODAY) patch = { ...patch, done: true }; // اختيار وجبة اليوم = تُحسب فورًا
   if (choose || 'done' in patch) S.undo = { k, dateKey, prev: (d.meals || {})[k] ? JSON.parse(JSON.stringify(d.meals[k])) : null };
-  const next = { ...cur, ...patch };
+  const next = { ...cur, ...patch }; if (('idea' in patch || 'picks' in patch) && !('items' in patch)) delete next.items;
   const comps = mealComps(k, next); Object.assign(next, mealSummary(comps));
   d.meals = { ...(d.meals || {}), [k]: next }; saveDay({ ...d });
 }
@@ -281,7 +281,7 @@ function ideaCard(idea, selected) {
   const comps = resolve(idea.parts, level()[idea.m] || {}); const t = totals(comps);
   const imgs = comps.slice(0, 4).map(x => window.KHIFFA_ICON ? window.KHIFFA_ICON(x.food.img, 'sm') : '<img src="' + imgURL(x.food.img) + '" alt="">').join('');
   const gf = comps.every(x => !x.food.gluten), lf = comps.every(x => !x.food.lactose);
-  const b = document.createElement('button'); b.className = 'icard' + (selected ? ' sel' : '');
+  const b = document.createElement('button'); b.className = 'icard' + (selected ? ' sel' : ''); b.dataset.idea = idea.id;
   b.innerHTML = '<div class="collage">' + imgs + '</div><div style="min-width:0"><div class="nm">' + esc(ideaName(idea)) + '</div><div class="sub">' +
     comps.map(x => esc(x.food.name.split(' (')[0]) + ' ' + amountText(x.food, x.n)).join('، ') + '</div><div class="sub num" style="margin-top:2px">' + ar(Math.round(t.n), 0) + ' سعرة – ' + ar(Math.round(t.p), 0) + ' ج بروتين' +
     (gf ? '<span class="tagchip">بدون جلوتين</span>' : '') + (lf ? '<span class="tagchip">بدون لاكتوز</span>' : '') + '</div></div>';
@@ -295,7 +295,7 @@ function openMealSheet(m, mode) {
       body.querySelectorAll('.seg button').forEach(b => b.onclick = () => { if (b.dataset.md === 'repeat') { closeSheet(); window.KHIFFA_REPEAT(m); return; } draw(b.dataset.md); });
       if (md === 'tune') { tuneMeal(m, st, body); return; }
       if (md === 'idea') {
-        const list = D.IDEAS.filter(i => i.m === m.k && ideaAllowed(i));
+        const list = D.IDEAS.filter(i => !i.hidden && i.m === m.k && ideaAllowed(i));
         if (!list.length) body.insertAdjacentHTML('beforeend', '<p class="note">لا توجد وجبات جاهزة مناسبة للتفضيلات الحالية.</p>');
         list.forEach(i => { const c = ideaCard(i, st.mode !== 'custom' && st.idea === i.id); c.onclick = () => { setMeal(m.k, { mode: 'idea', idea: i.id, items: null, title: null, planned: false }); closeSheet(); renderAll(); toast((S.cur <= TODAY ? 'سُجّلت ' : 'أُضيفت إلى ') + m.t + ' ✓', undoMeal); }; body.append(c); });
       } else {
@@ -380,7 +380,7 @@ function renderIdeas() {
   f.querySelectorAll('button').forEach(b => b.onclick = () => { S.ideaFilter = b.dataset.m; renderIdeas(); });
   const list = $('#ideaList'); list.innerHTML = '';
   const m = D.MEALS.find(x => x.k === S.ideaFilter);
-  D.IDEAS.filter(i => i.m === S.ideaFilter && ideaAllowed(i)).forEach(i => {
+  D.IDEAS.filter(i => !i.hidden && i.m === S.ideaFilter && ideaAllowed(i)).forEach(i => {
     const c = ideaCard(i, false);
     c.onclick = () => { setMeal(m.k, { mode: 'idea', idea: i.id, items: null, title: null, planned: false }, TODAY); toast('أُضيفت إلى ' + m.t + ' اليوم'); S.cur = TODAY; renderToday(); };
     c.title = 'اضغطي لإضافتها إلى ' + m.t + ' اليوم';
@@ -398,7 +398,7 @@ function generateWeek() {
       const st = d.meals[m.k];
       if (st && (st.done || (st.idea && !st.planned) || st.mode === 'custom')) { if (st.idea) recent[st.idea] = i; return; }
       const counts = weekCountsWith(k, d);
-      let cands = D.IDEAS.filter(x => x.m === m.k && ideaAllowed(x)).filter(x => {
+      let cands = D.IDEAS.filter(x => !x.hidden && x.m === m.k && ideaAllowed(x)).filter(x => {
         const tags = mealSummary(resolve(x.parts, level()[m.k] || {})).tags;
         return tags.every(t => { const lim = D.LIMITS.find(l => l[0] === t); return !lim || (counts[t] || 0) < lim[2]; });
       });
@@ -450,7 +450,7 @@ function renderBody() {
   else {
     $('#ibDate').textContent = fmt(ib.date, { day: 'numeric', month: 'long', year: 'numeric' });
     const dl = (k, down) => { if (!first || first === ib || ib[k] == null || first[k] == null) return ''; const d = ib[k] - first[k]; if (Math.abs(d) < 0.05) return ''; const good = down ? d < 0 : d > 0; return '<div class="delta ' + (good ? 'good' : 'bad') + '">' + (d > 0 ? '+' : '−') + ar(Math.abs(d)) + ' من أول قياس</div>'; };
-    const cards = [['الوزن', ib.weight, 'كجم', dl('weight', true), ''], ['الكتلة العضلية', ib.smm, 'كجم', dl('smm', false), ''], ['نسبة الدهون', ib.pbf, '%', dl('pbf', true), status('pbf', ib.pbf)], ['كتلة الدهون', ib.bfm, 'كجم', dl('bfm', true), ''], ['الدهون الحشوية', ib.vfl, 'مستوى', dl('vfl', true), status('vfl', ib.vfl)], ['الخصر للورك', ib.whr, 'نسبة', dl('whr', true), status('whr', ib.whr)], ['معدل الحرق BMR', ib.bmr, 'سعرة/يوم', '', ''], ['مؤشر الكتلة BMI', ib.bmi, 'كجم/م²', '', status('bmi', ib.bmi)]];
+    const cards = [['الوزن', ib.weight, 'كجم', dl('weight', true), ''], ['الكتلة العضلية', ib.smm, 'كجم', dl('smm', false), ''], ['نسبة الدهون', ib.pbf, '%', dl('pbf', true), status('pbf', ib.pbf)], ['كتلة الدهون', ib.bfm, 'كجم', dl('bfm', true), ''], ['الدهون الحشوية', ib.vfl, 'مستوى', dl('vfl', true), status('vfl', ib.vfl)], ['الخصر للورك', ib.whr, 'نسبة', dl('whr', true), status('whr', ib.whr)], ['معدل الأيض الأساسي', ib.bmr, 'سعرة/يوم', '', ''], ['مؤشر كتلة الجسم', ib.bmi, 'كجم/م²', '', status('bmi', ib.bmi)]];
     $('#ibStats').innerHTML = cards.filter(c => c[1] != null && c[1] !== '').map(c => '<div class="stat"><div class="eyebrow">' + c[0] + c[4] + '</div><div class="v num">' + ar(c[1], 2) + ' <span class="u">' + c[2] + '</span></div>' + c[3] + '</div>').join('');
     $('#charts').innerHTML = [['weight', 'الوزن (كجم)', 'var(--mint)'], ['smm', 'الكتلة العضلية (كجم)', 'var(--peach)'], ['pbf', 'نسبة الدهون (%)', 'var(--warn)']].map(x => spark(IB, x[0], x[1], x[2])).join('') || '<p class="note">يظهر الرسم بدءًا من القياس الثاني.</p>';
     const cols = [['date', 'التاريخ'], ['weight', 'الوزن'], ['smm', 'العضلات'], ['bfm', 'الدهون كجم'], ['pbf', 'الدهون %'], ['vfl', 'الحشوية'], ['bmr', 'BMR']];
@@ -549,8 +549,9 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.se
 window.KHIFFA_APP = { undoMeal, D, bottles, BOTTLE, dayOf, saveDay, toast, settings, saveSettings, level, mealComps, mealState, setMeal, openMealSheet, mealTargetKcal, amountText, ideaName, totals, levelTotals, weekKeys, weekCounts, fmt, ar, esc, img, imgURL, addDays, TODAY, people, displayName, switchUser,
   // [accounts] api + session helpers for accounts.js
   api, logout, get me() { return S.data && S.data.me; },
-  startSession(token) { S.token = token; store.set('token', token); S.pin = null; store.del('pin'); S.uid = null; store.del('uid'); $('#loginErr').hidden = true; boot(); },
+  startSession(token) { S.token = token; store.set('token', token); S.pin = null; store.del('pin'); S.uid = null; S.data = null; S.queue = []; store.del('queue'); store.del('uid'); $('#loginErr').hidden = true; boot(); },
   setToken(token) { S.token = token; store.set('token', token); S.pin = null; store.del('pin'); },
   get cur() { return S.cur; }, setCur: k => { S.cur = k; if (S.data) renderToday(); }, get data() { return S.data; }, refresh: () => { if (S.data) renderToday(); }, refreshAll: () => renderAll() };
 if (authed()) boot(); else showLogin();
 })();
+

@@ -82,7 +82,7 @@
     leg.appendChild(pinBox);
     var creds = d.createElement('div'); creds.id = 'acCreds';
     creds.innerHTML =
-      '<input id="acUser" class="ac-in" type="text" name="username" dir="ltr" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="اسم المستخدم" aria-label="اسم المستخدم">' +
+      '<input id="acUser" class="ac-in" type="text" name="username" dir="ltr" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="رقم الهاتف أو البريد الإلكتروني" aria-label="رقم الهاتف أو البريد الإلكتروني">' +
       '<div class="lg-pin ac-pass"><input id="acPass" class="ac-in" type="password" name="password" dir="ltr" autocomplete="current-password" placeholder="كلمة المرور" aria-label="كلمة المرور">' +
       '<button type="button" class="lg-eye" id="acEye">إظهار</button></div>';
     leg.parentNode.insertBefore(creds, leg);
@@ -105,7 +105,7 @@
       if (legacy) return orig && orig.call(form, e);
       e.preventDefault();
       var u = d.getElementById('acUser').value.trim(), p = pass.value, err = d.getElementById('loginErr');
-      if (!u || !p) { err.textContent = 'يُرجى إدخال اسم المستخدم وكلمة المرور'; err.hidden = false; return; }
+      if (!u || !p) { err.textContent = 'يُرجى إدخال الهاتف أو البريد وكلمة المرور'; err.hidden = false; return; }
       err.hidden = true; if (btn) { btn.disabled = true; btn.textContent = 'جارٍ الدخول…'; }
       A.api('login', { username: u, password: p, ua: ua() }).then(function (j) {
         ls.set('lastUser', u); pass.value = '';
@@ -152,7 +152,7 @@
     var key = me.id + '|' + me.username + '|' + me.hasPassword + '|' + me.name;
     if (box.dataset.k === key) return; box.dataset.k = key;
     box.innerHTML = '<div class="ac-me"><div class="ac-av">' + initial(me.name) + '</div><div><b>' + esc(me.name) + '</b>' +
-      '<p class="note">' + (me.username ? '<bdi dir="ltr">@' + esc(me.username) + '</bdi> · ' : '') + badge(me.role) + '</p></div></div>';
+      '<p class="note">' + ((me.phone || me.email || me.username) ? '<bdi dir="ltr">' + esc(me.phone || me.email || me.username) + '</bdi> · ' : '') + badge(me.role) + '</p></div></div>';
     var det2 = d.getElementById('acPw'), first = !me.hasPassword;
     det2.innerHTML = '<summary>' + (first ? 'إنشاء كلمة مرور' : 'تغيير كلمة المرور') + '</summary><form class="ac-form" id="acPwForm" autocomplete="off">' +
       (first ? '<p class="note" style="margin:0">الدخول لهذا الحساب يتم برمز حاليًا. بعد إنشاء كلمة المرور يصبح الدخول باسم المستخدم وكلمة المرور، ويتوقف الرمز القديم.</p>' : '') +
@@ -211,7 +211,7 @@
     if (!us.length) { list.innerHTML = '<div class="ac-empty">لا يوجد مستخدمون بعد</div>'; return; }
     list.innerHTML = us.map(function (u) {
       var self = String(u.id) === String(me.id);
-      var meta = [u.username ? '<bdi>@' + esc(u.username) + '</bdi>' : '<span style="color:var(--warn)">بلا اسم مستخدم</span>'];
+      var identityLabel=u.phone||u.email; var meta = [identityLabel ? '<bdi>'+esc(identityLabel)+'</bdi>' : u.username ? '<bdi>@' + esc(u.username) + '</bdi>' : '<span style="color:var(--warn)">بلا اسم مستخدم</span>'];
       if (u.role === 'client') meta.push(u.coach ? 'الأخصائي: ' + esc(nameOf(u.coach) || u.coach) : 'بلا أخصائي');
       meta.push(u.hasPassword ? when(u.last_login) : 'يدخل برمز قديم');
       return '<div class="ac-u' + (u.active ? '' : ' off') + '" data-id="' + esc(u.id) + '"><div class="ac-av">' + initial(u.name) + '</div>' +
