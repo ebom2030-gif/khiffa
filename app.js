@@ -544,7 +544,7 @@ async function refreshData() {
   catch (e) { setSync('off'); } finally { refreshing = false; }
 }
 setInterval(() => { if (document.visibilityState === 'visible') refreshData(); }, 5 * 60 * 1000);
-if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {});
 
 window.KHIFFA_APP = { undoMeal, D, bottles, BOTTLE, dayOf, saveDay, toast, settings, saveSettings, level, mealComps, mealState, setMeal, openMealSheet, mealTargetKcal, amountText, ideaName, totals, levelTotals, weekKeys, weekCounts, fmt, ar, esc, img, imgURL, addDays, TODAY, people, displayName, switchUser,
   // [accounts] api + session helpers for accounts.js
