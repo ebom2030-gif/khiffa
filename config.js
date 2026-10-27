@@ -6,10 +6,10 @@ window.KHIFFA_CONFIG = {
 };
 // الهوية والأيقونات + البحث عن الأكل + الصفحة الرئيسية + زرار التثبيت
 (function(){
-  var files=['theme.js','search.js','dashboard.js','reports.js','features.js','skin.js','photos.js','reminders.js','ux.js','ux2.js','logos.js','install.js','accounts.js','inbody.js','print.js','community.js','food-entry.js','coaching.js','responsive.js'];
+  var files=['theme.js','search.js','dashboard.js','reports.js','features.js','skin.js','photos.js','reminders.js','ux.js','ux2.js','logos.js','install.js','accounts.js','inbody.js','print.js','community.js','food-entry.js','coaching.js','responsive.js','notifications.js'];
   function load(index){
     if(index>=files.length){if(window.KHIFFA_APP)window.KHIFFA_APP.refreshAll();window.dispatchEvent(new Event('khiffa-ready'));return;}
-    var script=document.createElement('script');script.src=files[index]+'?v=27';script.async=false;
+    var script=document.createElement('script');script.src=files[index]+'?v=28';script.async=false;
     script.onload=function(){load(index+1);};
     script.onerror=function(){console.error('Khiffa module failed',files[index]);if(!document.getElementById('khiffa-load-error')){var banner=document.createElement('div');banner.id='khiffa-load-error';banner.setAttribute('role','alert');banner.style.cssText='position:fixed;bottom:90px;left:12px;right:12px;z-index:10002;background:#fff4e5;color:#532e00;padding:14px;border-radius:14px';banner.textContent='تعذّر تحميل جزء من التطبيق. ';var retry=document.createElement('button');retry.textContent='إعادة المحاولة';retry.onclick=function(){location.reload();};banner.append(retry);document.body.append(banner);}load(index+1);};
     document.body.append(script);
