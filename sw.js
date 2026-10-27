@@ -1,26 +1,9 @@
-// إشعارات OneSignal (لازم تكون أول سطر في الـ service worker)
+// إبقاء تكامل إشعارات الجهاز الحالي.
 try { importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js'); } catch (e) {}
-// خفّة — offline shell. Bump VERSION on every release so phones pick up the new files.
-const VERSION = 'khiffa-v31';
-const IMG = 'khiffa-img';
-const SHELL = ['./', 'index.html', 'config.js', 'data.js', 'app.js', 'theme.js', 'search.js', 'dashboard.js', 'reports.js', 'features.js', 'skin.js', 'photos.js', 'reminders.js', 'ux.js', 'ux2.js', 'inbody.js', 'print.js', 'accounts.js', 'logos.js', 'install.js', 'community.js', 'food-entry.js', 'coaching.js', 'responsive.js', 'notifications.js', 'direct-notices.js', 'system-ui.js', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'].map(file => file.endsWith('.js') ? file + '?v=31' : file);
-self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)));  });
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION && k !== IMG).map(k => caches.delete(k)))));
-  self.clients.claim();
-});
-self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
-  if (e.request.method === 'GET' && (url.hostname === 'images.unsplash.com' || url.hostname === 'cdn.jsdelivr.net')) { // photos + 3D icons: cache first = instant + offline
-    e.respondWith(caches.open(IMG).then(c => c.match(e.request).then(hit => hit || fetch(e.request).then(r => { c.put(e.request, r.clone()); return r; }))));
-    return;
-  }
-  if (e.request.method !== 'GET' || url.origin !== location.origin) return; // API + fonts go to network
-  // network first, fall back to cache (so updates show up as soon as they're online)
-  // network first (updates show right away), but if the network is slow (>2.5s) serve the saved copy
-  const net = fetch(e.request).then(r => { const copy = r.clone(); caches.open(VERSION).then(c => c.put(e.request, copy)); return r; });
-  const slow = new Promise(res => setTimeout(res, 2500)).then(() => caches.match(e.request)).then(r => r || net);
-  e.respondWith(Promise.race([net.catch(() => slow), slow]).catch(() => caches.match(e.request).then(r => r || caches.match('index.html'))));
-});
-
-self.addEventListener('message', e => { if(e.data && e.data.type === 'KHIFFA_ACTIVATE') self.skipWaiting(); });
+const VERSION='khiffa-v32',IMG='khiffa-img';
+const SHELL=['./','index.html','config.js','data.js','app.js','theme.js','search.js','dashboard.js','reports.js','features.js','skin.js','photos.js','reminders.js','ux.js','ux2.js','inbody.js','print.js','accounts.js','logos.js','install.js','community.js','food-entry.js','coaching.js','responsive.js','notifications.js','direct-notices.js','system-ui.js','updater.js','manifest.webmanifest','icon.svg','icon-180.png','icon-192.png','icon-512.png','apple-touch-icon.png'].map(file=>file.endsWith('.js')?file+'?v=32':file);
+const valid=(request,response)=>response&&response.ok&&(!new URL(request.url||request,self.location.href).pathname.endsWith('.js')||!/text\/html/i.test(response.headers.get('content-type')||''));
+self.addEventListener('install',event=>{event.waitUntil((async()=>{const cache=await caches.open(VERSION);await Promise.all(SHELL.map(async file=>{const request=new Request(new URL(file,self.location.href),{cache:'reload'}),response=await fetch(request);if(!valid(request,response))throw Error('Incomplete release: '+file);await cache.put(request,response);}));})());});
+self.addEventListener('activate',event=>{event.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(k=>k.startsWith('khiffa-v')&&k!==VERSION).map(k=>caches.delete(k)));await self.clients.claim();})());});
+self.addEventListener('fetch',event=>{const request=event.request,url=new URL(request.url);if(request.method!=='GET')return;if(url.origin===self.location.origin&&url.pathname.endsWith('/release.json')){event.respondWith(fetch(request,{cache:'no-store'}));return;}if(url.hostname==='images.unsplash.com'||url.hostname==='cdn.jsdelivr.net'){event.respondWith((async()=>{const cache=await caches.open(IMG),hit=await cache.match(request);if(hit)return hit;const response=await fetch(request);if(response.ok)await cache.put(request,response.clone());return response;})());return;}if(url.origin!==self.location.origin)return;event.respondWith((async()=>{const cache=await caches.open(VERSION);const versioned=url.pathname.endsWith('.js')&&url.searchParams.get('v')==='32';if(versioned){const hit=await cache.match(request);if(hit)return hit;}try{const response=await fetch(request,{cache:request.mode==='navigate'?'no-store':'no-cache'});if(valid(request,response))await cache.put(request,response.clone());return response;}catch(error){const hit=await cache.match(request);if(hit)return hit;if(request.mode==='navigate'){const shell=await cache.match('index.html');if(shell)return shell;}throw error;}})());});
+self.addEventListener('message',event=>{if(event.data?.type==='KHIFFA_ACTIVATE')event.waitUntil(self.skipWaiting());});
