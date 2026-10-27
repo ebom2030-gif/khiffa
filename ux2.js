@@ -37,7 +37,7 @@
   try { if (JSON.parse(localStorage.getItem('khiffa.tab')) === 'today') localStorage.setItem('khiffa.tab', '"home"'); } catch (e) {}
 
   /* ---------- صفحة النظام ---------- */
-  var SETTINGS = [/مستوى السعرات/, /مواعيد الوجبات/, /تفضيلات الأكل/, /^حسابي|^الحساب/, /إدارة المستخدمين/, /شكل الشعار/, /المتابعة مع أخصائي/, /المساعدة وحسابي/];
+  var SETTINGS = [/مستوى السعرات/, /مواعيد الوجبات/, /تفضيلات الأكل/, /^حسابي|^الحساب/, /إدارة المستخدمين/, /شكل الشعار/, /المتابعة مع أخصائي/, /المساعدة وحسابي/, /تحديث التطبيق/];
   function title(c) { var h = c.querySelector('h2'); return h ? h.textContent.trim() : ''; }
   function planOrder() {
     var plan = d.getElementById('v-plan'); if (!plan) return;
