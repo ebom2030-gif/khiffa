@@ -55,8 +55,8 @@ async function doFlush() {
 window.addEventListener('online', flush);
 
 async function boot() {
-  const cached = store.get('data:' + (S.uid || 'me'), null);
-  if (cached) { S.data = cached; if(window.KHIFFA_CONTENT) window.KHIFFA_CONTENT(cached.content || []); showApp(); }
+  const ownUid=store.get('selfUid',null),previousUid=store.get('uid',null);let cached=S.uid?store.get('data:'+S.uid,null):null;if(!S.uid){const own=store.get('data:'+(ownUid||previousUid),null);if(own&&own.me&&own.user&&String(own.me.id)===String(own.user.id))cached=own;}if(cached)S.uid=cached.user.id;
+  if (cached) { S.data = cached; if(window.KHIFFA_CONTENT) window.KHIFFA_CONTENT(cached.content || []); showApp(); setSync('wait'); }
   try {
     const j = await api('bootstrap', {});
     S.data = j.data; if(window.KHIFFA_CONTENT) window.KHIFFA_CONTENT(j.data.content || []); S.uid = j.data.user.id; store.set('uid', S.uid);
@@ -75,12 +75,12 @@ function mergeQueue() {
   });
 }
 function upsertLocal(col, row) { const a = (S.data[col] || []).filter(r => r.date !== row.date); a.push(row); a.sort((x, y) => x.date < y.date ? -1 : 1); S.data[col] = a; }
-function persist() { store.set('data:' + S.uid, S.data); }
+function persist() { store.set('data:' + S.uid, S.data); if(S.data&&S.data.me)store.set('selfUid',S.data.me.id); }
 function showLogin() { $('#login').hidden = false; $('#app').hidden = true; $('#tabs').hidden = true; setTimeout(() => { const u = $('#acUser'); (u && !u.closest('[hidden]') ? u : $('#pin')).focus(); }, 50); }
 function showApp() { $('#login').hidden = true; $('#app').hidden = false; $('#tabs').hidden = false; renderAll(); }
 function logout(msg) {
   if (S.token && !msg) api('logout', {}).catch(() => {}); // [accounts] end the server session (fire-and-forget; body is built before the token is cleared)
-  ['pin', 'token', 'uid', 'queue'].forEach(k => store.del(k));
+  ['pin', 'token', 'uid', 'selfUid', 'queue'].forEach(k => store.del(k));
   try { Object.keys(localStorage).filter(k => k.startsWith('khiffa.data:')).forEach(k => localStorage.removeItem(k)); } catch (e) {}
   S.pin = null; S.token = null; S.uid = null; S.data = null; S.queue = [];
   if (msg) { $('#loginErr').textContent = msg; $('#loginErr').hidden = false; }
@@ -551,7 +551,7 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.se
 window.KHIFFA_APP = { undoMeal, D, bottles, BOTTLE, dayOf, saveDay, toast, settings, saveSettings, level, mealComps, mealState, setMeal, openMealSheet, mealTargetKcal, amountText, ideaName, totals, levelTotals, weekKeys, weekCounts, fmt, ar, esc, img, imgURL, addDays, TODAY, people, displayName, switchUser,
   // [accounts] api + session helpers for accounts.js
   api, logout, get me() { return S.data && S.data.me; },
-  startSession(token) { S.token = token; store.set('token', token); S.pin = null; store.del('pin'); S.uid = null; S.data = null; S.queue = []; store.del('queue'); store.del('uid'); $('#loginErr').hidden = true; boot(); },
+  startSession(token) { store.del('selfUid'); S.token = token; store.set('token', token); S.pin = null; store.del('pin'); S.uid = null; S.data = null; S.queue = []; store.del('queue'); store.del('uid'); $('#loginErr').hidden = true; boot(); },
   setToken(token) { S.token = token; store.set('token', token); S.pin = null; store.del('pin'); },
   get cur() { return S.cur; }, setCur: k => { S.cur = k; if (S.data) renderToday(); }, get data() { return S.data; }, refresh: () => { if (S.data) renderToday(); }, refreshAll: () => renderAll() };
 if (authed()) boot(); else showLogin();
