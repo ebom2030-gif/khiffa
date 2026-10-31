@@ -51,7 +51,7 @@
     for(const [id,label,icon] of routes){
       let b=nav.querySelector('button[data-v="'+id+'"]');
       if(!b){if(NATIVE.has(id)&&!d.getElementById('v-'+id))continue;b=node('button');b.type='button';b.dataset.v=id;b.setAttribute('role','tab');}
-      if(b.dataset.kd!=='route'){b.dataset.kd='route';b.replaceChildren();const image=node('img','ti');image.alt='';image.src=A.imgURL(icon);b.append(image,node('span','kd-nav-label',label));b.onclick=()=>navigate(id);}
+      if(b.dataset.kd!=='route'){b.dataset.kd='route';b.replaceChildren();const image=node('img','ti');image.alt='';image.src=A.imgURL(icon);b.append(image,node('span','kd-nav-label',label),node('span','kd-nav-short',{home:'الرئيسية',today:'الوجبات',body:'المتابعة',community:'مجتمع',account:'المزيد'}[id]||label));b.onclick=()=>navigate(id);}
       nav.append(b);
     }
     const sel=route==='plan'?'account':route==='ideas'?'recipes':(route==='suggestions'&&matchMedia('(max-width:959px)').matches)?'today':route;
@@ -161,7 +161,7 @@
       const [a,b]=sw.children;a.setAttribute('aria-pressed',String(route==='today'));b.setAttribute('aria-pressed',String(route==='suggestions'));
     }
   }
-  function homeShortcuts(){const home=d.getElementById('v-home');if(!home||home.querySelector('.kd-shortcuts'))return;const links=node('div','kd-shortcuts');[['programs','برنامجي الغذائي'],['recipes','وصفات صحية'],['hydration','الماء والنشاط'],['goals','أهدافي']].forEach(([id,label])=>links.append(button(label,()=>navigate(id),'kd-shortcut')));home.querySelector('.kd-tools')?.after(links);}
+  function homeShortcuts(){const home=d.getElementById('v-home');if(!home||home.querySelector('.kd-shortcuts'))return;const links=node('div','kd-shortcuts');[['today','وجبات اليوم','fork_and_knife_with_plate'],['hydration','الماء','droplet'],['hydration','النشاط','person_running'],['body','الوزن','balance_scale'],['recipes','وصفات','green_salad'],['goals','أهدافي','bullseye']].forEach(([id,label,icon])=>{const b=button('',()=>navigate(id),'kd-shortcut');const im=node('img','kd-sc-ico');im.alt='';im.src=A.imgURL(icon);b.append(im,node('span','',label));links.append(b);});home.querySelector('.kd-tools')?.after(links);}
   function render(force=false){
     if(!state())return;mountPrograms();homeShortcuts();mealSwitch();
     const key=uid()+'|'+route+'|'+JSON.stringify(state().settings)+'|'+JSON.stringify(state().days)+'|'+JSON.stringify(state().inbody)+'|'+JSON.stringify(readLocal());

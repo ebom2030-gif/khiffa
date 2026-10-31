@@ -92,3 +92,11 @@
 .kd-mealswitch button{flex:1;min-height:44px;border:0;border-radius:999px;background:transparent;font:inherit;font-weight:700;color:var(--muted);cursor:pointer}
 .kd-mealswitch button[aria-pressed="true"]{background:var(--mint,#138358);color:#fff}
 @media(max-width:959px){#tabs button[data-v="suggestions"]{display:none!important}}
+/* v41 — مطابقة لوحة الجوال المعتمدة */
+.kd-nav-short{display:none}
+@media(max-width:959px){#tabs .kd-nav-label{display:none}#tabs .kd-nav-short{display:block;font-size:11px}#tabs button[aria-selected="true"]{color:var(--mint,#138358)!important;font-weight:700}}
+.kd-shortcuts{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.kd-shortcut{display:grid!important;justify-items:center;align-content:center;gap:6px;min-height:92px;padding:10px 6px!important;border-radius:18px!important;background:var(--surface)!important;border:1px solid var(--line)!important;box-shadow:0 2px 10px rgba(16,60,34,.06);font-weight:600;color:inherit!important}
+.kd-sc-ico{width:40px;height:40px;object-fit:contain}
+@media(max-width:959px){.kd-shortcuts{grid-template-columns:repeat(4,minmax(0,1fr))}.kd-shortcuts>.kd-shortcut:nth-child(n+5){display:none!important}.kd-shortcut{min-height:84px;font-size:13px}}
+@media(max-width:959px){#app #v-home>.kd-tools{display:none!important}#app #v-home>.hm-hero{order:0!important}#app #v-home>.kd-calories{order:1!important}#app #v-home>.kd-shortcuts{order:2!important}#app #v-home>#ktHome{order:3!important}}
