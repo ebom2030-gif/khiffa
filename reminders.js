@@ -45,18 +45,9 @@
     });
     return osReady;
   }
-  function linkUser() { // يربط الجهاز بحساب المستخدم عشان الخادم يبعت له هو بس
-    var D = A.data; if (!D || !D.me) return;
-    oneSignal().then(function (OS) { if (OS) try { OS.login(String(D.me.id)); } catch (e) {} });
-  }
-  function askPermission() {
-    return oneSignal().then(function (OS) {
-      if (!OS) { // لسه المفتاح مش متحط: نطلب الإذن عادي عشان يبقى جاهز
-        return ('Notification' in window) ? Notification.requestPermission().then(function (p) { return p === 'granted'; }) : false;
-      }
-      return OS.Notifications.requestPermission().then(function () { linkUser(); return OS.Notifications.permission; });
-    }).catch(function () { return false; });
-  }
+  function linkUser(){var profile=A.data;if(!profile||!profile.me)return Promise.resolve(false);return oneSignal().then(function(OS){if(!OS)return false;try{return Promise.resolve(OS.login(String(profile.me.id))).then(function(){return true;},function(){return false;});}catch(e){return false;}});}
+  window.KHIFFA_REQUEST_NOTIFICATIONS=askPermission;
+  function askPermission(){return oneSignal().then(function(OS){if(!OS)return false;return OS.Notifications.requestPermission().then(function(){if(OS.Notifications.permission&&OS.User&&OS.User.PushSubscription&&OS.User.PushSubscription.optIn)return Promise.resolve(OS.User.PushSubscription.optIn()).then(function(){return linkUser();});return linkUser();}).then(function(){return !!OS.Notifications.permission&&!!(OS.User&&OS.User.PushSubscription&&OS.User.PushSubscription.optedIn);});}).catch(function(){return false;});}
 
   /* ---------- شاشة المواعيد ---------- */
   function open(first) {

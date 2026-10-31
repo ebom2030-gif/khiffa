@@ -1,0 +1,81 @@
+[data-kd-screens="true"] #tabs button[data-kd-internal="true"]{display:none!important}
+[data-kd-screens="true"] #tabs button[data-v="today"]{display:flex!important}
+[data-kd-screens="true"] #tabs button{align-items:center;gap:12px}
+.kd-nav-label{display:inline-block}
+.kd-page-heading{grid-column:1/-1;margin-block:8px 4px}
+.kd-page-heading h1{font-size:25px;margin:0 0 8px;outline:0}
+.kd-page-heading p{margin:0;max-width:65ch}
+.kd-screen>.card{margin:0}
+.kd-screen{gap:18px}
+.kd-program-intro{grid-column:1/-1}
+.kd-shortcuts{display:flex;gap:10px;grid-column:1/-1;order:-99;margin-bottom:2px}
+.kd-shortcut{flex:1;min-height:46px;border:1px solid var(--line);border-radius:12px;padding:9px;background:var(--surface);color:var(--mint);font:inherit;font-weight:600;font-size:13px;cursor:pointer}
+.kd-metric{display:block;font-size:29px;line-height:1.5;margin-block:16px;color:var(--ink)}
+.kd-screen progress{width:100%;height:11px;accent-color:var(--mint);display:block;margin-block:16px}
+.kd-inline{display:flex;gap:9px;flex-wrap:wrap;margin-block:14px}
+.kd-activity-form,.kd-goal-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-block:18px}
+.kd-field input,.kd-field textarea{min-width:0;width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:11px;min-height:44px}
+.kd-field textarea{resize:vertical;min-height:120px}
+.kd-activity-form>button,.kd-goal-form>button{align-self:end;min-height:44px}
+.kd-recipe-controls{grid-column:1/-1}
+.kd-recipe-controls>input{width:100%;background:var(--bg);color:var(--ink);padding:12px 16px;min-height:46px;border-radius:12px;border:1px solid var(--line)}
+#kdRecipeCount{grid-column:1/-1;margin:0}
+.kd-recipe-grid{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.kd-recipe.card{padding:0;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;margin:0}
+.kd-recipe-open{font:inherit;text-align:start;padding:0;border:0;background:var(--surface);color:var(--ink);cursor:pointer;width:100%}
+.kd-recipe-open img{display:block;width:100%;aspect-ratio:1.6;object-fit:cover;background:var(--mint-soft)}
+.kd-recipe-open h2{font-size:16px;margin:15px 15px 7px}
+.kd-recipe-open p{margin:0 15px 16px}
+.kd-recipe-favorite{border:0;border-top:1px solid var(--line);padding:12px;background:var(--surface);color:var(--mint);font:inherit;font-size:12px;cursor:pointer}
+.kd-recipe-favorite[aria-pressed="true"]{background:var(--mint-soft)}
+.kd-recipe-dialog{border:1px solid var(--line);border-radius:22px;background:var(--surface);color:var(--ink);width:min(620px,calc(100vw - 32px));max-height:85vh;padding:0}
+.kd-recipe-dialog::backdrop{background:#07160f88}
+.kd-recipe-detail{padding:24px}
+.kd-recipe-detail>button:first-child{margin-inline-start:auto;display:block}
+.kd-ingredients{padding-inline-start:22px;margin-block:20px;line-height:2}
+.kd-empty{padding:28px;color:var(--muted);grid-column:1/-1;text-align:center}
+.kd-goal-grid{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.kd-goal-grid .card{margin:0}
+.kd-goal-grid .kd-metric{font-size:23px}
+.kd-draft-form{display:flex;flex-direction:column;gap:16px}
+.kd-draft-form button{align-self:flex-start}
+.kd-profile{grid-column:1/-1;border-inline-start:4px solid var(--mint)}
+.kd-account-links{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.kd-account-link{border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;text-align:start;cursor:pointer;padding:16px;min-height:52px}
+.kd-account-link:hover,.kd-shortcut:hover{background:var(--mint-soft)}
+@media(min-width:960px){[data-kd-screens="true"] #tabs .ti{width:22px;height:22px;object-fit:contain;position:static;margin:0}[data-kd-screens="true"] #tabs .kd-nav-brand{margin-bottom:8px}[data-kd-screens="true"] #tabs button{padding:10px 14px;min-height:44px;font-size:13px}}
+@media(max-width:959px){
+ [data-kd-screens="true"] #tabs button[data-v]{display:none!important}
+ [data-kd-screens="true"] #tabs button[data-v="home"],[data-kd-screens="true"] #tabs button[data-v="today"],[data-kd-screens="true"] #tabs button[data-v="body"],[data-kd-screens="true"] #tabs button[data-v="community"],[data-kd-screens="true"] #tabs button[data-v="account"]{display:flex!important;flex-direction:column;justify-content:center;gap:4px;max-width:none}
+ [data-kd-screens="true"] #tabs button .ti{position:static;width:21px;height:21px;object-fit:contain;margin:0;display:block}
+ [data-kd-screens="true"] #tabs button .kd-nav-label{font-size:10px;line-height:1.4}
+ .kd-screen{display:flex;flex-direction:column;gap:16px}
+ .kd-page-heading h1{font-size:23px}.kd-page-heading{margin-block:8px 2px}
+ .kd-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .kd-shortcut{font-size:12px;min-height:42px}
+ .kd-recipe-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ .kd-recipe-open h2{font-size:13px;margin:10px 10px 5px}.kd-recipe-open p{font-size:10px;margin:0 10px 10px}
+ .kd-recipe-favorite{font-size:10px;padding:10px 4px}
+ .kd-goal-grid{grid-template-columns:1fr;gap:12px}
+ .kd-activity-form,.kd-goal-form{grid-template-columns:1fr}
+ .kd-account-links{grid-template-columns:1fr}
+ .kd-metric{font-size:25px}
+}
+
+/* v38 — توافق التصميم المعتمد مع شبكة v37 (responsive.js يفرض عمودين على كل الأقسام) */
+@media(min-width:960px){
+#app #v-home:not([hidden]){grid-template-columns:repeat(12,minmax(0,1fr))!important}
+#app #v-home>.kd-tools,#app #v-home>.kd-shortcuts{grid-column:1/-1!important}
+#app #v-home>[data-kd-block="fast"]{grid-column:span 8}
+#app #v-home>.care-card,#app #v-home>#kfQuick{grid-column:span 4!important}
+}
+@media(min-width:960px) and (max-width:1279px){[data-kd-layout="0"] #app #v-home>.card{grid-column:span 6}[data-kd-layout="0"] #app #v-home>.hm-hero,[data-kd-layout="0"] #app #v-home>[data-kd-block="fast"]{grid-column:1/-1}}
+.kd-entry-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--kd-gap,16px);grid-column:1/-1}
+@media(min-width:960px){
+#app #v-home>#foodFastEntry{order:-85!important}
+#app #v-home>#kfQuick{order:-85!important}
+}
+/* v38 — الشعار كملف مستقل شفاف */
+.kd-brand-image{background:transparent!important;overflow:visible!important}
+.kd-brand-image img{position:static!important;width:100%!important;height:auto!important;max-width:none}
+@media(min-width:960px){#app>header .logo>.kd-brand-slot{display:inline-block}}
