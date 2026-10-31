@@ -72,6 +72,8 @@
   }
   const style = E('style'); style.textContent = '.kg-box{width:min(100%,760px)!important;max-width:760px!important}.kg-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.kg-item{border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin-bottom:8px}.kg-item summary{font-weight:700;cursor:pointer;min-height:32px}.kg-item p{line-height:1.9;margin:8px 0 0}';
   d.head.append(style);
+  function legal() { const box = d.querySelector('#login .lg-in') || d.getElementById('login'); if (!box || box.querySelector('.kd-legal')) return; const p = E('p', null, 'kd-legal'); p.style.cssText = 'text-align:center;font-size:12px;margin:14px 0 0;position:relative;z-index:2'; p.innerHTML = '<a href="privacy.html" style="color:inherit">سياسة الخصوصية</a> · <a href="delete-account.html" style="color:inherit">حذف الحساب</a>'; box.append(p); }
+  legal(); new MutationObserver(legal).observe(d.getElementById('login') || d.body, { childList: true, subtree: true });
   window.KHIFFA_GUIDE = open;
   (window.KHIFFA_HOOKS = window.KHIFFA_HOOKS || []).push(card);
   (window.KHIFFA_LOGOUT_HOOKS = window.KHIFFA_LOGOUT_HOOKS || []).push(() => d.getElementById('kgGuideCard')?.remove());
