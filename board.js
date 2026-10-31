@@ -119,7 +119,37 @@
       w.querySelector('progress')?.after(cups);
     }
   }
-  function render() { if (!A.me || !A.data) return; header(); home(); screens(); }
+  /* ---------- خيارات الوجبة ظاهرة مباشرة في «وجبات اليوم» ---------- */
+  function options(m) {
+    const R = window.KHIFFA_SUGGESTIONS, st = A.settings(), out = [];
+    if (R) {
+      const f = (st.dailySuggestions && st.dailySuggestions.filters && st.dailySuggestions.filters[m.k]) || [], sel = f.length ? f : Object.keys(R.cuisines);
+      const tgt = A.mealTargetKcal ? A.mealTargetKcal(m.k) : 320, seed = Number(A.cur.replace(/-/g, '')) % 97;
+      for (let i = 0; i < 6 && out.length < 2; i++) { const x = R.suggest(m.k, sel, D.FOODS, st, tgt, seed + i * 5); if (x && !out.some(o => o.title === x.title)) out.push({ kind: 'recipe', title: x.title, sub: R.cuisines[x.cuisine] || '', kcal: R.calories(x.items, D.FOODS), items: x.items }); }
+    }
+    const ideas = D.IDEAS.filter(i => !i.hidden && i.m === m.k && A.mealComps(m.k, { idea: i.id }).every(c => !(st.noGluten && c.food.gluten) && !(st.noLactose && c.food.lactose)));
+    if (ideas.length) { const i = ideas[(Number(A.cur.replace(/-/g, '')) + m.k.length) % ideas.length]; out.push({ kind: 'idea', id: i.id, title: A.ideaName(i), sub: 'وجبة جاهزة', kcal: A.totals(A.mealComps(m.k, { idea: i.id })).n }); }
+    return out;
+  }
+  function choose(m, o) {
+    const done = A.cur <= A.TODAY;
+    if (o.kind === 'idea') A.setMeal(m.k, { mode: 'idea', idea: o.id, items: null, title: null, planned: !done });
+    else A.setMeal(m.k, { mode: 'custom', title: o.title, items: o.items.map(x => ({ ...x, food: structuredClone(D.FOODS[x.id]) })), planned: !done });
+    A.refreshAll(); A.toast((done ? 'سُجّل ' : 'أُضيف ') + m.t + ': ' + o.title, A.undoMeal);
+  }
+  function mealOptions() {
+    const sec = d.getElementById('v-today'); if (!sec) return;
+    const cards = [...sec.querySelectorAll('.mcard')]; if (cards.length !== D.MEALS.length) return;
+    cards.forEach((c, i) => {
+      const m = D.MEALS[i]; if (c.querySelector('.chosen') || c.querySelector('.kb-opts')) return;
+      const box = E('div', null, 'kb-opts'); box.append(E('p', 'اختر ' + m.t + ' بضغطة:', 'kb-opts-t'));
+      const row = E('div', null, 'kb-opts-row');
+      options(m).forEach(o => { const b = E('button', null, 'kb-opt'); b.type = 'button'; const img = E('img'); img.alt = ''; img.loading = 'lazy'; img.src = photo(o.title, 300); img.onerror = () => img.remove(); const t = E('div', null, 'kb-opt-tx'); t.append(E('b', o.title), E('small', num(o.kcal) + ' سعرة · ' + o.sub)); b.append(img, t, E('span', 'اختيار', 'kb-opt-go')); b.onclick = e => { e.stopPropagation(); choose(m, o); }; row.append(b); });
+      const more = E('button', 'خيارات أكثر ومطابخ العالم ←', 'kb-opt-more'); more.type = 'button'; more.onclick = e => { e.stopPropagation(); A.openMealSheet(m, 'idea'); };
+      box.append(row, more); c.append(box);
+    });
+  }
+  function render() { if (!A.me || !A.data) return; header(); home(); screens(); mealOptions(); }
 
   const css = E('style'); css.id = 'kb-style'; css.textContent = `
 #app>header .kb-hello{display:flex;align-items:center;gap:10px;border:0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:6px 10px 6px 14px;font:inherit;color:inherit;cursor:pointer;text-align:right}
@@ -144,6 +174,13 @@
 .kb-ring svg{width:74px;height:74px}.kb-ring b{position:absolute;top:24px;font-size:13px}.kb-ring span{font-weight:600;font-size:13px}.kb-ring small{color:var(--muted);font-size:11px}
 .kb-pills{display:flex;gap:6px;padding:5px;border-radius:999px;background:var(--surface);border:1px solid var(--line);margin:0 0 14px;grid-column:1/-1;overflow-x:auto}
 .kb-pills button{flex:1;min-height:40px;white-space:nowrap;border:0;border-radius:999px;background:transparent;font:inherit;font-weight:600;color:var(--muted);cursor:pointer;padding:0 12px}.kb-pills button[aria-selected="true"]{background:#1E8A4C;color:#fff}
+.kb-opts{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}.kb-opts-t{margin:0 0 8px;font-weight:700;font-size:13px;color:var(--mint,#138358)}
+.kb-opts-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.kb-opt{display:grid;grid-template-rows:auto 1fr auto;border:1px solid var(--line);border-radius:14px;overflow:hidden;padding:0;background:var(--surface);font:inherit;color:inherit;text-align:right;cursor:pointer}
+.kb-opt img{width:100%;height:84px;object-fit:cover;background:var(--mint-soft,#e8f4ec)}.kb-opt-tx{display:grid;gap:2px;padding:6px 8px}.kb-opt-tx b{font-size:12.5px;line-height:1.5}.kb-opt-tx small{font-size:11px;color:var(--muted)}
+.kb-opt-go{margin:0 8px 8px;border-radius:999px;background:#1E8A4C;color:#fff;text-align:center;font-size:12px;font-weight:700;padding:5px 0}
+.kb-opt-more{margin-top:8px;width:100%;min-height:40px;border:0;border-radius:12px;background:var(--mint-soft,#e8f4ec);color:var(--mint,#138358);font:inherit;font-weight:700;cursor:pointer}
+@media(max-width:420px){.kb-opts-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.kb-opt img{height:64px}.kb-opt-tx b{font-size:11.5px}}
 .kb-cups{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.kb-cups span{width:24px;height:32px;border:2px solid #2f8cf0;border-top-width:3px;border-radius:3px 3px 8px 8px;opacity:.45}.kb-cups span.on{background:linear-gradient(#7cc0ff,#2f8cf0);opacity:1}
 @media(min-width:960px){#app #v-home>#kbMeals{grid-column:span 8;order:-75}#app #v-home>#kbRemind{grid-column:span 4;order:-75}#app #v-home>#kbRecipes{grid-column:span 8;order:-70}#app #v-home>#kbGoals{grid-column:span 4;order:-70}
 #app>header .kd-search{flex:1;max-width:560px;min-height:46px;border-radius:14px;text-align:right;padding:0 18px}}
@@ -154,6 +191,6 @@
   d.head.append(css);
   (window.KHIFFA_HOOKS = window.KHIFFA_HOOKS || []).push(render);
   (window.KHIFFA_LOGOUT_HOOKS = window.KHIFFA_LOGOUT_HOOKS || []).push(() => { d.querySelector('.kb-hello')?.remove(); ['kbMeals', 'kbRecipes', 'kbRemind', 'kbGoals'].forEach(id => d.getElementById(id)?.remove()); });
-  let t = 0; new MutationObserver(() => { clearTimeout(t); t = setTimeout(() => { if (A.me && A.data) { header(); screens(); } }, 120); }).observe(d.getElementById('app') || d.body, { childList: true, subtree: true });
+  let t = 0; new MutationObserver(() => { clearTimeout(t); t = setTimeout(() => { if (A.me && A.data) { header(); screens(); mealOptions(); } }, 120); }).observe(d.getElementById('app') || d.body, { childList: true, subtree: true });
   window.addEventListener('khiffa-ready', render); render();
 })();
