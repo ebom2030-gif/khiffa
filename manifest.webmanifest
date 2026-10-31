@@ -1,15 +1,15 @@
 {
   "id": "./",
-  "name": "خفّة",
-  "short_name": "خفّة",
-  "description": "متابعة يومية لنظامك الغذائي",
+  "name": "خفة دايت",
+  "short_name": "خفة دايت",
+  "description": "خفة دايت — نمط حياة أخف .. لصحة أفضل: متابعة يومية لنظامك الغذائي",
   "lang": "ar",
   "dir": "rtl",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f6f8f5",
-  "theme_color": "#1FA971",
+  "background_color": "#FBF8EF",
+  "theme_color": "#1E6B3C",
   "categories": [
     "health",
     "food",
@@ -33,12 +33,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    },
-    {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
     }
   ]
 }

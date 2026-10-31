@@ -298,6 +298,15 @@ function openMealSheet(m, mode) {
       if (md === 'tune') { tuneMeal(m, st, body); return; }
       if (md === 'idea') {
         const list = D.IDEAS.filter(i => !i.hidden && i.m === m.k && ideaAllowed(i));
+        // v39: الوصول لمطابخ العالم من نافذة اختيار الوجبة مباشرة
+        if (window.KHIFFA_RECIPE_LIBRARY || document.getElementById('v-suggestions')) {
+          const wc = document.createElement('div'); wc.className = 'kc-cuisines';
+          wc.innerHTML = '<b>من مطابخ العالم 🌍</b><span class="note">مصري، سعودي، خليجي، شامي، مغربي، تركي، هندي، إيطالي</span>';
+          const row = document.createElement('div'); row.className = 'kc-cuisines-row';
+          if (document.getElementById('v-suggestions')) { const b1 = document.createElement('button'); b1.type = 'button'; b1.className = 'btn'; b1.textContent = 'مقترح اليوم حسب مطابخك'; b1.onclick = () => { closeSheet(); const t = document.querySelector('#tabs button[data-v="suggestions"]'); if (t) t.click(); }; row.append(b1); }
+          if (window.KHIFFA_RECIPE_LIBRARY) { const b2 = document.createElement('button'); b2.type = 'button'; b2.className = 'btn ghost'; b2.textContent = 'دليل وصفات المطابخ'; b2.onclick = () => { closeSheet(); window.KHIFFA_RECIPE_LIBRARY({ type: m.k === 'b' ? 'b' : (m.k === 'l' || m.k === 'd') ? 'main' : 'snack' }); }; row.append(b2); }
+          wc.append(row); body.append(wc);
+        }
         if (!list.length) body.insertAdjacentHTML('beforeend', '<p class="note">لا توجد وجبات جاهزة مناسبة للتفضيلات الحالية.</p>');
         list.forEach(i => { const c = ideaCard(i, st.mode !== 'custom' && st.idea === i.id); c.onclick = () => { setMeal(m.k, { mode: 'idea', idea: i.id, items: null, title: null, planned: false }); closeSheet(); renderAll(); toast((S.cur <= TODAY ? 'سُجّلت ' : 'أُضيفت إلى ') + m.t + ' ✓', undoMeal); }; body.append(c); });
       } else {

@@ -79,3 +79,16 @@
 .kd-brand-image{background:transparent!important;overflow:visible!important}
 .kd-brand-image img{position:static!important;width:100%!important;height:auto!important;max-width:none}
 @media(min-width:960px){#app>header .logo>.kd-brand-slot{display:inline-block}}
+/* v39 — مطابخ العالم داخل نافذة الوجبة */
+.kc-cuisines{display:grid;gap:6px;padding:12px 14px;margin:10px 0 12px;border:1px solid var(--line);border-radius:16px;background:var(--mint-soft,#eef7f1)}
+.kc-cuisines-row{display:flex;flex-wrap:wrap;gap:8px}.kc-cuisines-row .btn{flex:1 1 180px;min-height:44px}
+/* v39 — وضوح الشعار في الوضع الليلي */
+[data-theme="dark"] .kd-brand-image{background:#FBF8EF!important;border-radius:14px;padding:6px 8px}
+@media(prefers-color-scheme:dark){html:not([data-theme="light"]) .kd-brand-image{background:#FBF8EF!important;border-radius:14px;padding:6px 8px}}
+.kd-nav-brand{height:auto!important;min-height:0!important;margin-bottom:14px!important}.kd-brand-image{box-sizing:border-box}
+@media(min-width:960px){#app~nav.tabs,nav.tabs{overflow-y:auto!important;padding-top:20px!important}nav.tabs>.kd-nav-brand{flex:none!important}nav.tabs>button{flex:none!important}.kd-nav-brand .kd-brand-image img{max-height:118px;width:auto!important;margin:auto}}
+/* v39 — التبديل بين سجل الوجبات ومقترحات اليوم */
+.kd-mealswitch{display:flex;gap:6px;padding:5px;border-radius:999px;background:var(--surface);border:1px solid var(--line);margin:0 0 14px;grid-column:1/-1}
+.kd-mealswitch button{flex:1;min-height:44px;border:0;border-radius:999px;background:transparent;font:inherit;font-weight:700;color:var(--muted);cursor:pointer}
+.kd-mealswitch button[aria-pressed="true"]{background:var(--mint,#138358);color:#fff}
+@media(max-width:959px){#tabs button[data-v="suggestions"]{display:none!important}}

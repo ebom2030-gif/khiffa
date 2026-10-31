@@ -54,7 +54,7 @@
       if(b.dataset.kd!=='route'){b.dataset.kd='route';b.replaceChildren();const image=node('img','ti');image.alt='';image.src=A.imgURL(icon);b.append(image,node('span','kd-nav-label',label));b.onclick=()=>navigate(id);}
       nav.append(b);
     }
-    const sel=route==='plan'?'account':route==='ideas'?'recipes':route;
+    const sel=route==='plan'?'account':route==='ideas'?'recipes':(route==='suggestions'&&matchMedia('(max-width:959px)').matches)?'today':route;
     nav.querySelectorAll('button[data-v]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.v===sel)));
   }
   function navigate(id,remember=true){
@@ -63,7 +63,7 @@
     route=id;lastKey='';
     if(native.get(id))native.get(id).call(d.querySelector('#tabs button[data-v="'+id+'"]'));
     d.querySelectorAll('section.view').forEach(v=>{v.hidden=v.id!=='v-'+id;});
-    const selected=id==='plan'?'account':id==='ideas'?'recipes':id;
+    const selected=id==='plan'?'account':id==='ideas'?'recipes':(id==='suggestions'&&matchMedia('(max-width:959px)').matches)?'today':id;
     d.querySelectorAll('#tabs button[data-v]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.v===selected)));
     d.documentElement.dataset.kdRoute=id;
     if(remember){try{localStorage.setItem(routeKey(),JSON.stringify(id));}catch{}}
@@ -112,7 +112,7 @@
   }
   function favoriteIds(){const ids=A.settings().ideaFavorites;return Array.isArray(ids)?ids.filter(x=>typeof x==='string'):[];}
   function recipeAllowed(idea){const s=A.settings();return A.mealComps(idea.m,{idea:idea.id}).every(x=>!(s.noGluten&&x.food.gluten)&&!(s.noLactose&&x.food.lactose));}
-  function photoFor(idea){const P=window.KHIFFA_PHOTOS; if(!P)return '';const text=idea.name;const key=/دجاج|فراخ/.test(text)?'chicken':/سمك|سلمون/.test(text)?'fish':/شوفان/.test(text)?'oats':/زبادي|لبن/.test(text)?'yogurt':'salad';return P.url(P.P[key],560);}
+  function photoFor(idea){const P=window.KHIFFA_PHOTOS; if(!P)return '';const text=idea.name;if(P.pick){const k=P.pick(text);if(P.P[k])return P.url(P.P[k],560);}const key=/دجاج|فراخ/.test(text)?'chicken':/سمك|سلمون/.test(text)?'fish':/شوفان/.test(text)?'oats':/زبادي|لبن/.test(text)?'yogurt':'salad';return P.url(P.P[key],560);}
   function renderRecipeList(){
     const list=d.getElementById('kdRecipeList');if(!list||!state())return;
     const norm=s=>String(s).replace(/[ً-ٰٟـ]/g,'').replace(/[أإآ]/g,'ا').replace(/ة/g,'ه');const q=norm(query.trim());const favs=favoriteIds();
@@ -151,9 +151,19 @@
     if(me.id!==state().user.id){profile.append(node('p','note','تعرض الآن بيانات '+A.displayName()),button('العودة إلى بيانات حسابي',()=>A.switchUser(me.id)));}
     section.append(profile);const grid=node('div','kd-account-links');routes.filter(r=>r[0]!=='account').forEach(([id,label])=>grid.append(button(label,()=>navigate(id),'kd-account-link')));grid.append(button('إعدادات التطبيق والمظهر',()=>navigate('plan'),'kd-account-link'));grid.append(button('دليل الاستخدام',()=>window.KHIFFA_GUIDE&&window.KHIFFA_GUIDE(),'kd-account-link'));section.append(grid);if(existing)section.append(existing);
   }
+  // v39: زرّا التبديل «سجل وجباتي | مقترحات اليوم» أعلى الصفحتين
+  function mealSwitch(){
+    for(const id of ['today','suggestions']){
+      const sec=d.getElementById('v-'+id);if(!sec)continue;let sw=sec.querySelector(':scope > .kd-mealswitch');
+      if(!sw){sw=node('div','kd-mealswitch');sw.setAttribute('role','group');sw.setAttribute('aria-label','التبديل بين سجل الوجبات والمقترحات');
+        sw.append(button('سجل وجباتي',()=>navigate('today'),''),button('مقترحات اليوم 🌍',()=>navigate('suggestions'),''));sec.prepend(sw);}
+      else if(sec.firstElementChild!==sw)sec.prepend(sw);
+      const [a,b]=sw.children;a.setAttribute('aria-pressed',String(route==='today'));b.setAttribute('aria-pressed',String(route==='suggestions'));
+    }
+  }
   function homeShortcuts(){const home=d.getElementById('v-home');if(!home||home.querySelector('.kd-shortcuts'))return;const links=node('div','kd-shortcuts');[['programs','برنامجي الغذائي'],['recipes','وصفات صحية'],['hydration','الماء والنشاط'],['goals','أهدافي']].forEach(([id,label])=>links.append(button(label,()=>navigate(id),'kd-shortcut')));home.querySelector('.kd-tools')?.after(links);}
   function render(force=false){
-    if(!state())return;mountPrograms();homeShortcuts();
+    if(!state())return;mountPrograms();homeShortcuts();mealSwitch();
     const key=uid()+'|'+route+'|'+JSON.stringify(state().settings)+'|'+JSON.stringify(state().days)+'|'+JSON.stringify(state().inbody)+'|'+JSON.stringify(readLocal());
     if(!force&&key===lastKey)return;lastKey=key;const section=d.getElementById('v-'+route);if(!section)return;
     if(route==='hydration')renderHydration(section);else if(route==='recipes')recipesSetup(section);else if(route==='goals')renderGoals(section);else if(route==='community')renderCommunity(section);else if(route==='account')renderAccount(section);
