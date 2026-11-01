@@ -149,7 +149,7 @@
     const me=state().me||state().user;const profile=card(me.name||'حسابي');profile.classList.add('kd-profile');const roleNames={owner:'مالك المنصة',dietitian:'أخصائي تغذية',client:'عميل'};
     profile.append(node('p','note',roleNames[me.role]||'حساب مستخدم'));
     if(me.id!==state().user.id){profile.append(node('p','note','تعرض الآن بيانات '+A.displayName()),button('العودة إلى بيانات حسابي',()=>A.switchUser(me.id)));}
-    section.append(profile);const grid=node('div','kd-account-links');routes.filter(r=>r[0]!=='account').forEach(([id,label])=>grid.append(button(label,()=>navigate(id),'kd-account-link')));grid.append(button('إعدادات التطبيق والمظهر',()=>navigate('plan'),'kd-account-link'));grid.append(button('دليل الاستخدام',()=>window.KHIFFA_GUIDE&&window.KHIFFA_GUIDE(),'kd-account-link'));section.append(grid);if(existing)section.append(existing);
+    section.append(profile);const grid=node('div','kd-account-links');routes.filter(r=>r[0]!=='account').forEach(([id,label])=>grid.append(button(label,()=>navigate(id),'kd-account-link')));grid.append(button('إعدادات التطبيق والمظهر',()=>navigate('plan'),'kd-account-link'));grid.append(button(window.KHIFFA_INSTALLED?'التطبيق مثبّت ✓':'📲 تثبيت التطبيق على الجهاز',()=>window.KHIFFA_INSTALL&&window.KHIFFA_INSTALL(),'kd-account-link kd-install-link'));grid.append(button('دليل الاستخدام',()=>window.KHIFFA_GUIDE&&window.KHIFFA_GUIDE(),'kd-account-link'));section.append(grid);if(existing)section.append(existing);
   }
   // v39: زرّا التبديل «سجل وجباتي | مقترحات اليوم» أعلى الصفحتين
   function mealSwitch(){

@@ -90,6 +90,8 @@
   }
   function hideAll() { d.querySelectorAll('[data-inst]').forEach(function (e) { e.remove(); }); }
 
+  window.KHIFFA_INSTALL = function () { if (standalone) { var A = window.KHIFFA_APP; if (A) A.toast('خفة دايت مثبّت على جهازك ✓ — افتحه من أيقونته على الشاشة الرئيسية'); return; } install(); };
+  window.KHIFFA_INSTALLED = standalone;
   if (standalone) return;
 
   window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; });

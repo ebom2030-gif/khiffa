@@ -100,3 +100,4 @@
 .kd-sc-ico{width:40px;height:40px;object-fit:contain}
 @media(max-width:959px){.kd-shortcuts{grid-template-columns:repeat(4,minmax(0,1fr))}.kd-shortcuts>.kd-shortcut:nth-child(n+5){display:none!important}.kd-shortcut{min-height:84px;font-size:13px}}
 @media(max-width:959px){#app #v-home>.kd-tools{display:none!important}#app #v-home>.hm-hero{order:0!important}#app #v-home>.kd-calories{order:1!important}#app #v-home>.kd-shortcuts{order:2!important}#app #v-home>#ktHome{order:3!important}}
+.kd-install-link{background:#1E8A4C!important;color:#fff!important;font-weight:700}
