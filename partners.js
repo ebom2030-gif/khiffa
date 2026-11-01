@@ -39,44 +39,23 @@
     if (!navigator.geolocation) { A.toast('تحديد الموقع غير مدعوم في هذا المتصفح'); return; }
     navigator.geolocation.getCurrentPosition(p => { here = { lat: p.coords.latitude, lng: p.coords.longitude }; draw(); A.toast('رُتّبت الأماكن حسب الأقرب لك'); }, () => A.toast('لم يُسمح بتحديد الموقع'), { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
   }
-  /* v50: أماكن قريبة من خرائط Google (عند تفعيل مفتاح Places في الخادم) أو من OpenStreetMap كبديل مجاني */
-  const near = {}, nearLoading = {};
-  async function overpass(kind) {
-    const R = 15000, at = '(around:' + R + ',' + here.lat + ',' + here.lng + ')';
-    const q = kind === 'gym' ? 'nwr' + at + '["leisure"~"fitness_centre|sports_centre"];'
-      : 'nwr' + at + '["amenity"~"restaurant|cafe|fast_food"]["name"~"صحي|دايت|diet|healthy|salad|سلط|fit|كيتو|keto|protein|بروتين|لايت|light|vegan|نباتي|bowl|بول|كالوري|calorie",i];nwr' + at + '["amenity"~"restaurant|cafe|fast_food"]["cuisine"~"salad|healthy|vegan|vegetarian|juice|poke",i];';
-    let j = null;
-    for (const u of ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter']) {
-      try { const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 12000); const r = await fetch(u, { method: 'POST', signal: ctl.signal, body: 'data=' + encodeURIComponent('[out:json][timeout:12];(' + q + ');out center tags 40;') }); clearTimeout(tm); if (r.ok) { j = await r.json(); break; } } catch (_) {}
-    }
-    if (!j) return [];
-    return (j.elements || []).map(e => { const t = e.tags || {}, lat = e.lat ?? (e.center && e.center.lat), lng = e.lon ?? (e.center && e.center.lon); return { name: t['name:ar'] || t.name, address: [t['addr:street'], t['addr:city']].filter(Boolean).join('، '), phone: t.phone || t['contact:phone'] || '', lat, lng, maps_url: 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent((t['name:ar'] || t.name || '') + ' ' + lat + ',' + lng) }; }).filter(p => p.name && p.lat != null);
-  }
-  async function loadNear() {
-    const k = tab; if (!here || near[k] || nearLoading[k]) return; nearLoading[k] = true;
-    let res = null, src = 'google';
-    try { const j = await api('placesNearby', { kind: k, lat: here.lat, lng: here.lng }); if (j.placesReady) res = j.places || []; } catch (_) {}
-    if (!res) { src = 'osm'; try { res = await overpass(k); } catch (_) { res = []; } }
-    res.forEach(p => { p._d = p.lat != null ? km(here, p) : null; }); res.sort((a, b) => (a._d ?? 1e9) - (b._d ?? 1e9));
-    near[k] = { src, rows: res.slice(0, 20) }; nearLoading[k] = false; draw();
-  }
+  /* v52: خريطة Google مدمجة مجانًا (بدون مفتاح) تعرض الأماكن القريبة داخل التطبيق */
+  let nq = {};
+  const NQ = { restaurant: [['🥗 مطاعم دايت', 'مطعم صحي دايت'], ['🥙 سلطات', 'سلطات صحية'], ['🛒 متاجر صحية', 'متجر أغذية صحية'], ['🧃 عصائر طبيعية', 'عصائر طبيعية']], gym: [['🏋️ جيم', 'جيم نادي رياضي'], ['🧘 نوادي سيدات', 'نادي رياضي نسائي'], ['🏊 مسابح', 'مسبح']] };
   function nearSection() {
-    const c = E('div', null, 'card kp-near'); c.append(E('h2', tab === 'gym' ? '📍 صالات رياضية قريبة منك' : '📍 مطاعم صحية قريبة منك'));
-    if (!here) { c.append(E('p', 'نعرض لك الأماكن القريبة من موقعك مع الاتصال والاتجاهات.', 'note'), B('📍 اعرض الأماكن القريبة مني', locate)); return c; }
-    const n = near[tab]; if (!n) { c.append(E('p', 'جارٍ البحث عن الأماكن القريبة…', 'note')); loadNear(); return c; }
-    if (!n.rows.length) { c.append(E('p', 'لم نجد نتائج قريبة في قاعدة الخرائط المفتوحة. استخدم أزرار خرائط Google بالأسفل.', 'note')); return c; }
-    const list = E('div', null, 'kp-near-list');
-    n.rows.forEach(p => {
-      const r = E('div', null, 'kp-near-item'), t = E('div');
-      t.append(E('b', p.name), E('small', [p._d != null ? num(p._d, 1) + ' كم' : '', p.rating ? '⭐ ' + num(p.rating, 1) + (p.reviews ? ' (' + num(p.reviews) + ')' : '') : '', p.open === true ? 'مفتوح الآن' : p.open === false ? 'مغلق الآن' : '', p.address].filter(Boolean).join(' · ')));
-      const a = E('div', null, 'kp-actions'); if (p.phone) a.append(link('📞', 'tel:' + p.phone.replace(/[^+0-9]/g, ''))); a.append(link('🧭 الاتجاهات', p.maps_url || mapUrl(p)));
-      r.append(t, a); list.append(r);
-    });
-    c.append(list, E('p', n.src === 'google' ? 'المصدر: خرائط Google' : 'المصدر: OpenStreetMap © المساهمون — للنتائج الكاملة استخدم خرائط Google بالأسفل.', 'note'));
+    const opts = NQ[tab], cur = nq[tab] || opts[0][1];
+    const c = E('div', null, 'card kp-near');
+    c.append(E('h2', tab === 'gym' ? '📍 صالات رياضية قريبة منك' : '📍 مطاعم صحية قريبة منك'));
+    const chips = E('div', null, 'kb-pills kp-near-q');
+    opts.forEach(([l, q]) => { const b = B(l, () => { nq[tab] = q; draw(); }, ''); b.setAttribute('aria-selected', String(q === cur)); chips.append(b); });
+    if (!here) chips.append(B('📍 حسب موقعي', locate, ''));
+    const fr = d.createElement('iframe'); fr.className = 'kp-map'; fr.loading = 'lazy'; fr.title = 'خريطة الأماكن القريبة'; fr.referrerPolicy = 'no-referrer-when-downgrade';
+    fr.src = 'https://www.google.com/maps?q=' + encodeURIComponent(cur) + (here ? '&ll=' + here.lat + ',' + here.lng + '&z=13' : '') + '&hl=ar&output=embed';
+    c.append(chips, fr, E('p', 'اضغط على أي مكان في الخريطة لرؤية الاسم والتقييم والهاتف والاتجاهات.' + (here ? '' : ' اضغط «حسب موقعي» لعرض الأقرب لك.'), 'note'));
     return c;
   }
   try { navigator.permissions && navigator.permissions.query({ name: 'geolocation' }).then(st => { if (st.state === 'granted' && navigator.geolocation) navigator.geolocation.getCurrentPosition(p => { here = { lat: p.coords.latitude, lng: p.coords.longitude }; draw(); }, () => {}, { maximumAge: 600000 }); }).catch(() => {}); } catch (_) {}
-  const nst = d.createElement('style'); nst.textContent = '.kp-near-list{display:flex;flex-direction:column;gap:8px}.kp-near-item{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:14px;padding:10px 12px}.kp-near-item b{display:block}.kp-near-item small{color:var(--muted);font-size:12px;line-height:1.6}.kp-near-item .kp-actions{flex:none;display:flex;gap:6px}.kp-near-item .kp-actions .btn{padding:6px 10px;min-height:0}'; d.head.append(nst);
+  const nst = d.createElement('style'); nst.textContent = '.kp-map{width:100%;height:min(62vh,520px);border:0;border-radius:16px;margin:10px 0 4px;background:#eef3ee;display:block}.kp-near-q{flex-wrap:wrap}'; d.head.append(nst);
 
   function addItem(p, it) {
     const day = A.dayOf(A.TODAY);
