@@ -79,8 +79,16 @@
     if (list.error) { sec.append(E('p', list.error, 'note')); return; }
     let rows = list.filter(p => p.kind === tab).map(p => ({ ...p, _d: here && p.lat != null && p.lng != null ? km(here, p) : null }));
     if (here) rows.sort((a, b) => (a._d ?? 1e9) - (b._d ?? 1e9));
-    if (!rows.length) { const e = E('div', null, 'card'); e.append(E('h2', tab === 'gym' ? 'لا توجد صالات شريكة بعد' : 'لا توجد مطاعم شريكة بعد'), E('p', 'نضيف الشركاء تباعًا. هل تعرف مكانًا مناسبًا؟ شارك معه رابط خفة ليسجّل.', 'note'), B('مشاركة رابط التسجيل', shareInvite, 'btn ghost')); sec.append(e); return; }
-    const grid = E('div', null, 'kp-grid'); rows.forEach(p => grid.append(placeCard(p))); sec.append(grid);
+    const ex = E('div', null, 'card kp-explore'), qs = tab === 'gym' ? [['🏋️ صالات رياضية قريبة', 'صالة رياضية جيم'], ['🧘 نوادي سيدات', 'نادي رياضي نسائي']] : [['🥗 مطاعم صحية ودايت قريبة', 'مطعم صحي دايت'], ['🥙 سلطات ووجبات خفيفة', 'سلطات وجبات صحية'], ['🛒 متاجر أغذية صحية', 'متجر أغذية صحية']];
+    const mapUrl = q => 'https://www.google.com/maps/search/' + encodeURIComponent(q) + (here ? '/@' + here.lat + ',' + here.lng + ',14z' : '');
+    ex.append(E('h2', rows.length ? 'اكتشف المزيد على خرائط Google' : (tab === 'gym' ? 'لا توجد صالات شريكة بعد — اكتشف القريب منك' : 'لا توجد مطاعم شريكة بعد — اكتشف القريب منك')), E('p', 'تفتح خرائط Google بالأماكن القريبة من موقعك، مع الأرقام والتقييمات والاتجاهات.' + (here ? '' : ' اضغط «الأقرب لي» أولاً لدقة أعلى.'), 'note'));
+    const eb = E('div', null, 'row'); eb.style.cssText = 'gap:8px;flex-wrap:wrap';
+    qs.forEach(([t, q]) => { const a = E('a', t, 'btn ghost'); a.href = mapUrl(q); a.target = '_blank'; a.rel = 'noopener'; eb.append(a); });
+    if (!rows.length) eb.append(B('📨 دعوة مكان للانضمام', shareInvite, 'btn ghost'));
+    ex.append(eb);
+    if (A.me && A.me.role === 'owner') ex.append(E('p', 'للمالك: انسخ رابط أي مكان من خرائط Google ثم «إدارة الشركاء» ← «إضافة مكان من خرائط Google» ليظهر هنا لكل المستخدمين.', 'note'));
+    if (!rows.length) { sec.append(ex); return; }
+    const grid = E('div', null, 'kp-grid'); rows.forEach(p => grid.append(placeCard(p))); sec.append(grid, ex);
   }
   function shareInvite() { const t = invite(); if (navigator.share) navigator.share({ title: 'خفة دايت — شركاء', text: t }).catch(() => {}); else { navigator.clipboard?.writeText(t); A.toast('تم نسخ الرسالة'); } }
   function invite() {

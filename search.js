@@ -117,6 +117,7 @@
   var A = window.KHIFFA_APP; if (!A) return;
   var D = A.D;
   var ITEMS = COMMON.map(function (r, i) { return { id: 'c' + i, name: r[0], portion: r[1], n: r[2], p: r[3], c: r[4], f: r[5], key: norm(r[0] + ' ' + (r[6] || '')), img: r[7], tag: r[8] || null }; });
+  (window.KHIFFA_FOODS_EXTRA || []).forEach(function (r, i) { ITEMS.push({ id: 'x' + i, name: r[0], portion: r[1], grams: r[2], n: r[3], p: r[4], c: r[5], f: r[6], key: norm(r[0] + ' ' + (r[7] || '')), img: r[8], ml: !!r[9], tag: null }); });
   Object.keys(D.FOODS).forEach(function (k) {
     var f = D.FOODS[k];
     ITEMS.push({ id: 'f-' + k, name: f.name, portion: 'حصة: ' + f.grams + (f.g === 'M' ? ' مل' : ' ج') + (f.unit ? ' (' + f.unit + ')' : ''), n: f.n, p: f.p, c: f.c, f: f.f, key: norm(f.name), img: f.img, tag: f.limit, grams: f.grams, ml: f.g === 'M', pcs: (D.PIECES || {})[k] });
@@ -134,7 +135,7 @@
       else if (words.some(function (w) { return w.length > 2 && it.key.indexOf(w) >= 0; })) s = 15;
       if (s) scored.push([s - (it.id.charAt(0) === 'f' ? -5 : 0), it]);
     });
-    return scored.sort(function (a, b) { return b[0] - a[0]; }).slice(0, 8).map(function (x) { return x[1]; });
+    return scored.sort(function (a, b) { return b[0] - a[0]; }).slice(0, 10).map(function (x) { return x[1]; });
   }
 
   var css = d.createElement('style');
@@ -179,10 +180,10 @@
     var q = d.createElement('div'); q.className = 'qa-qty'; var chosen = 1;
     q.innerHTML = '<span class="note">الكمية:</span>' + QTY.map(function (x) { return '<button data-q="' + x[0] + '" aria-pressed="' + (x[0] === 1) + '">' + x[1] + '</button>'; }).join('');
     var amt = '';
-    var upd = function () { add.disabled=!(Number.isFinite(chosen)&&chosen>0&&chosen<=10000); add.textContent = 'أضيفي (' + A.ar(Math.round(it.n * chosen), 0) + ' سعرة)'; };
+    var upd = function () { add.disabled=!(Number.isFinite(chosen)&&chosen>0&&chosen<=10000); add.textContent = 'أضيفي (' + A.ar(Math.round(it.n * chosen), 0) + ' سعرة' + (it.grams && chosen > 0 ? ' · ' + A.ar(Math.round(it.grams * chosen)) + (it.ml ? ' مل' : ' جم') : '') + ')'; };
     q.querySelectorAll('button').forEach(function (b) { b.onclick = function () { chosen = +b.dataset.q; amt = ''; q.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); q.querySelectorAll('input').forEach(function (x) { x.value = ''; }); upd(); }; });
     // exact amount typed by hand: grams / ml, pieces, or a multiple of the portion — calories follow automatically
-    var ins = [['x','عدد الحصص']];if(it.grams)ins.push(['g',it.ml?'الكمية بالملليلتر':'الوزن بالجرام']);
+    var ins = [['x','عدد الحصص']];if(it.grams)ins.push(['g',it.ml?'الكمية بالملليلتر':'الوزن بالجرام']);if(it.n>0)ins.push(['k','أو اكتب السعرات']);
     if (it.pcs) ins.push(['pc', 'عدد الثمار أو الحبات']);
     q.insertAdjacentHTML('beforeend', '<div style="display:flex;gap:6px;flex-wrap:wrap;width:100%">' + ins.map(function (x) { return '<input class="qa-in" data-u="' + x[0] + '" type="number" inputmode="decimal" min="0" step="any" placeholder="' + x[1] + '" style="width:150px">'; }).join('') + '</div>');
     q.querySelectorAll('.qa-in').forEach(function (inp) { inp.oninput = function () {
@@ -190,8 +191,9 @@
       q.querySelectorAll('.qa-in').forEach(function (x) { if (x !== inp) x.value = ''; });
       q.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
       var u = inp.dataset.u;
-      chosen = u === 'g' ? v / it.grams : u === 'pc' ? v / it.pcs[0] : v;
-      amt = u === 'g' ? A.ar(v) + (it.ml ? ' مل' : ' جم') : u === 'pc' ? A.ar(v) + ' ' + (v === 1 ? it.pcs[1] : v === 2 ? it.pcs[2] : it.pcs[3]) : '';
+      chosen = u === 'g' ? v / it.grams : u === 'pc' ? v / it.pcs[0] : u === 'k' ? v / it.n : v;
+      if (u === 'k' && it.grams) amt = A.ar(Math.round(chosen * it.grams)) + (it.ml ? ' مل' : ' جم');
+      if (u !== 'k') amt = u === 'g' ? A.ar(v) + (it.ml ? ' مل' : ' جم') : u === 'pc' ? A.ar(v) + ' ' + (v === 1 ? it.pcs[1] : v === 2 ? it.pcs[2] : it.pcs[3]) : '';
       upd();
     }; });
     $res.append(q);
@@ -226,6 +228,27 @@
     $log.querySelectorAll('.x').forEach(function (b) { b.onclick = function () { var dd = A.dayOf(A.cur); var e2 = (dd.extras || []).slice(); e2.splice(+b.dataset.i, 1); dd.extras = e2; A.saveDay(Object.assign({}, dd)); A.refresh(); }; });
   }
 
+  /* منتجات السوبر ماركت: Open Food Facts (قاعدة مفتوحة، أولوية للسعودية ومصر) — قيم لكل حصة أو ١٠٠ جم */
+  var mkCache = {};
+  function market(q, btn) {
+    btn.disabled = true; btn.textContent = 'جارٍ البحث في منتجات السوبر ماركت…';
+    var url = 'https://world.openfoodfacts.org/cgi/search.pl?search_terms=' + encodeURIComponent(q) + '&search_simple=1&action=process&json=1&page_size=24&fields=code,product_name,product_name_ar,brands,nutriments,serving_quantity,countries_tags,image_small_url';
+    (mkCache[q] ? Promise.resolve(mkCache[q]) : fetch(url).then(function (r) { return r.json(); })).then(function (j) {
+      mkCache[q] = j;
+      var list = (j.products || []).map(function (p) {
+        var nu = p.nutriments || {}, k = Number(nu['energy-kcal_100g'] != null ? nu['energy-kcal_100g'] : (nu['energy_100g'] ? nu['energy_100g'] / 4.184 : NaN));
+        if (!(k > 0) || k > 950) return null;
+        var sv = Number(p.serving_quantity), g = sv > 0 && sv < 1500 ? sv : 100, sc = g / 100, nm = (p.product_name_ar || p.product_name || '').trim(); if (!nm) return null;
+        var local = (p.countries_tags || []).some(function (c) { return /saudi|egypt|emirates|kuwait|qatar|bahrain|oman|jordan/.test(c); });
+        return { id: 'off-' + p.code, name: nm + (p.brands ? ' — ' + String(p.brands).split(',')[0] : ''), portion: (g === 100 ? '١٠٠ جم' : 'حصة ' + A.ar(g) + ' جم') + ' · منتج', grams: g, n: Math.round(k * sc), p: Math.round((nu.proteins_100g || 0) * sc * 10) / 10, c: Math.round((nu.carbohydrates_100g || 0) * sc * 10) / 10, f: Math.round((nu.fat_100g || 0) * sc * 10) / 10, img: 'shopping_cart', tag: null, local: local };
+      }).filter(Boolean).sort(function (a, b) { return b.local - a.local; }).slice(0, 10);
+      btn.remove();
+      if (!list.length) { A.toast('لم أجد منتجًا بسعرات مسجلة؛ جرّب اسمًا آخر أو امسح الباركود'); return; }
+      var h = d.createElement('div'); h.className = 'eyebrow'; h.textContent = 'من منتجات السوبر ماركت (Open Food Facts):'; $res.append(h);
+      list.forEach(function (it) { var b = row(it); b.onclick = function () { pick(it); }; $res.append(b); });
+    }).catch(function () { btn.disabled = false; btn.textContent = '🛒 ابحث في منتجات السوبر ماركت'; A.toast('تعذّر الاتصال بقاعدة المنتجات'); });
+  }
+
   var t;
   $q.addEventListener('input', function () {
     clearTimeout(t); t = setTimeout(function () {
@@ -233,7 +256,10 @@
       var r = search(v);
       r.forEach(function (it) { var b = row(it); b.onclick = function () { pick(it); }; $res.append(b); });
       var m = d.createElement('button'); m.className = 'btn ghost sm'; m.textContent = r.length ? 'لم تجدي ما تناولته؟ أضيفيه يدويًا' : 'غير موجود، أضيفيه يدويًا';
-      m.onclick = function () { manual(v); }; $res.append(m);
+      m.onclick = function () { manual(v); };
+      var sm = d.createElement('button'); sm.className = 'btn ghost sm'; sm.textContent = '🛒 ابحث في منتجات السوبر ماركت'; sm.onclick = function () { market(v, sm); };
+      var bc = d.createElement('button'); bc.className = 'btn ghost sm'; bc.textContent = '📷 مسح باركود'; bc.onclick = function () { window.KHIFFA_TOOLS && window.KHIFFA_TOOLS.barcode(); };
+      var bar = d.createElement('div'); bar.className = 'row'; bar.style.cssText = 'gap:6px;flex-wrap:wrap'; bar.append(sm, bc, m); $res.append(bar);
     }, 150);
   });
   $q.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); var f = $res.querySelector('.qa-item:not(.sel)'); if (f) f.click(); } });

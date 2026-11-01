@@ -105,3 +105,5 @@
 @media(max-width:959px){.kd-shortcuts>.kd-shortcut:nth-child(3),.kd-shortcuts>.kd-shortcut:nth-child(5){display:none!important}.kd-shortcuts>.kd-shortcut:nth-child(6){display:grid!important}}
 /* v48 — «المطاعم» تبويب مستقل في شريط الجوال بدل «مجتمع» (المجتمع في «المزيد») */
 @media(max-width:959px){[data-kd-screens="true"] #tabs button[data-v="community"]{display:none!important}[data-kd-screens="true"] #tabs button[data-v="partners"]{display:flex!important;flex-direction:column;justify-content:center;gap:4px;max-width:none}#tabs button[data-v="partners"]{order:4}#tabs button[data-v="account"]{order:5}}
+/* v49: لا تكرار للأيقونة الصغيرة بجانب الشعار في صفحة الدخول */
+#login .lg-brand>img[src^="icon-"]{display:none!important}
