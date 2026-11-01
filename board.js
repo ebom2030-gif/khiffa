@@ -12,6 +12,7 @@
   const DEF_T = { b: '08:00', s1: '11:00', l: '14:00', s2: '17:00', d: '20:00' };
   const fmtT = t => { const [h, m] = String(t || '').split(':').map(Number); if (!Number.isFinite(h)) return ''; const pm = h >= 12; return pad(((h + 11) % 12) + 1) + ':' + pad(m || 0) + (pm ? ' م' : ' ص'); };
   const pad = n => String(n).padStart(2, '0');
+  function setPh(img, text, w) { const P = PH(); if (P && P.apply) P.apply(img, text, w); else img.src = photo(text, w); }
   function photo(text, w) { const P = PH(); if (!P) return ''; const k = P.pick ? P.pick(text || '') : 'salad'; return P.url(P.P[k] || P.P.salad, w || 360); }
   function mealInfo(m) {
     const day = A.dayOf(A.TODAY), st = A.mealState(day, m.k), comps = A.mealComps(m.k, st);
@@ -48,7 +49,7 @@
       const x = mealInfo(m), b = E('button', null, 'kb-meal' + (x.done ? ' done' : '')); b.type = 'button';
       b.onclick = () => { A.setCur(A.TODAY); A.openMealSheet(m, 'idea'); };
       const top = E('div', null, 'kb-meal-top'); top.append(E('b', m.t), E('small', fmtT(x.time)));
-      const img = E('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = photo(x.title || m.t); img.onerror = () => img.remove();
+      const img = E('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; setPh(img, x.title || m.t); img.onerror = () => img.remove();
       const fig = E('div', null, 'kb-meal-img'); fig.append(img); if (x.done) fig.append(E('span', '✓', 'kb-check'));
       b.append(top, fig, E('span', x.title || 'اختر وجبتك', 'kb-meal-name'), E('small', x.kcal ? num(x.kcal) + ' سعرة' : 'لم تُسجَّل بعد', 'kb-meal-kcal'));
       row.append(b);
@@ -65,7 +66,7 @@
     pick.forEach(r => {
       const kc = R.calories ? R.calories(r.items.map(x => ({ id: x.id, n: x.g / D.FOODS[x.id].grams })), D.FOODS) : 0;
       const b = E('button', null, 'kb-recipe'); b.type = 'button'; b.onclick = () => window.KHIFFA_RECIPE_LIBRARY && window.KHIFFA_RECIPE_LIBRARY();
-      const img = E('img'); img.alt = ''; img.loading = 'lazy'; img.src = photo(r.title, 420); img.onerror = () => img.remove();
+      const img = E('img'); img.alt = ''; img.loading = 'lazy'; setPh(img, r.title, 420); img.onerror = () => img.remove();
       const t = E('div', null, 'kb-recipe-tx'); t.append(E('b', r.title), E('small', num(kc) + ' سعرة · ' + (R.cuisines[r.cuisine] || '')));
       b.append(img, t); if (favs.includes(r.id)) b.append(E('span', '♥', 'kb-fav')); row.append(b);
     });
@@ -144,7 +145,7 @@
       const m = D.MEALS[i]; if (c.querySelector('.chosen') || c.querySelector('.kb-opts')) return;
       const box = E('div', null, 'kb-opts'); box.append(E('p', 'اختر ' + m.t + ' بضغطة:', 'kb-opts-t'));
       const row = E('div', null, 'kb-opts-row');
-      options(m).forEach(o => { const b = E('button', null, 'kb-opt'); b.type = 'button'; const img = E('img'); img.alt = ''; img.loading = 'lazy'; img.src = photo(o.title, 300); img.onerror = () => img.remove(); const t = E('div', null, 'kb-opt-tx'); t.append(E('b', o.title), E('small', num(o.kcal) + ' سعرة · ' + o.sub)); b.append(img, t, E('span', 'اختيار', 'kb-opt-go')); b.onclick = e => { e.stopPropagation(); choose(m, o); }; row.append(b); });
+      options(m).forEach(o => { const b = E('button', null, 'kb-opt'); b.type = 'button'; const img = E('img'); img.alt = ''; img.loading = 'lazy'; setPh(img, o.title, 300); img.onerror = () => img.remove(); const t = E('div', null, 'kb-opt-tx'); t.append(E('b', o.title), E('small', num(o.kcal) + ' سعرة · ' + o.sub)); b.append(img, t, E('span', 'اختيار', 'kb-opt-go')); b.onclick = e => { e.stopPropagation(); choose(m, o); }; row.append(b); });
       const more = E('button', 'خيارات أكثر ومطابخ العالم ←', 'kb-opt-more'); more.type = 'button'; more.onclick = e => { e.stopPropagation(); A.openMealSheet(m, 'idea'); };
       box.append(row, more); c.append(box);
     });

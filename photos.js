@@ -37,8 +37,32 @@
     [/سلطة فواكه|فروت سلاد/, 'fruitsalad'], [/روبيان|جمبري/, 'shrimp'], [/تونة|تونه/, 'tuna'], [/سلمون|سمك|فيليه|بلطي|هامور|سردين/, 'fish'], [/كبدة|لحم|كفتة|ستيك|برجر|لحمة/, 'meat'],
     [/فراخ|دجاج|صدر|شيش/, 'chicken'], [/شوربة|شوربه/, 'soup'], [/شوفان|جرانولا/, 'oats'], [/بيض|أومليت|اومليت|شكشوكة/, 'egg'],
     [/جبن|جبنة|جبنه|لبنة|لبنه|حلوم|قريش/, 'cheese'], [/توت|فراولة|فراوله/, 'berries'], [/زبادي|لبن/, 'yobowl'], [/سندوتش|ساندويتش|توست|راب|تورتيلا/, 'sandwich'], [/فاكه|تفاح|فراولة|موز|برتقال|تمر|بطيخ/, 'fruit'], [/سلطة|سلطه|خضار/, 'salad']];
-  function pick(txt) { for (var i = 0; i < KW.length; i++) if (KW[i][0].test(txt)) return KW[i][1]; return 'salad'; }
-  window.KHIFFA_PHOTOS.pick = pick;
+  // v51: بلا مطابقة ← لا صورة فوتوغرافية (أيقونة ثلاثية الأبعاد تدل على المكوّن بدلًا منها)
+  function pick(txt) { for (var i = 0; i < KW.length; i++) if (KW[i][0].test(txt)) return KW[i][1]; return null; }
+  var nz = function (x) { return String(x || '').replace(/[ً-ْـ]/g, '').replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي'); };
+  var ICONS = null;
+  function icons() {
+    if (ICONS) return ICONS; ICONS = [];
+    var A = window.KHIFFA_APP, F = A && A.D && A.D.FOODS || {};
+    Object.keys(F).forEach(function (k) { if (F[k].img) ICONS.push([nz(F[k].name.split(/[(،]/)[0]).trim(), F[k].img]); });
+    (window.KHIFFA_FOODS_EXTRA || []).forEach(function (r) { ICONS.push([nz(r[0].split(/[(،]/)[0]).trim(), r[8]]); });
+    ICONS.sort(function (a, b) { return b[0].length - a[0].length; }); return ICONS;
+  }
+  function icon(txt) {
+    var t = nz(txt), L = icons(), i, w;
+    for (i = 0; i < L.length; i++) if (L[i][0].length > 2 && t.indexOf(L[i][0]) >= 0) return L[i][1];
+    var words = t.split(/[\s،,و]+/).filter(function (x) { return x.length > 2; });
+    for (w = 0; w < words.length; w++) for (i = 0; i < L.length; i++) if (L[i][0].indexOf(words[w]) >= 0) return L[i][1];
+    return 'fork_and_knife_with_plate';
+  }
+  function iconURL(n) { var A = window.KHIFFA_APP; return A && A.imgURL ? A.imgURL(n) : ''; }
+  function apply(img, txt, w) {
+    var k = pick(txt || '');
+    if (k && P[k]) { img.classList.remove('is-ico'); img.src = U(P[k], w || 360); }
+    else { img.classList.add('is-ico'); img.src = iconURL(icon(txt)); }
+    return img;
+  }
+  window.KHIFFA_PHOTOS.pick = pick; window.KHIFFA_PHOTOS.icon = icon; window.KHIFFA_PHOTOS.apply = apply;
   function slot() { var h = new Date().getHours(); return h < 11 ? 'morning' : h < 17 ? 'noon' : 'night'; }
 
   var css = d.createElement('style'); css.id = 'kf-photos';
@@ -73,6 +97,8 @@
     /* الجسم والتقارير */
     '.kban.body{height:130px}.kban.rep{height:120px}' +
     '.kban .kcap{position:absolute;inset:auto 14px 12px;color:#fff;font-weight:700;font-size:15px;z-index:1;text-shadow:0 1px 8px rgba(0,0,0,.5)}' +
+    '.kban-ico{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#E8F3EA,#FBF8EF 60%,#F6EBD3)}.kban-ico::after{display:none}.kban-ico img{width:84px;height:84px;object-fit:contain;filter:drop-shadow(0 10px 14px rgba(30,107,60,.25))}' +
+    'img.is-ico{object-fit:contain!important;padding:14%;box-sizing:border-box;background:linear-gradient(135deg,#E8F3EA,#FBF8EF 60%,#F6EBD3)}' +
     '@media (min-width:900px){.kban{height:140px}.icard .kban{height:120px}}';
   d.head.appendChild(css);
 
@@ -93,7 +119,10 @@
       var old = c.firstElementChild && c.firstElementChild.classList.contains('kban') ? c.firstElementChild : null;
       if (old && old.dataset.sig === sig) return;
       if (old) old.remove();
-      var b = ban('', ch ? P[pick(sig)] : (P[MEALS[i]] || P.salad)); b.dataset.sig = sig;
+      var pk = ch ? pick(sig) : null, b;
+      if (ch && !pk) { b = d.createElement('div'); b.className = 'kban kban-ico'; b.setAttribute('aria-hidden', 'true'); var bi = d.createElement('img'); bi.alt = ''; bi.src = iconURL(icon(sig)); b.appendChild(bi); }
+      else b = ban('', ch ? P[pk] : (P[MEALS[i]] || P.salad));
+      b.dataset.sig = sig;
       var icons = ch ? Array.prototype.slice.call(ch.querySelectorAll('.comp .fimg, .comp img')).filter(function (x, j, a) { return !x.closest('.fimg') || x.classList.contains('fimg'); }).slice(0, 6) : [];
       if (icons.length) { // الطبق: أيقونات المكونات المختارة مترتبة على صحن
         var pl = d.createElement('div'); pl.className = 'kplate'; var n = icons.length;
