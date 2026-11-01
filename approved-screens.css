@@ -107,3 +107,13 @@
 @media(max-width:959px){[data-kd-screens="true"] #tabs button[data-v="community"]{display:none!important}[data-kd-screens="true"] #tabs button[data-v="partners"]{display:flex!important;flex-direction:column;justify-content:center;gap:4px;max-width:none}#tabs button[data-v="partners"]{order:4}#tabs button[data-v="account"]{order:5}}
 /* v49: لا تكرار للأيقونة الصغيرة بجانب الشعار في صفحة الدخول */
 #login .lg-brand>img[src^="icon-"]{display:none!important}
+/* v50: مراجعة «الوجبات» كمستخدم — صور أوضح وأقل ازدحامًا */
+.mcard .mhead .slots{display:flex;flex-wrap:wrap;gap:6px}
+.mcard .mhead .chk{align-self:flex-start}
+.mcard .mact:has(+.kb-opts){display:none}
+.kb-opt-tx small{font-size:12px;font-weight:600;color:var(--ink);line-height:1.5}
+@media (max-width:760px){
+ .mcard .kban .kplate{display:none}
+ .mcard .kban.has-plate+.mhead{padding-left:0}
+ .mcard .kban{height:132px}
+}
