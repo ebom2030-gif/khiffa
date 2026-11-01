@@ -46,7 +46,9 @@
   const ORDER = { client: ['client'], dietitian: ['client', 'dietitian'], admin: ['client', 'admin'], owner: ['owner', 'admin', 'dietitian', 'client'] };
   function E(tag, text, cls) { const e = d.createElement(tag); if (text) e.textContent = text; if (cls) e.className = cls; return e; }
   function open() {
-    const role = (A.me && A.me.role) || 'client', parts = ORDER[role] || ORDER.client, old = d.activeElement;
+    const role = (A.me && A.me.role) || 'client', old = d.activeElement;
+    let parts = (ORDER[role] || ORDER.client).slice();
+    (window.KHIFFA_GUIDE_EXTRA || []).forEach(x => { try { if (x.when()) { SECTIONS[x.key] = { title: x.title, items: x.items }; if (!parts.includes(x.key)) parts.splice(role === 'owner' ? parts.length : 0, 0, x.key); } } catch (_) {} });
     const overlay = E('div', null, 'ac-modal'), box = E('div', null, 'ac-box kg-box');
     overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true'); overlay.setAttribute('aria-label', 'دليل الاستخدام');
     const close = () => { overlay.remove(); old && old.focus && old.focus(); };

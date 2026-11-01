@@ -7,7 +7,7 @@
   const routes = [
     ['home','الرئيسية','house'],['today','وجبات اليوم','calendar'],['suggestions','مقترحات اليوم','bento_box'],['programs','برامجي الغذائية','clipboard'],
     ['body','الوزن والقياسات','straight_ruler'],['hydration','الماء والنشاط','droplet'],['recipes','وصفات صحية','green_salad'],
-    ['community','المجتمع والدعم','people_hugging'],['reports','التقارير والتحليلات','bar_chart'],['goals','أهدافي','bullseye'],['account','حسابي','bust_in_silhouette']
+    ['community','المجتمع والدعم','people_hugging'],['reports','التقارير والتحليلات','bar_chart'],['goals','أهدافي','bullseye'],['partners','مطاعم وجيم','round_pushpin'],['account','حسابي','bust_in_silhouette']
   ];
   const names = Object.fromEntries(routes.map(r=>[r[0],r[1]]));
   const NATIVE = new Set(['home','today','suggestions','body','reports']);
@@ -161,7 +161,7 @@
       const [a,b]=sw.children;a.setAttribute('aria-pressed',String(route==='today'));b.setAttribute('aria-pressed',String(route==='suggestions'));
     }
   }
-  function homeShortcuts(){const home=d.getElementById('v-home');if(!home||home.querySelector('.kd-shortcuts'))return;const links=node('div','kd-shortcuts');[['today','وجبات اليوم','fork_and_knife_with_plate'],['hydration','الماء','droplet'],['hydration','النشاط','running_shoe'],['body','الوزن','balance_scale'],['recipes','وصفات','green_salad'],['goals','أهدافي','bullseye']].forEach(([id,label,icon])=>{const b=button('',()=>navigate(id),'kd-shortcut');const im=node('img','kd-sc-ico');im.alt='';im.src=A.imgURL(icon);b.append(im,node('span','',label));links.append(b);});home.querySelector('.kd-tools')?.after(links);}
+  function homeShortcuts(){const home=d.getElementById('v-home');if(!home||home.querySelector('.kd-shortcuts'))return;const links=node('div','kd-shortcuts');[['today','وجبات اليوم','fork_and_knife_with_plate'],['hydration','الماء','droplet'],['hydration','النشاط','running_shoe'],['body','الوزن','balance_scale'],['recipes','وصفات','green_salad'],['partners','مطاعم وجيم','round_pushpin']].forEach(([id,label,icon])=>{const b=button('',()=>navigate(id),'kd-shortcut');const im=node('img','kd-sc-ico');im.alt='';im.src=A.imgURL(icon);b.append(im,node('span','',label));links.append(b);});home.querySelector('.kd-tools')?.after(links);}
   function render(force=false){
     if(!state())return;mountPrograms();homeShortcuts();mealSwitch();
     const key=uid()+'|'+route+'|'+JSON.stringify(state().settings)+'|'+JSON.stringify(state().days)+'|'+JSON.stringify(state().inbody)+'|'+JSON.stringify(readLocal());
