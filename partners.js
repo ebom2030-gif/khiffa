@@ -12,7 +12,8 @@
   const api = async (action, payload = {}) => { try { return await A.api(action, payload); } catch (e) { if (/unknown action/i.test(e.message)) throw Error(SERVER); throw e; } };
   const digits = s => String(s || '').replace(/[^0-9]/g, '');
   const km = (a, b) => { const R = 6371, t = x => x * Math.PI / 180, dl = t(b.lat - a.lat), dn = t(b.lng - a.lng); const h = Math.sin(dl / 2) ** 2 + Math.cos(t(a.lat)) * Math.cos(t(b.lat)) * Math.sin(dn / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
-  const mapUrl = p => p.lat != null && p.lng != null ? 'https://www.google.com/maps/search/?api=1&query=' + p.lat + ',' + p.lng : 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(p.name + ' ' + (p.address || p.city || ''));
+  const mapUrl = p => p.maps_url ? p.maps_url : p.lat != null && p.lng != null ? 'https://www.google.com/maps/search/?api=1&query=' + p.lat + ',' + p.lng : 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(p.name + ' ' + (p.address || p.city || ''));
+  function parseMaps(u) { let s = String(u || ''); try { s = decodeURIComponent(s); } catch (_) {} const m = s.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) || s.match(/[?&](?:q|query|ll|destination|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/) || s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/); const n = s.match(/\/place\/([^/@?]+)/); return { lat: m ? +m[1] : null, lng: m ? +m[2] : null, name: n ? n[1].replace(/\+/g, ' ').trim() : '' }; }
   function link(text, href, cls) { const a = E('a', text, cls || 'btn ghost'); a.href = href; a.target = '_blank'; a.rel = 'noopener'; return a; }
   function modal(title) {
     const old = d.activeElement, o = E('div', null, 'ac-modal'), box = E('div', null, 'ac-box kp-box'); o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true'); o.setAttribute('aria-label', title);
@@ -89,13 +90,28 @@
   /* ---------- التسجيل وإدارة المكان (مدير المطعم/الجيم) ---------- */
   function placeForm(box, p, submit) {
     const f = E('form', null, 'kp-form');
+    // v48: التسجيل من خرائط Google — الصق رابط المكان فتُملأ البيانات تلقائيًا
+    const gm = E('div', null, 'kp-gmaps'); gm.append(E('b', '📍 أسهل طريقة: من خرائط Google'), E('small', 'افتح المكان في خرائط Google ← «مشاركة» ← «نسخ الرابط»، ثم الصقه هنا.'));
+    const gmRow = E('div', null, 'kp-gm-row'), gmIn = d.createElement('input'); gmIn.type = 'url'; gmIn.name = 'maps_url'; gmIn.placeholder = 'https://maps.app.goo.gl/…'; gmIn.value = p?.maps_url || ''; gmIn.setAttribute('aria-label', 'رابط خرائط Google');
+    const gmBtn = B('قراءة الرابط', async () => {
+      const url = gmIn.value.trim(); if (!url) { A.toast('الصق رابط المكان أولًا'); return; } gmBtn.disabled = true;
+      try {
+        let info = parseMaps(url);
+        if (/maps\.app\.goo\.gl|goo\.gl\//i.test(url) || !info.name || info.lat == null || true) { try { const r = await api('mapsResolve', { url }); info = { ...info, ...r, ...(r.details || {}) }; if (r.url) gmIn.value = (r.details && r.details.maps_url) || url; if (!r.placesReady) info._noPlaces = true; } catch (e) { if (info.lat == null) throw e; } }
+        const set = (n, v) => { if (v != null && v !== '' && f.elements[n] && !f.elements[n].value) f.elements[n].value = v; };
+        set('name', info.name); set('address', info.address); set('city', info.city); set('phone', info.phone); set('whatsapp', info.phone && /^\+?9665/.test(info.phone.replace(/\s/g, '')) ? info.phone : ''); set('hours', info.hours);
+        if (info.lat != null) { lat.value = Number(info.lat).toFixed(6); lng.value = Number(info.lng).toFixed(6); }
+        A.toast(info.phone ? 'تمت قراءة الاسم والموقع والهاتف من خرائط Google' : 'تمت قراءة الاسم والموقع' + (info._noPlaces ? ' — أكمل رقم الهاتف يدويًا' : ''));
+      } catch (e) { A.toast(e.message || 'تعذّرت قراءة الرابط'); } finally { gmBtn.disabled = false; }
+    }, 'btn');
+    gmRow.append(gmIn, gmBtn); gm.append(gmRow); f.append(gm);
     if (!p) { const k = E('label', null, 'kd-field'); k.append(E('span', 'نوع المكان')); const s = d.createElement('select'); s.name = 'kind'; [['restaurant', 'مطعم دايت / وجبات صحية'], ['gym', 'صالة رياضية / جيم']].forEach(([v, t]) => s.append(new Option(t, v))); k.append(s); f.append(k); }
     field(f, 'اسم المكان', 'name', p?.name, 'text', { required: true, maxLength: 80 });
     field(f, 'المدينة', 'city', p?.city, 'text', { maxLength: 40 }); field(f, 'العنوان', 'address', p?.address, 'text', { maxLength: 160 });
     field(f, 'رقم الهاتف (مع رمز الدولة)', 'phone', p?.phone, 'tel', { placeholder: '+9665…' }); field(f, 'رقم واتساب', 'whatsapp', p?.whatsapp, 'tel', { placeholder: '+9665…' });
     field(f, 'ساعات العمل', 'hours', p?.hours, 'text', { placeholder: 'مثال: 12 ظهرًا – 12 ليلًا' }); field(f, 'عرض لمستخدمي خفة (اختياري)', 'offer', p?.offer, 'text', { placeholder: 'مثال: خصم 10% بإظهار التطبيق' });
     field(f, 'نبذة', 'about', p?.about, 'textarea', { maxLength: 600, rows: 3 });
-    const lat = field(f, 'خط العرض (اختياري)', 'lat', p?.lat ?? '', 'number', { step: 'any' }), lng = field(f, 'خط الطول (اختياري)', 'lng', p?.lng ?? '', 'number', { step: 'any' });
+    const lat = field(f, 'خط العرض (يُملأ من الرابط)', 'lat', p?.lat ?? '', 'number', { step: 'any' }), lng = field(f, 'خط الطول (يُملأ من الرابط)', 'lng', p?.lng ?? '', 'number', { step: 'any' });
     f.append(B('📍 استخدم موقعي الحالي كموقع المكان', () => navigator.geolocation?.getCurrentPosition(x => { lat.value = x.coords.latitude.toFixed(6); lng.value = x.coords.longitude.toFixed(6); A.toast('تم تحديد الموقع'); }, () => A.toast('لم يُسمح بتحديد الموقع')), 'btn ghost'));
     const lf = field(f, 'شعار المكان (اختياري)', 'logoFile', '', 'file', { accept: 'image/*' }); let logo;
     lf.onchange = async () => { if (lf.files[0]) logo = await shrink(lf.files[0], 240); };
@@ -135,6 +151,7 @@
     const m = modal('إدارة الشركاء'); let rows; try { rows = (await api('partnerAdmin')).partners; } catch (e) { m.box.append(E('p', e.message, 'note')); return; }
     const inv = E('div', null, 'card kp-invite'); inv.append(E('h3', 'رسالة التعريف للمطاعم والصالات'), E('pre', invite(), 'kp-pre'));
     const ia = E('div', null, 'kp-actions'); ia.append(B('نسخ الرسالة', () => { navigator.clipboard?.writeText(invite()); A.toast('تم نسخ الرسالة'); }, 'btn ghost'), link('إرسال عبر واتساب', 'https://wa.me/?text=' + encodeURIComponent(invite()), 'btn')); inv.append(ia); m.box.append(inv);
+    m.box.append(B('➕ إضافة مكان من خرائط Google (يُعتمد مباشرة)', () => { m.close(); applyForm(); }, 'btn'));
     m.box.append(E('h3', 'الطلبات والشركاء (' + num(rows.length) + ')'));
     if (!rows.length) m.box.append(E('p', 'لا توجد طلبات بعد.', 'note'));
     rows.forEach(p => {
@@ -167,6 +184,7 @@
 .kp-offer{margin:0;font-weight:600;color:#B7791F}.kp-actions{display:flex;flex-wrap:wrap;gap:8px}.kp-actions a{border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink,#1d2b22);font-weight:700;font-size:14px}.kp-actions a.btn:not(.ghost){background:#1E8A4C;color:#fff;border-color:#1E8A4C}.kp-actions .btn,.kp-actions a{flex:1 1 90px;min-height:42px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
 .kp-menu summary{cursor:pointer;font-weight:700;min-height:36px}.kp-item{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;border-top:1px solid var(--line);padding:8px 0}.kp-item img{width:52px;height:52px;border-radius:10px;object-fit:cover}.kp-item>div{display:grid}.kp-item small{color:var(--muted)}
 .kp-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.kp-form .kd-field{display:grid;gap:4px}.kp-form .kd-field:has(textarea),.kp-form>button{grid-column:1/-1}.kp-form input,.kp-form select,.kp-form textarea{min-height:44px;font:inherit;font-size:16px}
+.kp-gmaps{grid-column:1/-1;display:grid;gap:6px;padding:12px;border-radius:14px;background:var(--mint-soft,#e8f4ec);border:1px solid #bfe3cb}.kp-gmaps small{color:var(--muted)}.kp-gm-row{display:flex;gap:8px}.kp-gm-row input{flex:1;min-height:44px;font-size:16px;direction:ltr}.kp-gm-row .btn{flex:none;min-height:44px}
 .kp-status{font-weight:700}.kp-pre{white-space:pre-wrap;font:inherit;font-size:13px;line-height:1.9;background:var(--bg);border-radius:12px;padding:10px;max-height:240px;overflow:auto}
 .kp-st{font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;background:#fff4d6;color:#8a5a00}.kp-approved{background:#e2f5e8;color:#1E6B3C}.kp-paused{background:#fde2e1;color:#a12622}.kp-admin{grid-template-columns:1fr auto}.kp-admin .kp-actions{grid-column:1/-1}
 @media(max-width:600px){.kp-form{grid-template-columns:1fr}.kp-grid{grid-template-columns:1fr}}`;

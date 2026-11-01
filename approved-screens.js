@@ -51,7 +51,7 @@
     for(const [id,label,icon] of routes){
       let b=nav.querySelector('button[data-v="'+id+'"]');
       if(!b){if(NATIVE.has(id)&&!d.getElementById('v-'+id))continue;b=node('button');b.type='button';b.dataset.v=id;b.setAttribute('role','tab');}
-      if(b.dataset.kd!=='route'){b.dataset.kd='route';b.replaceChildren();const image=node('img','ti');image.alt='';image.src=A.imgURL(icon);b.append(image,node('span','kd-nav-label',label),node('span','kd-nav-short',{home:'الرئيسية',today:'الوجبات',body:'المتابعة',community:'مجتمع',account:'المزيد'}[id]||label));b.onclick=()=>navigate(id);}
+      if(b.dataset.kd!=='route'){b.dataset.kd='route';b.replaceChildren();const image=node('img','ti');image.alt='';image.src=A.imgURL(icon);b.append(image,node('span','kd-nav-label',label),node('span','kd-nav-short',{home:'الرئيسية',today:'الوجبات',body:'المتابعة',community:'مجتمع',partners:'المطاعم',account:'المزيد'}[id]||label));b.onclick=()=>navigate(id);}
       nav.append(b);
     }
     const sel=route==='plan'?'account':route==='ideas'?'recipes':(route==='suggestions'&&matchMedia('(max-width:959px)').matches)?'today':route;
